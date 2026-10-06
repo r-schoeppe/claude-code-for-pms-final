@@ -23,7 +23,19 @@ prompt library built from your own questions.
 ---
 
 ### 1.
+What can you reach from here? List what's in this folder, what's in Rook's wiki, and what tables are in Rook's database.
 
 ### 2.
+I just joined Rook Industries as PM for Rook Dispatch. Read everything in 00-rook/company/ and add to the CLAUDE.md at the root of this folder, what you'd need to know to help me do my job here: the products, the people, the vocabulary, where things stand. Leave the session scope block at the top. Keep it under two pages.
 
 ### 3.
+Give me a better overview on the domain model and the products value proposition
+
+### 4.
+yes add more of this context in there the current one is too unspeciffic.
+
+### 5.
+Which problems where tried to be solved in the last release, based on which evidence and how?
+
+### 6.
+for each of them provide the documents of that software lifecycle step
