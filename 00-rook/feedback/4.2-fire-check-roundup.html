@@ -1,0 +1,703 @@
+<title>4.2 Fire Check</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600&display=swap">
+<style>
+/* Layout: sticky tab bar over one scrolling column; a stat strip first, then dense, scannable panels. */
+:root {
+  --bg: #f1f4f7; --surface: #ffffff; --ink: #17202a; --muted: #5a6776; --line: #d8e0e7;
+  --accent: #1d5b87; --accent-soft: #dce9f3;
+  --red: #b3261e; --red-soft: #fbe4e2; --amber: #8f5a00; --amber-soft: #fbefd3;
+  --green: #1b7443; --green-soft: #dcf1e4; --grey-soft: #e8edf1;
+  --f-head: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1419; --surface: #162029; --ink: #e5ebf0; --muted: #94a2b0; --line: #2a3745;
+    --accent: #72b6e6; --accent-soft: #1b3345;
+    --red: #ff8f86; --red-soft: #3b1f1d; --amber: #f0b64f; --amber-soft: #382b10;
+    --green: #72d19b; --green-soft: #143222; --grey-soft: #223039; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1419; --surface: #162029; --ink: #e5ebf0; --muted: #94a2b0; --line: #2a3745;
+  --accent: #72b6e6; --accent-soft: #1b3345;
+  --red: #ff8f86; --red-soft: #3b1f1d; --amber: #f0b64f; --amber-soft: #382b10;
+  --green: #72d19b; --green-soft: #143222; --grey-soft: #223039; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.5 var(--f-body); padding-inline: 16px; }
+.wrap { max-width: 980px; margin-inline: auto; padding-block: 20px 56px; }
+h1, h2, h3 { font-family: var(--f-head); font-weight: 600; margin: 0; text-wrap: balance; }
+h1 { font-size: 2rem; line-height: 1.1; }
+h2 { font-size: 1.35rem; margin-bottom: 4px; }
+h3 { font-size: 1.05rem; }
+p { margin: 0; }
+.sub { color: var(--muted); font-size: .9rem; max-width: 70ch; }
+.mono { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+header.top { display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: end; justify-content: space-between; margin-bottom: 16px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px; font-size: .78rem; }
+.badge { display: inline-block; font: 500 .68rem/1 var(--f-mono); letter-spacing: .04em; text-transform: uppercase; padding: 4px 6px; border-radius: 4px; white-space: nowrap; }
+.b-ver { background: var(--green-soft); color: var(--green); }
+.b-mod { background: var(--accent-soft); color: var(--accent); }
+.b-inf { background: var(--amber-soft); color: var(--amber); }
+.b-unk { background: var(--red-soft); color: var(--red); }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; margin-bottom: 16px; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; min-width: 0; }
+.stat .lbl { font-size: .78rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.stat .val { font: 600 1.55rem/1.2 var(--f-head); margin-top: 2px; }
+.stat .val .arrow { color: var(--muted); font-weight: 400; padding-inline: 4px; }
+.stat .val .bad { color: var(--red); }
+.stat .src { font: .72rem/1.35 var(--f-mono); color: var(--muted); margin-top: 6px; overflow-wrap: anywhere; }
+nav.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); display: flex; gap: 4px; overflow-x: auto; padding-block: 8px; margin-bottom: 12px; border-bottom: 1px solid var(--line); }
+nav.tabs button { flex: none; }
+button, select, input[type=search] { font: inherit; color: inherit; }
+.btn { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 7px 12px; cursor: pointer; }
+.btn:hover { border-color: var(--accent); }
+.btn[aria-pressed="true"], nav.tabs button[aria-selected="true"] { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+section.panel[hidden] { display: none; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 10px 0 12px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px; margin-bottom: 12px; min-width: 0; }
+details.fire { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; margin-bottom: 8px; border-left-width: 5px; }
+details.fire[data-state="burning"] { border-left-color: var(--red); }
+details.fire[data-state="partly"], details.fire[data-state="slow"] { border-left-color: var(--amber); }
+details.fire[data-state="outside"] { border-left-color: var(--accent); }
+details.fire[data-state="admin"] { border-left-color: var(--muted); }
+details.fire > summary { list-style: none; cursor: pointer; padding: 12px 14px; display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; align-items: start; }
+details.fire > summary::-webkit-details-marker { display: none; }
+.fid { font: 500 .8rem var(--f-mono); color: var(--muted); padding-top: 3px; }
+.ftitle { font: 600 1.05rem/1.3 var(--f-head); }
+.fhead { color: var(--muted); font-size: .88rem; grid-column: 2; }
+.pills { display: flex; flex-wrap: wrap; gap: 6px; grid-column: 2; margin-top: 4px; }
+.pill { font: 500 .72rem/1 var(--f-mono); padding: 4px 7px; border-radius: 99px; background: var(--grey-soft); }
+.pill.red { background: var(--red-soft); color: var(--red); }
+.pill.amber { background: var(--amber-soft); color: var(--amber); }
+.pill.blue { background: var(--accent-soft); color: var(--accent); }
+.fbody { padding: 2px 14px 14px; border-top: 1px dashed var(--line); }
+.fbody ul { margin: 10px 0; padding-left: 0; list-style: none; display: grid; gap: 7px; }
+.fbody li { display: grid; grid-template-columns: auto 1fr; gap: 8px; align-items: baseline; }
+.next { background: var(--grey-soft); border-radius: 6px; padding: 10px 12px; font-size: .9rem; }
+.chartcard h3 { margin-bottom: 2px; }
+.chartcard .cap { color: var(--muted); font-size: .85rem; margin-bottom: 8px; max-width: 75ch; }
+.chartcard .src { font: .72rem/1.35 var(--f-mono); color: var(--muted); margin-top: 6px; overflow-wrap: anywhere; }
+svg.chart { display: block; width: 100%; height: auto; overflow: visible; }
+svg .ax { fill: var(--muted); font: 11px var(--f-mono); }
+svg .axl { fill: var(--ink); font: 12px var(--f-body); }
+svg .grid { stroke: var(--line); stroke-width: 1; }
+svg .mk { stroke: var(--ink); stroke-width: 1; stroke-dasharray: 4 3; }
+svg .mkt { fill: var(--ink); font: 600 11px var(--f-body); }
+svg .hit { fill: transparent; }
+svg .hit:hover { fill: var(--accent-soft); fill-opacity: .45; }
+.sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
+.keys { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: .8rem; color: var(--muted); margin-bottom: 4px; }
+#tip { position: fixed; z-index: 20; pointer-events: none; background: var(--ink); color: var(--bg); font: .78rem/1.35 var(--f-mono); padding: 6px 8px; border-radius: 4px; max-width: 260px; white-space: pre-line; }
+.tablewrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: .88rem; }
+th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+th { font: 500 .72rem var(--f-mono); letter-spacing: .05em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+td.num, th.num { text-align: right; }
+.verdict { font: 600 .74rem/1 var(--f-mono); padding: 4px 7px; border-radius: 4px; white-space: nowrap; display: inline-block; }
+.v-wrong { background: var(--red-soft); color: var(--red); }
+.v-part { background: var(--amber-soft); color: var(--amber); }
+.v-ok { background: var(--green-soft); color: var(--green); }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
+.machine .big { font: 600 2.4rem/1 var(--f-head); }
+.meter { height: 12px; background: var(--grey-soft); border-radius: 6px; overflow: hidden; margin: 8px 0; }
+.meter > i { display: block; height: 100%; background: var(--accent); }
+.chips { display: flex; flex-wrap: wrap; gap: 3px; margin: 8px 0; min-height: 22px; }
+.chip { font: 500 .72rem/1 var(--f-mono); width: 20px; height: 20px; display: grid; place-items: center; border-radius: 4px; }
+.chip.T { background: var(--green-soft); color: var(--green); }
+.chip.D { background: var(--amber-soft); color: var(--amber); }
+.chip.M { background: var(--red-soft); color: var(--red); }
+.row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+input[type=range] { width: 100%; accent-color: var(--accent); }
+.check { display: grid; grid-template-columns: auto 1fr; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); align-items: start; }
+.check input { margin-top: 5px; width: 17px; height: 17px; accent-color: var(--accent); }
+.check .who { font: .75rem var(--f-mono); color: var(--muted); }
+.check.done label { text-decoration: line-through; color: var(--muted); }
+code.sql { display: block; font: .76rem/1.45 var(--f-mono); background: var(--grey-soft); padding: 8px 10px; border-radius: 6px; overflow-x: auto; white-space: pre; }
+.callout { border-left: 4px solid var(--amber); background: var(--amber-soft); padding: 10px 12px; border-radius: 0 6px 6px 0; font-size: .9rem; margin-bottom: 12px; }
+@media (prefers-reduced-motion: no-preference) { .meter > i { transition: width .25s; } }
+@media (max-width: 520px) { h1 { font-size: 1.6rem; } details.fire > summary { grid-template-columns: 1fr; } .fid, .fhead, .pills { grid-column: 1; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>4.2 Fire Check</h1>
+      <p class="sub">Rook Dispatch, release of 12 Aug 2026. Callouts and pings 29 Jun to 6 Sep, tickets to 7 Sep. "Before" is before 12 Aug, "after" is from 12 Aug (26 days). All figures are fictional course data.</p>
+    </div>
+    <div class="legend" aria-label="Status legend">
+      <span><span class="badge b-ver">verified</span> recomputed from data</span>
+      <span><span class="badge b-mod">modelled</span> replay or simulation</span>
+      <span><span class="badge b-inf">inferred</span> reasoned</span>
+      <span><span class="badge b-unk">unknown</span> cannot tell</span>
+    </div>
+  </header>
+
+  <div class="stats">
+    <div class="stat"><div class="lbl">Acceptance rate</div><div class="val">76.6%<span class="arrow">&rarr;</span><span class="bad">64.0%</span></div><div class="src">831/1,085 &rarr; 391/611 pings taken. SQL-A</div></div>
+    <div class="stat"><div class="lbl">Pings missed</div><div class="val">2.3%<span class="arrow">&rarr;</span><span class="bad">18.0%</span></div><div class="src">25 &rarr; 110 missed. Turned down fell 21.1% &rarr; 18.0%. SQL-A</div></div>
+    <div class="stat"><div class="lbl">Callouts nobody took</div><div class="val">5.5%<span class="arrow">&rarr;</span><span class="bad">11.1%</span></div><div class="src">48/879 &rarr; 49/440 callouts. SQL-G</div></div>
+    <div class="stat"><div class="lbl">Open tickets</div><div class="val">0<span class="arrow">&rarr;</span><span class="bad">83 of 108</span></div><div class="src">Tickets filed after 12 Aug still open. SQL-K</div></div>
+  </div>
+
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button class="btn" role="tab" data-tab="fires" aria-selected="true">Fires</button>
+    <button class="btn" role="tab" data-tab="charts" aria-selected="false">Charts</button>
+    <button class="btn" role="tab" data-tab="score" aria-selected="false">Score machine</button>
+    <button class="btn" role="tab" data-tab="challenge" aria-selected="false">Challenged claims</button>
+    <button class="btn" role="tab" data-tab="actions" aria-selected="false">Actions</button>
+    <button class="btn" role="tab" data-tab="recheck" aria-selected="false">Recheck</button>
+  </nav>
+
+  <!-- FIRES -->
+  <section class="panel" id="p-fires">
+    <h2>Fire register</h2>
+    <p class="sub">Three are still burning, two are partly out, and some will reach you from outside Dispatch. Open a row for the evidence and the next step.</p>
+    <div class="toolbar" id="fireFilters"></div>
+    <div id="fireList"></div>
+  </section>
+
+  <!-- CHARTS -->
+  <section class="panel" id="p-charts" hidden>
+    <h2>The evidence in pictures</h2>
+    <p class="sub">Hover or tap a column or row for the numbers. The dashed line marks the 4.2 release on 12 Aug.</p>
+    <div class="card chartcard" style="margin-top:12px">
+      <h3>Pings to the four cut-off responders vs the other twelve</h3>
+      <p class="cap">Pings a week. The four fell from 49 to 3 while the other twelve rose from 123 to 162.</p>
+      <div class="keys"><span><i class="sw" style="background:var(--red)"></i>Farlight, The Undertow, Meteor Mite, Vesper</span><span><i class="sw" style="background:var(--accent)"></i>Other twelve</span></div>
+      <div id="c1"></div>
+      <div class="src">Source: 00-rook/data/callout-history.csv (weeks start Monday). SQL-C. Verified.</div>
+    </div>
+    <div class="card chartcard">
+      <h3>Missed pings a day</h3>
+      <p class="cap">Zero or one a day until 11 Aug, 7 on the release day and 12 the day after. Never back to baseline.</p>
+      <div class="keys"><span><i class="sw" style="background:var(--grey-soft);border:1px solid var(--line)"></i>All pings</span><span><i class="sw" style="background:var(--red)"></i>Missed</span></div>
+      <div id="c2"></div>
+      <div class="src">Source: pings table, grouped by sent_at date. SQL-B. Verified.</div>
+    </div>
+    <div class="card chartcard">
+      <h3 id="c3title">Callouts nobody took, by week</h3>
+      <p class="cap" id="c3cap"></p>
+      <div class="toolbar" style="margin-top:0"><button class="btn" id="c3a" aria-pressed="true">Callouts nobody took</button><button class="btn" id="c3b" aria-pressed="false">Tickets filed</button></div>
+      <div id="c3"></div>
+      <div class="src" id="c3src"></div>
+    </div>
+    <div class="card chartcard">
+      <h3>Who answers: home-area pings vs pings to another area</h3>
+      <p class="cap">Before 12 Aug, none of 186 pings to a responder from another area were taken. Since, 86 of 241 were. Misses rose in both groups.</p>
+      <div class="keys"><span><i class="sw" style="background:var(--green)"></i>Taken</span><span><i class="sw" style="background:var(--amber)"></i>Turned down</span><span><i class="sw" style="background:var(--red)"></i>Missed</span></div>
+      <div id="c4"></div>
+      <div class="src">Source: pings joined to callouts and responders (responders.area against callouts.area). Home area is not the same as nearest. Verified counts, inferred meaning.</div>
+    </div>
+    <div class="card chartcard">
+      <h3>Jobs taken a day, per responder</h3>
+      <p class="cap">Hollow dot before 12 Aug, filled dot after. Seven responders took 10% to 28% more; four fell to almost nothing.</p>
+      <div class="toolbar" style="margin-top:0"><button class="btn" id="c5a" aria-pressed="true">Sort by after</button><button class="btn" id="c5b" aria-pressed="false">Sort by change</button></div>
+      <div id="c5"></div>
+      <div class="src">Source: pings with outcome taken, divided by 44 days before and 26 days after. Verified.</div>
+    </div>
+  </section>
+
+  <!-- SCORE MACHINE -->
+  <section class="panel" id="p-score" hidden>
+    <h2>Score machine</h2>
+    <p class="sub">The recent-acceptance score from history.py: a yes adds 0.08, a turn-down or a miss subtracts 0.12, held between 0 and 1. Start at 0.5 and tap outcomes, or scrub through Farlight's real pings.</p>
+    <div class="grid2" style="margin-top:12px">
+      <div class="card machine">
+        <h3>Play it</h3>
+        <div class="big mono" id="mScore">0.50</div>
+        <div class="meter"><i id="mBar" style="width:50%"></i></div>
+        <div class="row">
+          <button class="btn" data-o="T">Taken +0.08</button>
+          <button class="btn" data-o="D">Turned down &minus;0.12</button>
+          <button class="btn" data-o="M">Missed &minus;0.12</button>
+          <button class="btn" id="mReset">Reset to 0.50</button>
+        </div>
+        <div class="chips" id="mChips" aria-label="Outcome history"></div>
+        <p class="sub">A responder who takes fewer than 60% of their pings drifts to zero: 0.6 &times; 0.08 equals 0.4 &times; 0.12. After 12 Aug the overall take rate was 64%, and the four were at about 21%.</p>
+      </div>
+      <div class="card machine">
+        <h3>How much rank does the score cost?</h3>
+        <label for="mColl" class="sub">A healthy neighbour's score: <b class="mono" id="mCollV">0.90</b></label>
+        <input type="range" id="mColl" min="0" max="1" step="0.01" value="0.9">
+        <table style="margin-top:8px">
+          <tr><th>Weights</th><th class="num">Score gap</th><th class="num">Same as</th></tr>
+          <tr><td>4.2 (0.25 on recent acceptance)</td><td class="num mono" id="g42">0</td><td class="num mono" id="m42">0</td></tr>
+          <tr><td>4.1 (0.40 on recent acceptance)</td><td class="num mono" id="g41">0</td><td class="num mono" id="m41">0</td></tr>
+        </table>
+        <p class="sub" style="margin-top:8px">"Same as" turns the gap into minutes of extra travel, using the proximity weight (0.60 in 4.2, 0.45 in 4.1) over the 45-minute horizon. If the responder is closer than the neighbour by more than this, they are still asked first. This is why the score alone cannot explain being unreachable.</p>
+      </div>
+    </div>
+    <div class="card chartcard">
+      <h3>Replay Farlight</h3>
+      <p class="cap">Her real pings in order, starting at 0.5 on 29 Jun. Drag the slider. The line marks the 4.2 release.</p>
+      <div class="row" style="justify-content:space-between"><span>Ping <b class="mono" id="rIdx">0</b> of <span class="mono" id="rN"></span></span><span>Score <b class="mono" id="rScore">0.50</b></span></div>
+      <input type="range" id="rSlider" min="0" value="0" aria-label="Farlight ping number">
+      <div id="c6"></div>
+      <div class="src">Source: pings for Farlight ordered by sent_at; rule from 00-rook/code/dispatch-routing/history.py. Modelled: the true start value and any reset at deploy are unknown. See 00-rook/feedback/score-replay-real-pings.py.</div>
+    </div>
+  </section>
+
+  <!-- CHALLENGE -->
+  <section class="panel" id="p-challenge" hidden>
+    <h2>Challenged claims</h2>
+    <p class="sub">What people told you, checked against the data.</p>
+    <div class="toolbar"><input id="chSearch" type="search" placeholder="Filter by who or what" aria-label="Filter claims" class="btn" style="min-width:220px"><span id="chCount" class="sub"></span></div>
+    <div class="card tablewrap"><table id="chTable"><thead><tr><th>Claim</th><th>Who</th><th>Verdict</th><th>What the evidence says</th></tr></thead><tbody></tbody></table></div>
+    <h3 style="margin:16px 0 6px">Weaknesses in the evidence itself</h3>
+    <div class="card"><ul id="weak" style="margin:0;padding-left:18px;display:grid;gap:6px"></ul></div>
+  </section>
+
+  <!-- ACTIONS -->
+  <section class="panel" id="p-actions" hidden>
+    <h2>Actions</h2>
+    <p class="sub">Ticks stay in this browser only.</p>
+    <div class="callout"><b>Stopgap, with a better design.</b> Resetting the four to 0.5 still leaves them about 0.12 below healthy colleagues (about 9 minutes of travel) and the next miss costs 0.12 again. Reset two of the four, keep two as comparison for seven days, and agree the success measure first, for example at least one ping a day each.</div>
+    <div class="card" id="actList"></div>
+    <h3 style="margin:16px 0 6px">Ranked fixes</h3>
+    <div class="card"><ol style="margin:0;padding-left:20px;display:grid;gap:6px">
+      <li><b>Stop treating a miss like a refusal.</b> history.py merges them in record_declined; offer.py already returns them separately.</li>
+      <li><b>Let stuck scores recover, and persist them.</b> The 2019 TODO in history.py; scores sit in an in-memory dictionary.</li>
+      <li><b>Pilot a 75 to 90 second wait.</b> Pair it with a time-to-accept measure first.</li>
+      <li><b>Guarantee a fair share of pings</b> for anyone with none for N days.</li>
+      <li><b>Revert the 4.2 weights.</b> Lowest: the simulation shows they barely change the low-ranked group. <span class="badge b-inf">inferred ranking</span></li>
+    </ol></div>
+    <h3 style="margin:16px 0 6px">What we still cannot tell</h3>
+    <div class="card"><ul style="margin:0;padding-left:18px;display:grid;gap:6px">
+      <li><span class="badge b-unk">unknown</span> Why the four miss 59% of the few pings they get: the shorter wait, the phone not buzzing, or both.</li>
+      <li><span class="badge b-unk">unknown</span> Why a neighbour outranks a home responder: no travel times or score components in the data.</li>
+      <li><span class="badge b-unk">unknown</span> Severity of the 49 unserved callouts, and whether another route handled them.</li>
+      <li><span class="badge b-unk">unknown</span> Anything after 7 Sep. The system date is 15 Oct, so ask for a newer extract.</li>
+      <li><span class="badge b-unk">unknown</span> Seasonality: there is no prior-year data. Time-to-accept and "active responders" are not in the database either.</li>
+    </ul></div>
+  </section>
+
+  <!-- RECHECK -->
+  <section class="panel" id="p-recheck" hidden>
+    <h2>Recheck it yourself</h2>
+    <p class="sub">Read-only queries against rook-database, and the files they rely on.</p>
+    <div id="sqlList" style="margin-top:12px"></div>
+    <h3 style="margin:16px 0 6px">Files</h3>
+    <div class="card"><ul class="mono" style="margin:0;padding-left:18px;font-size:.82rem;display:grid;gap:4px">
+      <li>00-rook/data/callout-history.csv</li>
+      <li>00-rook/code/dispatch-routing/ (config.py, history.py, routing.py, offer.py, CHANGELOG.md)</li>
+      <li>00-rook/feedback/score-replay-real-pings.py</li>
+      <li>00-rook/feedback/scoring-simulation.py</li>
+      <li>00-rook/feedback/problem-statements-prioritized.md</li>
+      <li>00-rook/feedback/4.2-fire-check-roundup.md (the written version)</li>
+      <li>00-rook/wiki/company/releases/4.2.md, q3-roadmap.md; 00-rook/wiki/research/customer-interviews/</li>
+    </ul></div>
+    <h3 style="margin:16px 0 6px">Corrections to earlier statements</h3>
+    <div class="card"><ul style="margin:0;padding-left:18px;display:grid;gap:6px">
+      <li>Farlight's first ping after the release was taken. The four misses that week were on 12, 13 (twice) and 14 Aug.</li>
+      <li>Farlight missed 3 pings in the six weeks before 10 Aug, not 5.</li>
+      <li>Her handler filed 19 tickets about her; 11 are about the quiet stretch or the one missed ping, not 15.</li>
+      <li>Ten responders gained pings, not twelve. The "about 70%" loss is replaced by the weekly table.</li>
+    </ul></div>
+  </section>
+</div>
+<div id="tip" hidden></div>
+
+<script>
+(function () {
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+  var esc = function (s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); };
+  var store = {
+    get: function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set: function (k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  };
+  var BADGE = { V: '<span class="badge b-ver">verified</span>', M: '<span class="badge b-mod">modelled</span>', I: '<span class="badge b-inf">inferred</span>', U: '<span class="badge b-unk">unknown</span>' };
+
+  /* ---------- data ---------- */
+  var WEEKS = ["29 Jun","6 Jul","13 Jul","20 Jul","27 Jul","3 Aug","10 Aug","17 Aug","24 Aug","31 Aug"];
+  var FOUR = [49,48,48,50,50,49,43,16,6,3];
+  var TWELVE = [123,122,126,126,120,123,134,142,156,162];
+  var DAYS = [[5,38,1],[6,28,0],[7,30,0],[8,23,1],[9,16,0],[10,32,0],[11,19,1],[12,25,7],[13,25,12],[14,30,8],[15,24,6],[16,22,4],[17,24,1],[18,25,2],[19,24,6],[20,19,4],[21,25,7],[22,16,2],[23,25,6],[24,25,6],[25,18,3],[26,23,2],[27,20,2],[28,22,2],[29,22,5],[30,32,4],[31,19,2],[32,25,4],[33,17,3],[34,25,2],[35,30,3],[36,30,2],[37,19,5]];
+  var NOBODY = [9,8,5,12,5,4,14,17,16,7];
+  var CALLOUTS = [141,139,138,144,137,138,110,121,124,127];
+  var TIX = [6,6,8,5,7,7,20,27,32,25,4];
+  var TIXOPEN = [0,0,0,0,0,0,11,16,27,25,4];
+  var TIXW = WEEKS.concat(["7 Sep*"]);
+  var HOME = [
+    { l: "Home area, before", n: 899, t: 831, d: 62, m: 6 },
+    { l: "Home area, after", n: 370, t: 305, d: 27, m: 38 },
+    { l: "Other area, before", n: 186, t: 0, d: 167, m: 19 },
+    { l: "Other area, after", n: 241, t: 86, d: 83, m: 72 }
+  ];
+  var JOBS = [["The Gale",1.45,1.85],["Nightwell",1.64,1.81],["Stormwrack",1.48,1.73],["Captain Vantage",1.27,1.62],["Sgt. Falkirk",1.14,1.38],["Cindermark",1.02,1.12],["Ironvale",0.89,1.00],["Sgt. Bulwark",0.98,1.00],["The Longcast",0.77,0.81],["Halfmoon",1.14,0.81],["Corporal Ashgrove",1.11,0.73],["The Drift",0.75,0.69],["Vesper",1.59,0.19],["The Undertow",1.32,0.12],["Meteor Mite",1.09,0.12],["Farlight",1.25,0.08]];
+  var FOURSET = { "Farlight": 1, "The Undertow": 1, "Meteor Mite": 1, "Vesper": 1 };
+  var FL_PRE = "TDTDDTTTTTTTTTDTTTDDTTTTTMTTTTDDTTTTTTTMTTDTDTTTTDTTTTTDTDTTDTTTTTTDTMTDTTD";
+  var FL_POST = "TMDMMMTMDMM";
+  var FL = (FL_PRE + FL_POST).split("");
+
+  var FIRES = [
+    { id: "F1", state: "burning", sev: "High", title: "Four responders cut off from work",
+      head: "Farlight, The Undertow, Meteor Mite and Vesper went from about 12 pings a week each to under 1.",
+      pills: [["Burning","red"],["Retention risk","amber"]],
+      ev: [["V","Pings to the four fell 49, 48, 48, 50, 50, 49, 43, 16, 6, 3 a week; the other twelve rose 123 to 162. callout-history.csv"],
+           ["V","Jobs taken a day, before to after: Farlight 1.25 to 0.08, The Undertow 1.32 to 0.12, Meteor Mite 1.09 to 0.12, Vesper 1.59 to 0.19."],
+           ["V","They missed 59% (33 of 56) of pings after 12 Aug, against 13.9% for everyone else and 2.9% for the four before."],
+           ["M","Replaying the real outcomes through history.py's rule leaves exactly these four at 0.00; the other twelve end at 0.72 or higher."],
+           ["V","Their handlers: \"starting to wonder if im still even in the system\" (tickets 3120, 3121)."],
+           ["U","Why they miss so much. The score is only worth 0.25 of the ranking, and Farlight was asked first at a score of 0.28, so score alone does not explain it."]],
+      next: "Reset two of the four and keep two as comparison for seven days. Pull the three score components for callouts 40985, 41416, 40987 and 40997. Owner: staff engineer via the engineering manager." },
+    { id: "F2", state: "burning", sev: "High", title: "Missed pings, still 5 to 10 times baseline",
+      head: "Missed pings went from 2.3% to 18.0% on release day and were still 12.7% in the 31 Aug week.",
+      pills: [["Burning","red"],["Not seasonal","blue"]],
+      ev: [["V","Misses were 0 or 1 a day until 11 Aug, then 7, 12, 8, 6, 4 on 12 to 16 Aug. Since then 2 to 7 a day."],
+           ["V","Not a time-of-day effect: morning 1.6% to 18.4%, afternoon 1.8% to 17.5%, evening 2.5% to 19.0%."],
+           ["V","The healthy twelve alone miss 15.7%, 13.4%, 12.8%, 11.1% in the four weeks from 10 Aug, against 1.5% to 2.4% before. It is not only the four."],
+           ["V","The daily dip after 13 Aug is partly composition: the four, who miss most, stopped being pinged."],
+           ["V","The shorter wait did not speed assignment. Time from callout to the ping that was taken: median 17 s before, 19 s after; slowest 10% 41 s before, 78 s after. This is a proxy; there is no response-time field."]],
+      next: "Ask whether the 60 second wait stays. A pilot at 75 to 90 seconds, measured against time-to-accept, is ranked third behind the two score fixes." },
+    { id: "F3", state: "burning", sev: "High", title: "Handler tickets unanswered",
+      head: "83 of 108 tickets filed since 12 Aug are still open; before 12 Aug all 39 were closed.",
+      pills: [["Burning","red"],["Trust","amber"]],
+      ev: [["V","Tickets a week: 6, 6, 8, 5, 7, 7 before; 20, 27, 32, 25 after (4 in the partial week of 7 Sep)."],
+           ["V","One responder's quiet stretch produced up to 11 tickets (Farlight) with no answer recorded."],
+           ["V","A handler emailed the support lead directly on 26 Aug (release page comment)."],
+           ["I","The engineering manager asked on 14 Aug whether the ranking change should hit decliners; the staff engineer said they would look when back. No answer recorded."]],
+      next: "Reply to the quiet-stretch tickets with the plain explanation, and close the 'gone before I could answer' ones with the wait decision. Owner: support lead." },
+    { id: "F4", state: "partly", sev: "High if any were serious", title: "Callouts nobody took",
+      head: "5.5% before, 11.1% after, but 5.5% again in the 31 Aug week.",
+      pills: [["Partly out","amber"],["One week of improvement","blue"]],
+      ev: [["V","48 of 879 before, 49 of 440 after: roughly 25 more than the baseline would give."],
+           ["V","By week: 9, 8, 5, 12, 5, 4 before; 14, 17, 16, 7 after. The latest week is in the normal range, but one week is thin."],
+           ["V","No severity field. Unserved incident texts include a bus full of commuters held at the depot (41202, 25 Aug) and a bank being emptied (41066, 17 Aug; 41376, 4 Sep)."],
+           ["U","Whether each was handled another way (handler override, manual call) is not in the data."]],
+      next: "Ask operations whether the 49 were handled another way. Add 'callouts nobody took' as a tracked metric." },
+    { id: "F5", state: "slow", sev: "Medium", title: "Work piling onto a few responders",
+      head: "The busiest responders took 10% to 28% more jobs a day after 12 Aug.",
+      pills: [["Slow burn","amber"]],
+      ev: [["V","Jobs a day before to after: The Gale 1.45 to 1.85, Captain Vantage 1.27 to 1.62, Sgt. Falkirk 1.14 to 1.38, Stormwrack 1.48 to 1.73, Nightwell 1.64 to 1.81."],
+           ["V","Kip, The Gale's handler: \"exhausted.\""],
+           ["I","Part of the rise is the four responders' work moving to others. The ping log shows who got it; it does not show fatigue."]],
+      next: "Track pings per responder weekly. Add a fair-share rule to the fix list." },
+    { id: "F6", state: "outside", sev: "Safety-adjacent", title: "Supply items that will land on your desk",
+      head: "Cracked vest plates, a cold-weather grapple line, servicing booked on marathon day, and a planned extra approval step.",
+      pills: [["Outside Dispatch","blue"]],
+      ev: [["V","Cracked vest plates: Halloran's interview (11 days waiting), ticket 3021 (Farlight, July), ticket 3074 (Nightwell, 21 Aug, open). The priority field changes nothing."],
+           ["V","Ticket 3092 (Corporal Ashgrove, 25 Aug, open): the grapple line retracts slowly below freezing; a field failure report was filed."],
+           ["V","Tickets 3054 and 3109: maintenance booked on the day of the city marathon, 'one of our busiest days'."],
+           ["I","Supply books into low-callout windows from the Responder Availability Record that Dispatch writes. Whether 4.2 changed that record is not visible; availability.py is a stub here."],
+           ["V","The Q3 roadmap commits a second approval step for large requisitions in 4.3. Its success measure is second sign-offs, not speed, and it adds a step to a queue handlers already call too slow."]],
+      next: "Tell the Supply owner about the marathon tickets and the grapple line. Challenge the 4.3 brief on speed. Do not change the shape of availability.current_record()." },
+    { id: "F7", state: "admin", sev: "Medium", title: "Roadmap and process gaps",
+      head: "Availability Confidence is still 'Committed' for 4.2 but did not ship; no 4.2 change has a brief, spec or tests.",
+      pills: [["Admin","blue"]],
+      ev: [["V","Q3 roadmap: Availability Confidence, Committed, target 4.2, last reviewed 30 Jun."],
+           ["V","'Ping timeout tuning' is Committed; what shipped was a cut from 90 to 60 seconds with no evidence on file."],
+           ["V","Nobody has written down how ping ranking works. Priya asked you to write it, starting with the staff engineer."]],
+      next: "Hold the conversation with the Director of Product about which squeezed-out 4.2 items are still Q3 commitments." }
+  ];
+
+  var CLAIMS = [
+    ["Mostly seasonal; August is always soft","Priya, 19 Aug and handover","Half right","part","Callouts a week did fall about 12% (137 to 144 before; 110, 121, 124, 127 after). But misses jumped on release day and four responders collapsed, and neither is seasonal. No prior-year data exists, so even the dip cannot be called seasonal."],
+    ["It should settle once September starts","Engineering manager, 26 Aug","Not yet shown","part","The 31 Aug week still had 12.7% missed and 25 tickets. Callouts nobody took did improve that week."],
+    ["It was the right change; reverting trades one angry group for another","Priya","Partly","part","Wide-area responders gained 10% to 28% more jobs a day, and pings to responders from another area are now taken (86 of 241, against 0 of 186). But the share of callouts whose first ping went to a home-area responder fell from 80% to 61%, and the cost fell on the four. The wait and the miss penalty can change without reverting the weights."],
+    ["Phone never goes off is a mystery","Support lead","Mostly explained","ok","For the four, pings stopped arriving, which fits the ranking. But 59% of the few they did get were missed, so delivery problems are not ruled out."],
+    ["The near-miss was two weeks ago","Mr. Ambrose, interview 2 Sep","Wrong date","wrong","Ticket 3043 ('yesterday evening', filed 13 Aug) and the ping log (callout 40987, 12 Aug 19:03, Captain Vantage missed) agree on release day. The home responder, Nightwell, was pinged last, 163 seconds in."],
+    ["Maintenance scheduling has improved","Halloran, interview 5 Sep","Not a contradiction","ok","He spoke about Bulwark. The marathon tickets are about Falkirk and Ironvale: one responder against two others."],
+    ["Quiet weeks and fast-vanishing ones","Aunt Dot, interview 3 Sep","Prompted","part","The interviewer asked about quiet weeks and she answered 'now that you mention it'. The data still backs it for Vesper (1.59 to 0.19 jobs a day)."],
+    ["The ranking weights caused the starvation","An earlier version of this analysis","Not shown","wrong","The simulation gives almost the same low-ranked group under the 4.1 and 4.2 weights, and it did not reproduce the real starvation. Misses drive the loop."]
+  ];
+  var WEAK = [
+    "The four interviews were about the console redesign, not 4.2. Only two of the four handlers' responders are among the four cut off (Kip's Meteor Mite, Aunt Dot's Vesper). Nobody was interviewed for Farlight, The Undertow, Ashgrove or Halfmoon, who filed the most tickets.",
+    "Home area is not nearest. Responders move, so the fall in home-first pings does not prove the new weights misfire.",
+    "The score replay is a model. Travel times and the three score components are not in the data, and Farlight was still asked first at a score of 0.28.",
+    "The data stops at 7 Sep. Ask for a refreshed extract before treating any of this as current."
+  ];
+  var ACTIONS = [
+    ["Reset two of the four responders to 0.5, keep two as comparison for 7 days; agree the success measure first","Staff engineer via engineering manager"],
+    ["(a) Score components (travel, recent acceptance, skills) for Farlight and her three neighbours on callouts 40985 and 41416","Staff engineer"],
+    ["(b) Push-delivery logs for the four on 12 and 13 Aug","Staff engineer"],
+    ["(c) Travel times from the four to their home areas","Staff engineer"],
+    ["(d) Does the 4.2 deploy reset the in-memory scores?","Staff engineer"],
+    ["(e) Same score components for callouts 40987 and 40997, where the home responder was pinged last","Staff engineer"],
+    ["(f) Ops check: were the 49 unserved callouts handled another way?","Engineering manager"],
+    ["Answer the 14 Aug question: should the ranking change hit responders who keep turning pings down?","Staff engineer"],
+    ["Ask for a data extract after 7 Sep to see whether anything has recovered","Data analyst"],
+    ["Reply to open quiet-stretch tickets; close 'gone before I could answer' tickets once the wait is decided","Support lead"],
+    ["Tell Supply about the marathon tickets and the grapple line; challenge the 4.3 approval step on speed","Supply owner"],
+    ["Decide which squeezed-out 4.2 items (Availability Confidence) are still Q3 commitments","Director of Product"],
+    ["Guard: do not change the shape of availability.current_record(); Supply reads it","Everyone touching availability.py"]
+  ];
+  var SQL = [
+    ["SQL-A","Acceptance, missed and turned down before and after","SELECT CASE WHEN sent_at >= '2026-08-12' THEN 'post' ELSE 'pre' END AS period, outcome, COUNT(*)\nFROM pings GROUP BY 1,2 ORDER BY 1,2"],
+    ["SQL-B","Pings and misses by day","SELECT sent_at::date AS day, COUNT(*) AS pings,\n  SUM(CASE WHEN outcome='missed' THEN 1 ELSE 0 END) AS missed\nFROM pings GROUP BY 1 ORDER BY 1"],
+    ["SQL-C","Weekly pings: the four vs the rest","SELECT DATE_TRUNC('week', sent_at)::date AS week,\n  SUM(CASE WHEN responder IN ('Farlight','The Undertow','Meteor Mite','Vesper') THEN 1 ELSE 0 END) AS four,\n  SUM(CASE WHEN responder NOT IN ('Farlight','The Undertow','Meteor Mite','Vesper') THEN 1 ELSE 0 END) AS other\nFROM pings GROUP BY 1 ORDER BY 1"],
+    ["SQL-G","Callouts nobody took, by week","SELECT DATE_TRUNC('week', c.happened_at)::date AS week, COUNT(*) AS callouts,\n  SUM(CASE WHEN NOT EXISTS (SELECT 1 FROM pings p WHERE p.callout_number=c.callout_number AND p.outcome='taken') THEN 1 ELSE 0 END) AS nobody_took\nFROM callouts c GROUP BY 1 ORDER BY 1"],
+    ["SQL-H","Home-area against other-area pings","SELECT CASE WHEN c.happened_at >= '2026-08-12' THEN 'post' ELSE 'pre' END AS period,\n  CASE WHEN r.area = c.area THEN 'home' ELSE 'other' END AS where_pinged,\n  COUNT(*), SUM(CASE WHEN p.outcome='taken' THEN 1 ELSE 0 END) AS taken,\n  SUM(CASE WHEN p.outcome='turned down' THEN 1 ELSE 0 END) AS declined,\n  SUM(CASE WHEN p.outcome='missed' THEN 1 ELSE 0 END) AS missed\nFROM pings p JOIN callouts c USING (callout_number) JOIN responders r ON r.name = p.responder\nGROUP BY 1,2 ORDER BY 1,2"],
+    ["SQL-I","First ping per callout, home or not","WITH first AS (SELECT DISTINCT ON (p.callout_number) p.callout_number, p.outcome, c.area, c.happened_at, r.area AS resp_area\n  FROM pings p JOIN callouts c USING (callout_number) JOIN responders r ON r.name=p.responder\n  ORDER BY p.callout_number, p.sent_at)\nSELECT CASE WHEN happened_at >= '2026-08-12' THEN 'post' ELSE 'pre' END AS period, COUNT(*),\n  SUM(CASE WHEN resp_area=area THEN 1 ELSE 0 END) AS first_ping_home FROM first GROUP BY 1"],
+    ["SQL-K","Tickets by week and status","SELECT DATE_TRUNC('week', filed_at)::date AS week, COUNT(*) AS tickets,\n  SUM(CASE WHEN status='open' THEN 1 ELSE 0 END) AS open_now\nFROM support_tickets GROUP BY 1 ORDER BY 1"],
+    ["SQL-L","Jobs taken a day per responder","SELECT p.responder,\n  ROUND(SUM(CASE WHEN c.happened_at < '2026-08-12' AND p.outcome='taken' THEN 1 ELSE 0 END)/44.0,2) AS pre_per_day,\n  ROUND(SUM(CASE WHEN c.happened_at >= '2026-08-12' AND p.outcome='taken' THEN 1 ELSE 0 END)/26.0,2) AS post_per_day\nFROM pings p JOIN callouts c USING (callout_number) GROUP BY 1 ORDER BY 3 DESC"]
+  ];
+
+  /* ---------- tooltip ---------- */
+  var tip = $("#tip");
+  document.addEventListener("pointermove", function (e) {
+    var t = e.target.closest ? e.target.closest("[data-tip]") : null;
+    if (!t) { tip.hidden = true; return; }
+    tip.textContent = t.getAttribute("data-tip");
+    tip.hidden = false;
+    var x = Math.min(e.clientX + 12, window.innerWidth - tip.offsetWidth - 8);
+    var y = e.clientY + 14;
+    if (y + tip.offsetHeight > window.innerHeight - 8) y = e.clientY - tip.offsetHeight - 10;
+    tip.style.left = Math.max(8, x) + "px"; tip.style.top = Math.max(8, y) + "px";
+  });
+  document.addEventListener("pointerleave", function () { tip.hidden = true; });
+
+  /* ---------- tabs ---------- */
+  var TABS = ["fires","charts","score","challenge","actions","recheck"];
+  function showTab(name) {
+    if (TABS.indexOf(name) < 0) name = "fires";
+    TABS.forEach(function (t) { $("#p-" + t).hidden = t !== name; });
+    $$("nav.tabs button").forEach(function (b) { b.setAttribute("aria-selected", b.getAttribute("data-tab") === name ? "true" : "false"); });
+    try { history.replaceState(null, "", "#" + name); } catch (e) {}
+    renderCharts();
+  }
+  $$("nav.tabs button").forEach(function (b) { b.addEventListener("click", function () { showTab(b.getAttribute("data-tab")); window.scrollTo(0, 0); }); });
+
+  /* ---------- fires ---------- */
+  var FILTERS = [["all","All"],["burning","Burning"],["partly","Partly out"],["slow","Slow burn"],["outside","Outside Dispatch"],["admin","Admin"]];
+  var fireFilter = "all";
+  function renderFires() {
+    $("#fireFilters").innerHTML = FILTERS.map(function (f) {
+      var n = f[0] === "all" ? FIRES.length : FIRES.filter(function (x) { return x.state === f[0]; }).length;
+      return '<button class="btn" data-f="' + f[0] + '" aria-pressed="' + (fireFilter === f[0]) + '">' + f[1] + ' <span class="mono">' + n + '</span></button>';
+    }).join("") + '<button class="btn" id="expandAll" style="margin-left:auto">Expand all</button>';
+    $("#fireList").innerHTML = FIRES.filter(function (x) { return fireFilter === "all" || x.state === fireFilter; }).map(function (x) {
+      return '<details class="fire" data-state="' + x.state + '"><summary><span class="fid">' + x.id + '</span><span class="ftitle">' + esc(x.title) + '</span>' +
+        '<span class="fhead">' + esc(x.head) + '</span><span class="pills">' + x.pills.map(function (p) { return '<span class="pill ' + p[1] + '">' + esc(p[0]) + '</span>'; }).join("") +
+        '<span class="pill">Severity: ' + esc(x.sev) + '</span></span></summary><div class="fbody"><ul>' +
+        x.ev.map(function (e) { return '<li>' + BADGE[e[0]] + '<span>' + esc(e[1]) + '</span></li>'; }).join("") +
+        '</ul><div class="next"><b>Next:</b> ' + esc(x.next) + '</div></div></details>';
+    }).join("");
+    $$("#fireFilters [data-f]").forEach(function (b) { b.addEventListener("click", function () { fireFilter = b.getAttribute("data-f"); renderFires(); }); });
+    $("#expandAll").addEventListener("click", function () {
+      var ds = $$("#fireList details"); var open = ds.some(function (d) { return !d.open; });
+      ds.forEach(function (d) { d.open = open; }); this.textContent = open ? "Collapse all" : "Expand all";
+    });
+  }
+
+  /* ---------- chart helpers ---------- */
+  var M = { l: 40, r: 12, t: 14, b: 34 };
+  function niceTicks(max, n) { var step = max / n, out = []; for (var i = 0; i <= n; i++) out.push(Math.round(step * i * 100) / 100); return out; }
+  function axisY(w, h, ticks, y, fmt) {
+    return ticks.map(function (t) { return '<line class="grid" x1="' + M.l + '" x2="' + (w - M.r) + '" y1="' + y(t) + '" y2="' + y(t) + '"/><text class="ax" x="' + (M.l - 6) + '" y="' + (y(t) + 4) + '" text-anchor="end">' + (fmt ? fmt(t) : t) + '</text>'; }).join("");
+  }
+  function xlabels(w, h, labels, x, every) {
+    return labels.map(function (l, i) { return i % every === 0 ? '<text class="ax" x="' + x(i) + '" y="' + (h - 12) + '" text-anchor="middle">' + esc(l) + '</text>' : ""; }).join("");
+  }
+  function mount(sel, fn) {
+    var host = $(sel); if (!host) return;
+    host._fn = fn;
+    var w = host.clientWidth;
+    if (!w) return;
+    host.innerHTML = fn(w);
+  }
+
+  function c1(w) {
+    var h = 250, n = WEEKS.length, iw = w - M.l - M.r, ymax = 180;
+    var x = function (i) { return M.l + iw * (i + .5) / n; };
+    var y = function (v) { return h - M.b - (h - M.t - M.b) * v / ymax; };
+    var line = function (arr, cls) { return '<polyline fill="none" style="stroke:' + cls + '" stroke-width="2.5" points="' + arr.map(function (v, i) { return x(i) + "," + y(v); }).join(" ") + '"/>' + arr.map(function (v, i) { return '<circle cx="' + x(i) + '" cy="' + y(v) + '" r="3.5" style="fill:' + cls + '"/>'; }).join(""); };
+    var mx = M.l + iw * (6 + 2 / 7) / n + 0; // 12 Aug sits two days into the 10 Aug week
+    var s = '<svg class="chart" width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '" role="img" aria-label="Weekly pings, four cut-off responders against the other twelve">';
+    s += axisY(w, h, [0,45,90,135,180], y);
+    s += line(TWELVE, "var(--accent)") + line(FOUR, "var(--red)");
+    s += '<line class="mk" x1="' + mx + '" x2="' + mx + '" y1="' + M.t + '" y2="' + (h - M.b) + '"/><text class="mkt" x="' + (mx - 6) + '" y="' + (M.t + 8) + '" text-anchor="end">4.2 ships 12 Aug</text>';
+    s += xlabels(w, h, WEEKS, x, w < 420 ? 2 : 1);
+    s += WEEKS.map(function (l, i) { return '<rect class="hit" x="' + (x(i) - iw / n / 2) + '" y="' + M.t + '" width="' + (iw / n) + '" height="' + (h - M.t - M.b) + '" data-tip="Week of ' + l + '\nFour: ' + FOUR[i] + ' pings\nOther twelve: ' + TWELVE[i] + ' pings"/>'; }).join("");
+    return s + '</svg>';
+  }
+  function c2(w) {
+    var h = 230, n = DAYS.length, iw = w - M.l - M.r, ymax = 40;
+    var bw = iw / n;
+    var x = function (i) { return M.l + bw * i; };
+    var y = function (v) { return h - M.b - (h - M.t - M.b) * v / ymax; };
+    var lab = function (d) { return d <= 31 ? d + " Aug" : (d - 31) + " Sep"; };
+    var s = '<svg class="chart" width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '" role="img" aria-label="Pings and missed pings by day">';
+    s += axisY(w, h, [0,10,20,30,40], y);
+    DAYS.forEach(function (d, i) {
+      s += '<rect x="' + (x(i) + 1) + '" y="' + y(d[1]) + '" width="' + Math.max(1, bw - 2) + '" height="' + (y(0) - y(d[1])) + '" style="fill:var(--grey-soft);stroke:var(--line)"/>';
+      s += '<rect x="' + (x(i) + 1) + '" y="' + y(d[2]) + '" width="' + Math.max(1, bw - 2) + '" height="' + (y(0) - y(d[2])) + '" style="fill:var(--red)"/>';
+      if (i % (w < 520 ? 7 : 4) === 0) s += '<text class="ax" x="' + (x(i) + bw / 2) + '" y="' + (h - 12) + '" text-anchor="middle">' + lab(d[0]).replace(" Aug", " Aug").replace(" Sep", " Sep") + '</text>';
+      s += '<rect class="hit" x="' + x(i) + '" y="' + M.t + '" width="' + bw + '" height="' + (h - M.t - M.b) + '" data-tip="' + lab(d[0]) + '\n' + d[1] + ' pings, ' + d[2] + ' missed (' + Math.round(100 * d[2] / d[1]) + '%)"/>';
+    });
+    var mxi = 7; var mx = x(mxi);
+    s += '<line class="mk" x1="' + mx + '" x2="' + mx + '" y1="' + M.t + '" y2="' + (h - M.b) + '"/><text class="mkt" x="' + (mx + 5) + '" y="' + (M.t + 8) + '">4.2 ships 12 Aug</text>';
+    return s + '</svg>';
+  }
+  var c3mode = "nobody";
+  function c3(w) {
+    var h = 240, iw = w - M.l - M.r, s;
+    if (c3mode === "nobody") {
+      var n = WEEKS.length, bw = iw / n, ymax = 16;
+      var x = function (i) { return M.l + bw * i; };
+      var y = function (v) { return h - M.b - (h - M.t - M.b) * v / ymax; };
+      var pct = NOBODY.map(function (v, i) { return 100 * v / CALLOUTS[i]; });
+      s = '<svg class="chart" width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '" role="img" aria-label="Callouts nobody took, percent by week">';
+      s += axisY(w, h, [0,4,8,12,16], y, function (t) { return t + "%"; });
+      s += '<line x1="' + M.l + '" x2="' + (w - M.r) + '" y1="' + y(5.5) + '" y2="' + y(5.5) + '" stroke-dasharray="5 4" style="stroke:var(--muted)"/><text class="ax" x="' + (w - M.r) + '" y="' + (y(5.5) - 5) + '" text-anchor="end">before-12-Aug rate 5.5%</text>';
+      pct.forEach(function (p, i) {
+        s += '<rect x="' + (x(i) + 5) + '" y="' + y(p) + '" width="' + (bw - 10) + '" height="' + (y(0) - y(p)) + '" style="fill:' + (i >= 6 ? "var(--red)" : "var(--accent)") + '" rx="2"/>';
+        s += '<text class="ax" x="' + (x(i) + bw / 2) + '" y="' + (y(p) - 4) + '" text-anchor="middle">' + p.toFixed(1) + '</text>';
+        s += '<rect class="hit" x="' + x(i) + '" y="' + M.t + '" width="' + bw + '" height="' + (h - M.t - M.b) + '" data-tip="Week of ' + WEEKS[i] + '\n' + NOBODY[i] + ' of ' + CALLOUTS[i] + ' callouts\nnobody took (' + p.toFixed(1) + '%)"/>';
+        if (i % (w < 420 ? 2 : 1) === 0) s += '<text class="ax" x="' + (x(i) + bw / 2) + '" y="' + (h - 12) + '" text-anchor="middle">' + WEEKS[i] + '</text>';
+      });
+    } else {
+      var n2 = TIXW.length, bw2 = iw / n2, ymax2 = 40;
+      var x2 = function (i) { return M.l + bw2 * i; };
+      var y2 = function (v) { return h - M.b - (h - M.t - M.b) * v / ymax2; };
+      s = '<svg class="chart" width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '" role="img" aria-label="Tickets filed per week, open and closed">';
+      s += axisY(w, h, [0,10,20,30,40], y2);
+      TIX.forEach(function (t, i) {
+        var closed = t - TIXOPEN[i];
+        s += '<rect x="' + (x2(i) + 5) + '" y="' + y2(closed) + '" width="' + (bw2 - 10) + '" height="' + (y2(0) - y2(closed)) + '" style="fill:var(--accent)"/>';
+        s += '<rect x="' + (x2(i) + 5) + '" y="' + y2(t) + '" width="' + (bw2 - 10) + '" height="' + (y2(closed) - y2(t)) + '" style="fill:var(--red)"/>';
+        s += '<rect class="hit" x="' + x2(i) + '" y="' + M.t + '" width="' + bw2 + '" height="' + (h - M.t - M.b) + '" data-tip="Week of ' + TIXW[i] + '\n' + t + ' tickets, ' + TIXOPEN[i] + ' still open"/>';
+        if (i % (w < 420 ? 2 : 1) === 0) s += '<text class="ax" x="' + (x2(i) + bw2 / 2) + '" y="' + (h - 12) + '" text-anchor="middle">' + TIXW[i] + '</text>';
+      });
+    }
+    return s + '</svg>';
+  }
+  function setC3() {
+    var nb = c3mode === "nobody";
+    $("#c3a").setAttribute("aria-pressed", nb); $("#c3b").setAttribute("aria-pressed", !nb);
+    $("#c3title").textContent = nb ? "Callouts nobody took, by week" : "Support tickets filed, by week";
+    $("#c3cap").textContent = nb ? "Share of callouts with no taker. Red weeks are from the release week on. The 31 Aug week is back at the old rate, but one week is thin evidence." : "Blue is closed, red is still open. All 39 tickets before 12 Aug are closed. *Partial week to 7 Sep.";
+    $("#c3src").textContent = nb ? "Source: callouts with no taken ping. SQL-G. Verified." : "Source: support_tickets by filed_at and status. SQL-K. Verified.";
+  }
+  function c4(w) {
+    var rowH = 46, h = HOME.length * rowH + 14, lw = w < 520 ? 110 : 150, iw = w - lw - 14;
+    var s = '<svg class="chart" width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '" role="img" aria-label="Outcome shares for home-area and other-area pings">';
+    HOME.forEach(function (r, i) {
+      var y0 = 8 + i * rowH, x0 = lw, parts = [["t","var(--green)"],["d","var(--amber)"],["m","var(--red)"]];
+      s += '<text class="axl" x="' + (lw - 8) + '" y="' + (y0 + 17) + '" text-anchor="end">' + r.l + '</text><text class="ax" x="' + (lw - 8) + '" y="' + (y0 + 32) + '" text-anchor="end">' + r.n + ' pings</text>';
+      parts.forEach(function (p) {
+        var v = r[p[0]]; if (!v) return; var pw = iw * v / r.n;
+        s += '<rect x="' + x0 + '" y="' + y0 + '" width="' + pw + '" height="30" style="fill:' + p[1] + '" data-tip="' + r.l + '\n' + ({t:"Taken",d:"Turned down",m:"Missed"})[p[0]] + ': ' + v + ' of ' + r.n + ' (' + (100 * v / r.n).toFixed(1) + '%)"/>';
+        if (pw > 30) s += '<text x="' + (x0 + pw / 2) + '" y="' + (y0 + 20) + '" text-anchor="middle" style="fill:var(--surface);font:600 11px var(--f-mono)">' + Math.round(100 * v / r.n) + '%</text>';
+        x0 += pw;
+      });
+    });
+    return s + '</svg>';
+  }
+  var c5mode = "after";
+  function c5(w) {
+    var rows = JOBS.slice().sort(function (a, b) { return c5mode === "after" ? b[2] - a[2] : (a[2] - a[1]) - (b[2] - b[1]); });
+    var rowH = 26, lw = w < 520 ? 112 : 140, h = rows.length * rowH + 40, iw = w - lw - 20, xmax = 2;
+    var x = function (v) { return lw + iw * v / xmax; };
+    var s = '<svg class="chart" width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '" role="img" aria-label="Jobs taken a day per responder before and after">';
+    [0,.5,1,1.5,2].forEach(function (t) { s += '<line class="grid" x1="' + x(t) + '" x2="' + x(t) + '" y1="4" y2="' + (h - 28) + '"/><text class="ax" x="' + x(t) + '" y="' + (h - 12) + '" text-anchor="middle">' + t.toFixed(1) + '</text>'; });
+    rows.forEach(function (r, i) {
+      var cy = 16 + i * rowH, four = FOURSET[r[0]], col = four ? "var(--red)" : (r[2] >= r[1] ? "var(--accent)" : "var(--amber)");
+      s += '<text class="axl" x="' + (lw - 8) + '" y="' + (cy + 4) + '" text-anchor="end" style="' + (four ? "font-weight:600" : "") + '">' + esc(r[0]) + '</text>';
+      s += '<line x1="' + x(r[1]) + '" x2="' + x(r[2]) + '" y1="' + cy + '" y2="' + cy + '" stroke-width="3" style="stroke:' + col + '"/>';
+      s += '<circle cx="' + x(r[1]) + '" cy="' + cy + '" r="5" style="fill:var(--surface);stroke:' + col + ';stroke-width:2"/><circle cx="' + x(r[2]) + '" cy="' + cy + '" r="5" style="fill:' + col + '"/>';
+      s += '<rect class="hit" x="0" y="' + (cy - rowH / 2) + '" width="' + w + '" height="' + rowH + '" data-tip="' + esc(r[0]) + '\nBefore: ' + r[1].toFixed(2) + ' jobs a day\nAfter: ' + r[2].toFixed(2) + ' jobs a day"/>';
+    });
+    return s + '</svg>';
+  }
+  function c6(w) {
+    var h = 150, n = FL.length, iw = w - M.l - M.r, idx = +$("#rSlider").value;
+    var x = function (i) { return M.l + iw * i / n; };
+    var y = function (v) { return h - M.b - (h - M.t - M.b) * v; };
+    var H = 0.5, pts = [[0, H]];
+    for (var i = 0; i < n; i++) { H = FL[i] === "T" ? Math.min(1, H + .08) : Math.max(0, H - .12); pts.push([i + 1, H]); }
+    var s = '<svg class="chart" width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '" role="img" aria-label="Farlight recent-acceptance score over her pings">';
+    s += axisY(w, h, [0,.5,1], y, function (t) { return t.toFixed(1); });
+    s += '<polyline fill="none" stroke-width="2" style="stroke:var(--accent)" points="' + pts.map(function (p) { return x(p[0]) + "," + y(p[1]); }).join(" ") + '"/>';
+    var rx = x(FL_PRE.length);
+    s += '<line class="mk" x1="' + rx + '" x2="' + rx + '" y1="' + M.t + '" y2="' + (h - M.b) + '"/><text class="mkt" x="' + (rx - 6) + '" y="' + (M.t + 8) + '" text-anchor="end">4.2 ships</text>';
+    s += '<text class="ax" x="' + M.l + '" y="' + (h - 12) + '">first ping, 29 Jun</text><text class="ax" x="' + (w - M.r) + '" y="' + (h - 12) + '" text-anchor="end">last ping, 28 Aug</text>';
+    s += '<circle cx="' + x(idx) + '" cy="' + y(pts[idx][1]) + '" r="6" style="fill:var(--red)"/>';
+    return s + '</svg>';
+  }
+
+  var charts = [["#c1", c1], ["#c2", c2], ["#c3", c3], ["#c4", c4], ["#c5", c5], ["#c6", c6]];
+  function renderCharts() { charts.forEach(function (c) { mount(c[0], c[1]); }); }
+  var lastW = 0;
+  window.addEventListener("resize", function () { var w = document.documentElement.clientWidth; if (w !== lastW) { lastW = w; renderCharts(); } });
+  $("#c3a").addEventListener("click", function () { c3mode = "nobody"; setC3(); renderCharts(); });
+  $("#c3b").addEventListener("click", function () { c3mode = "tickets"; setC3(); renderCharts(); });
+  $("#c5a").addEventListener("click", function () { c5mode = "after"; $("#c5a").setAttribute("aria-pressed", true); $("#c5b").setAttribute("aria-pressed", false); renderCharts(); });
+  $("#c5b").addEventListener("click", function () { c5mode = "change"; $("#c5a").setAttribute("aria-pressed", false); $("#c5b").setAttribute("aria-pressed", true); renderCharts(); });
+
+  /* ---------- score machine ---------- */
+  var mH = 0.5, mSeq = [];
+  function mRender() {
+    $("#mScore").textContent = mH.toFixed(2);
+    $("#mBar").style.width = (mH * 100) + "%";
+    $("#mChips").innerHTML = mSeq.slice(-40).map(function (o) { return '<span class="chip ' + o + '">' + o + '</span>'; }).join("") || '<span class="sub">Tap an outcome.</span>';
+  }
+  $$("[data-o]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var o = b.getAttribute("data-o"); mSeq.push(o);
+      mH = o === "T" ? Math.min(1, mH + .08) : Math.max(0, mH - .12); mH = Math.round(mH * 100) / 100; mRender(); gaps();
+    });
+  });
+  $("#mReset").addEventListener("click", function () { mH = 0.5; mSeq = []; mRender(); gaps(); });
+  function gaps() {
+    var c = +$("#mColl").value; $("#mCollV").textContent = c.toFixed(2);
+    var d = Math.max(0, c - mH);
+    $("#g42").textContent = (0.25 * d).toFixed(3); $("#m42").textContent = (0.25 * d / 0.60 * 45).toFixed(1) + " min";
+    $("#g41").textContent = (0.40 * d).toFixed(3); $("#m41").textContent = (0.40 * d / 0.45 * 45).toFixed(1) + " min";
+  }
+  $("#mColl").addEventListener("input", gaps);
+  var rs = $("#rSlider"); rs.max = FL.length; $("#rN").textContent = FL.length;
+  function rUpdate() {
+    var i = +rs.value, H = 0.5;
+    for (var k = 0; k < i; k++) H = FL[k] === "T" ? Math.min(1, H + .08) : Math.max(0, H - .12);
+    $("#rIdx").textContent = i; $("#rScore").textContent = H.toFixed(2);
+    mount("#c6", c6);
+  }
+  rs.addEventListener("input", rUpdate);
+
+  /* ---------- challenge ---------- */
+  function renderClaims() {
+    var q = ($("#chSearch").value || "").toLowerCase(), n = 0;
+    $("#chTable tbody").innerHTML = CLAIMS.filter(function (c) { return !q || (c[0] + " " + c[1] + " " + c[2] + " " + c[4]).toLowerCase().indexOf(q) >= 0; }).map(function (c) {
+      n++; return '<tr><td>' + esc(c[0]) + '</td><td>' + esc(c[1]) + '</td><td><span class="verdict v-' + c[3] + '">' + esc(c[2]) + '</span></td><td>' + esc(c[4]) + '</td></tr>';
+    }).join("");
+    $("#chCount").textContent = n + " of " + CLAIMS.length;
+  }
+  $("#chSearch").addEventListener("input", renderClaims);
+  $("#weak").innerHTML = WEAK.map(function (w) { return "<li>" + esc(w) + "</li>"; }).join("");
+
+  /* ---------- actions ---------- */
+  var done = {};
+  try { done = JSON.parse(store.get("fc-done") || "{}") || {}; } catch (e) { done = {}; }
+  function renderActions() {
+    $("#actList").innerHTML = ACTIONS.map(function (a, i) {
+      return '<div class="check' + (done[i] ? " done" : "") + '"><input type="checkbox" id="act' + i + '"' + (done[i] ? " checked" : "") + '><div><label for="act' + i + '">' + esc(a[0]) + '</label><div class="who">Owner: ' + esc(a[1]) + '</div></div></div>';
+    }).join("");
+    $$("#actList input").forEach(function (cb, i) { cb.addEventListener("change", function () { done[i] = cb.checked; store.set("fc-done", JSON.stringify(done)); renderActions(); }); });
+  }
+
+  /* ---------- recheck ---------- */
+  $("#sqlList").innerHTML = SQL.map(function (q, i) {
+    return '<div class="card"><div class="row" style="justify-content:space-between"><h3><span class="mono">' + q[0] + '</span> ' + esc(q[1]) + '</h3><button class="btn" data-copy="' + i + '">Copy</button></div><code class="sql" style="margin-top:8px">' + esc(q[2]) + '</code></div>';
+  }).join("");
+  $$("[data-copy]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var text = SQL[+b.getAttribute("data-copy")][2];
+      var ok = function () { b.textContent = "Copied"; setTimeout(function () { b.textContent = "Copy"; }, 1400); };
+      var fail = function () { var r = document.createRange(); r.selectNodeContents(b.closest(".card").querySelector("code")); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = "Selected"; };
+      try { navigator.clipboard.writeText(text).then(ok, fail); } catch (e) { fail(); }
+    });
+  });
+
+  /* ---------- boot ---------- */
+  renderFires(); renderClaims(); renderActions(); mRender(); gaps(); setC3();
+  var start = (location.hash || "").replace("#", "");
+  showTab(/^[a-z]+$/.test(start) ? start : "fires");
+  lastW = document.documentElement.clientWidth;
+  if (window.ResizeObserver) { new ResizeObserver(function () { var w = document.documentElement.clientWidth; if (w !== lastW) { lastW = w; renderCharts(); } }).observe(document.body); }
+})();
+</script>

@@ -1,0 +1,117 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700" font-family="sans-serif" font-size="12">
+<rect width="1200" height="700" fill="white"/>
+<text x="20" y="28" font-size="18" font-weight="bold">Where scores end up after 250 callouts (3,000 simulated situations x 5 responders per panel)</text>
+<text x="20" y="48" fill="#444">Columns: ranking weights. Rows: how responders behave (before 12 Aug vs from 12 Aug). Red = final score 0.2 or lower.</text>
+<text x="70" y="88" font-weight="bold">Weights 4.1 (45/40/15), behaviour before 12 Aug (2.3% missed, 21% turned down)</text>
+<rect x="70" y="110" width="480" height="230" fill="#fafafa" stroke="#bbb"/>
+<rect x="71.0" y="323.5594944065088" width="22.0" height="16.44050559349121" fill="#e5484d"/>
+<rect x="95.0" y="330.1757954380357" width="22.0" height="9.82420456196426" fill="#e5484d"/>
+<rect x="119.0" y="332.88246404184224" width="22.0" height="7.11753595815778" fill="#e5484d"/>
+<rect x="143.0" y="331.3453436001743" width="22.0" height="8.654656399825658" fill="#e5484d"/>
+<rect x="167.0" y="330.74386168821735" width="22.0" height="9.256138311782653" fill="#2a6fdb"/>
+<rect x="191.0" y="331.61266889437746" width="22.0" height="8.387331105622549" fill="#2a6fdb"/>
+<rect x="215.0" y="330.3094580851373" width="22.0" height="9.690541914862704" fill="#2a6fdb"/>
+<rect x="239.0" y="330.4097050704635" width="22.0" height="9.590294929536539" fill="#2a6fdb"/>
+<rect x="263.0" y="330.74386168821735" width="22.0" height="9.256138311782653" fill="#2a6fdb"/>
+<rect x="287.0" y="328.0371930844109" width="22.0" height="11.962806915589132" fill="#2a6fdb"/>
+<rect x="311.0" y="328.47159668749094" width="22.0" height="11.52840331250908" fill="#2a6fdb"/>
+<rect x="335.0" y="327.9035304373093" width="22.0" height="12.096469562690688" fill="#2a6fdb"/>
+<rect x="359.0" y="325.43077146593055" width="22.0" height="14.569228534069447" fill="#2a6fdb"/>
+<rect x="383.0" y="326.7673979369461" width="22.0" height="13.232602063053902" fill="#2a6fdb"/>
+<rect x="407.0" y="325.09661484817667" width="22.0" height="14.903385151823333" fill="#2a6fdb"/>
+<rect x="431.0" y="313.13380793258756" width="22.0" height="26.866192067412467" fill="#2a6fdb"/>
+<rect x="455.0" y="320.6189161702746" width="22.0" height="19.38108382972541" fill="#2a6fdb"/>
+<rect x="479.0" y="294.086880720616" width="22.0" height="45.91311927938399" fill="#2a6fdb"/>
+<rect x="503.0" y="327.43571117245386" width="22.0" height="12.564288827546129" fill="#2a6fdb"/>
+<rect x="527.0" y="110.0" width="22.0" height="230.0" fill="#2a6fdb"/>
+<text x="70" y="356" text-anchor="middle" fill="#666">0</text>
+<text x="166.0" y="356" text-anchor="middle" fill="#666">0.2</text>
+<text x="310.0" y="356" text-anchor="middle" fill="#666">0.5</text>
+<text x="454.0" y="356" text-anchor="middle" fill="#666">0.8</text>
+<text x="550" y="356" text-anchor="middle" fill="#666">1</text>
+<text x="70" y="376" fill="#222">9% of responders end at 0.2 or lower (3% exactly at floor); 61% end at 0.8+; 35% of situations have at least one in the low cluster</text>
+<text x="630" y="88" font-weight="bold">Weights 4.2 (60/25/15), behaviour before 12 Aug (2.3% missed, 21% turned down)</text>
+<rect x="630" y="110" width="480" height="230" fill="#fafafa" stroke="#bbb"/>
+<rect x="631.0" y="325.09428950863213" width="22.0" height="14.905710491367861" fill="#e5484d"/>
+<rect x="655.0" y="332.69986719787516" width="22.0" height="7.300132802124834" fill="#e5484d"/>
+<rect x="679.0" y="335.3572377158035" width="22.0" height="4.6427622841965475" fill="#e5484d"/>
+<rect x="703.0" y="332.57768924302786" width="22.0" height="7.422310756972111" fill="#e5484d"/>
+<rect x="727.0" y="332.66932270916334" width="22.0" height="7.330677290836653" fill="#2a6fdb"/>
+<rect x="751.0" y="333.5245683930943" width="22.0" height="6.47543160690571" fill="#2a6fdb"/>
+<rect x="775.0" y="332.97476759628154" width="22.0" height="7.0252324037184595" fill="#2a6fdb"/>
+<rect x="799.0" y="333.3413014608234" width="22.0" height="6.658698539176627" fill="#2a6fdb"/>
+<rect x="823.0" y="333.46347941567063" width="22.0" height="6.53652058432935" fill="#2a6fdb"/>
+<rect x="847.0" y="331.1115537848606" width="22.0" height="8.888446215139442" fill="#2a6fdb"/>
+<rect x="871.0" y="332.21115537848607" width="22.0" height="7.788844621513944" fill="#2a6fdb"/>
+<rect x="895.0" y="329.64541832669323" width="22.0" height="10.354581673306773" fill="#2a6fdb"/>
+<rect x="919.0" y="328.54581673306774" width="22.0" height="11.45418326693227" fill="#2a6fdb"/>
+<rect x="943.0" y="327.96547144754317" width="22.0" height="12.03452855245684" fill="#2a6fdb"/>
+<rect x="967.0" y="329.37051792828686" width="22.0" height="10.629482071713147" fill="#2a6fdb"/>
+<rect x="991.0" y="316.75564409030545" width="22.0" height="23.244355909694555" fill="#2a6fdb"/>
+<rect x="1015.0" y="322.4369189907039" width="22.0" height="17.56308100929615" fill="#2a6fdb"/>
+<rect x="1039.0" y="294.1527224435591" width="22.0" height="45.8472775564409" fill="#2a6fdb"/>
+<rect x="1063.0" y="327.93492695883134" width="22.0" height="12.06507304116866" fill="#2a6fdb"/>
+<rect x="1087.0" y="110.0" width="22.0" height="230.0" fill="#2a6fdb"/>
+<text x="630" y="356" text-anchor="middle" fill="#666">0</text>
+<text x="726.0" y="356" text-anchor="middle" fill="#666">0.2</text>
+<text x="870.0" y="356" text-anchor="middle" fill="#666">0.5</text>
+<text x="1014.0" y="356" text-anchor="middle" fill="#666">0.8</text>
+<text x="1110" y="356" text-anchor="middle" fill="#666">1</text>
+<text x="630" y="376" fill="#222">8% of responders end at 0.2 or lower (3% exactly at floor); 67% end at 0.8+; 34% of situations have at least one in the low cluster</text>
+<text x="70" y="428" font-weight="bold">Weights 4.1 (45/40/15), behaviour from 12 Aug (18% missed, 18% turned down)</text>
+<rect x="70" y="450" width="480" height="230" fill="#fafafa" stroke="#bbb"/>
+<rect x="71.0" y="545.8579122852013" width="22.0" height="134.14208771479866" fill="#e5484d"/>
+<rect x="95.0" y="623.5470633495768" width="22.0" height="56.45293665042318" fill="#e5484d"/>
+<rect x="119.0" y="658.3508591946653" width="22.0" height="21.649140805334703" fill="#e5484d"/>
+<rect x="143.0" y="645.1962041549115" width="22.0" height="34.80379584508849" fill="#e5484d"/>
+<rect x="167.0" y="644.2523724031803" width="22.0" height="35.7476275968197" fill="#2a6fdb"/>
+<rect x="191.0" y="658.0559117722493" width="22.0" height="21.944088227750704" fill="#2a6fdb"/>
+<rect x="215.0" y="656.817132598102" width="22.0" height="23.182867401897923" fill="#2a6fdb"/>
+<rect x="239.0" y="657.5250064119004" width="22.0" height="22.47499358809951" fill="#2a6fdb"/>
+<rect x="263.0" y="658.2328802256989" width="22.0" height="21.767119774301104" fill="#2a6fdb"/>
+<rect x="287.0" y="659.707617337779" width="22.0" height="20.292382662221083" fill="#2a6fdb"/>
+<rect x="311.0" y="660.8874070274429" width="22.0" height="19.112592972557067" fill="#2a6fdb"/>
+<rect x="335.0" y="657.0530905360349" width="22.0" height="22.94690946396512" fill="#2a6fdb"/>
+<rect x="359.0" y="652.982816106694" width="22.0" height="27.017183893305976" fill="#2a6fdb"/>
+<rect x="383.0" y="661.1233649653757" width="22.0" height="18.87663503462426" fill="#2a6fdb"/>
+<rect x="407.0" y="659.0587330084637" width="22.0" height="20.941266991536292" fill="#2a6fdb"/>
+<rect x="431.0" y="637.7045396255451" width="22.0" height="42.29546037445499" fill="#2a6fdb"/>
+<rect x="455.0" y="647.968709925622" width="22.0" height="32.03129007437805" fill="#2a6fdb"/>
+<rect x="479.0" y="617.7660938702231" width="22.0" height="62.23390612977686" fill="#2a6fdb"/>
+<rect x="503.0" y="663.0700179533213" width="22.0" height="16.929982046678635" fill="#2a6fdb"/>
+<rect x="527.0" y="450.0" width="22.0" height="230.0" fill="#2a6fdb"/>
+<text x="70" y="696" text-anchor="middle" fill="#666">0</text>
+<text x="166.0" y="696" text-anchor="middle" fill="#666">0.2</text>
+<text x="310.0" y="696" text-anchor="middle" fill="#666">0.5</text>
+<text x="454.0" y="696" text-anchor="middle" fill="#666">0.8</text>
+<text x="550" y="696" text-anchor="middle" fill="#666">1</text>
+<text x="70" y="716" fill="#222">29% of responders end at 0.2 or lower (13% exactly at floor); 39% end at 0.8+; 80% of situations have at least one in the low cluster</text>
+<text x="630" y="428" font-weight="bold">Weights 4.2 (60/25/15), behaviour from 12 Aug (18% missed, 18% turned down)</text>
+<rect x="630" y="450" width="480" height="230" fill="#fafafa" stroke="#bbb"/>
+<rect x="631.0" y="555.1675" width="22.0" height="124.8325" fill="#e5484d"/>
+<rect x="655.0" y="627.1575" width="22.0" height="52.8425" fill="#e5484d"/>
+<rect x="679.0" y="659.9325" width="22.0" height="20.0675" fill="#e5484d"/>
+<rect x="703.0" y="646.88" width="22.0" height="33.12" fill="#e5484d"/>
+<rect x="727.0" y="644.695" width="22.0" height="35.305" fill="#2a6fdb"/>
+<rect x="751.0" y="661.025" width="22.0" height="18.975" fill="#2a6fdb"/>
+<rect x="775.0" y="659.76" width="22.0" height="20.24" fill="#2a6fdb"/>
+<rect x="799.0" y="660.5075" width="22.0" height="19.4925" fill="#2a6fdb"/>
+<rect x="823.0" y="657.69" width="22.0" height="22.31" fill="#2a6fdb"/>
+<rect x="847.0" y="661.4275" width="22.0" height="18.5725" fill="#2a6fdb"/>
+<rect x="871.0" y="663.3825" width="22.0" height="16.6175" fill="#2a6fdb"/>
+<rect x="895.0" y="657.4025" width="22.0" height="22.5975" fill="#2a6fdb"/>
+<rect x="919.0" y="653.895" width="22.0" height="26.105" fill="#2a6fdb"/>
+<rect x="943.0" y="660.335" width="22.0" height="19.665" fill="#2a6fdb"/>
+<rect x="967.0" y="655.9075" width="22.0" height="24.0925" fill="#2a6fdb"/>
+<rect x="991.0" y="633.9425" width="22.0" height="46.0575" fill="#2a6fdb"/>
+<rect x="1015.0" y="649.065" width="22.0" height="30.935" fill="#2a6fdb"/>
+<rect x="1039.0" y="618.36" width="22.0" height="61.64" fill="#2a6fdb"/>
+<rect x="1063.0" y="660.9675" width="22.0" height="19.0325" fill="#2a6fdb"/>
+<rect x="1087.0" y="450.0" width="22.0" height="230.0" fill="#2a6fdb"/>
+<text x="630" y="696" text-anchor="middle" fill="#666">0</text>
+<text x="726.0" y="696" text-anchor="middle" fill="#666">0.2</text>
+<text x="870.0" y="696" text-anchor="middle" fill="#666">0.5</text>
+<text x="1014.0" y="696" text-anchor="middle" fill="#666">0.8</text>
+<text x="1110" y="696" text-anchor="middle" fill="#666">1</text>
+<text x="630" y="716" fill="#222">28% of responders end at 0.2 or lower (12% exactly at floor); 40% end at 0.8+; 80% of situations have at least one in the low cluster</text>
+</svg>
