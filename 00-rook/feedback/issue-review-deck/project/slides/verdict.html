@@ -1,0 +1,37 @@
+<section id="verdict" data-transition="fade" style="background:#F5F4EF;color:#1B2230;font-family:'DM Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<h2 style="font-size:56px;font-weight:700;line-height:1.1">Which issues need a fix</h2>
+<div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:32px">
+<div style="display:flex;flex-direction:column;gap:16px;background:#FCFBF8;padding:36px;border:1px solid #DAD8CF;border-radius:16px">
+<p style="font-size:24px;font-weight:700;background:#E8590C;color:#1B2230;padding:6px 18px;border-radius:10px">Fix: yes</p>
+<h3 style="font-size:32px;font-weight:700">Missed pings</h3>
+<p style="font-size:28px;color:#566070">Missed rose from 2.3% to 15.1%. The whole acceptance drop is misses.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px;background:#FCFBF8;padding:36px;border:1px solid #DAD8CF;border-radius:16px">
+<p style="font-size:24px;font-weight:700;background:#E8590C;color:#1B2230;padding:6px 18px;border-radius:10px">Investigate, then fix</p>
+<h3 style="font-size:32px;font-weight:700">Quiet responders</h3>
+<p style="font-size:28px;color:#566070">Four responders lost about 83% of their pings. Cause untested.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px;background:#FCFBF8;padding:36px;border:1px solid #DAD8CF;border-radius:16px">
+<p style="font-size:24px;font-weight:700;background:#F4B183;color:#1B2230;padding:6px 18px;border-radius:10px">Add a metric</p>
+<h3 style="font-size:32px;font-weight:700">Late warning</h3>
+<p style="font-size:28px;color:#566070">Tickets trail the data by about five days. Ping spread is not tracked.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px;background:#FCFBF8;padding:36px;border:1px solid #DAD8CF;border-radius:16px">
+<p style="font-size:24px;font-weight:700;background:#F4B183;color:#1B2230;padding:6px 18px;border-radius:10px">Small fix</p>
+<h3 style="font-size:32px;font-weight:700">Filters reset</h3>
+<p style="font-size:28px;color:#566070">Tickets went from 2 to 14 after 4.2. Rough edges, not a failure.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px;background:#FCFBF8;padding:36px;border:1px solid #DAD8CF;border-radius:16px">
+<p style="font-size:24px;font-weight:700;background:#DDE1E7;color:#1B2230;padding:6px 18px;border-radius:10px">No 4.2 fix</p>
+<h3 style="font-size:32px;font-weight:700">Alerts and legibility</h3>
+<p style="font-size:28px;color:#566070">7 tickets before, 6 after. Fold into the console redesign.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px;background:#FCFBF8;padding:36px;border:1px solid #DAD8CF;border-radius:16px">
+<p style="font-size:24px;font-weight:700;background:#DDE1E7;color:#1B2230;padding:6px 18px;border-radius:10px">Hand to Supply</p>
+<h3 style="font-size:32px;font-weight:700">Supply requests</h3>
+<p style="font-size:28px;color:#566070">Weekly tickets rose, cause unknown. Not a Dispatch change.</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#566070">Sources: pings and support_tickets tables; ticket topics from the problem statements file.</p>
+<aside>Two issues need action now: the ping wait and the four starved responders. The third is a monitoring gap that explains why the second went unnoticed. The last three are real but small.</aside>
+</section>
