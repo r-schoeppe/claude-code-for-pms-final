@@ -1,0 +1,622 @@
+<title>Quiet Responders Demonstrator</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Public+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: sticky control bar (view switch, highlight toggle, tabs) over four working areas: journey canvas, screens, map, simulator. */
+:root {
+  --bg: #edf1f4; --surface: #ffffff; --surface2: #f5f7f9; --ink: #14202b; --muted: #55646f; --line: #d3dce3;
+  --hot: #c2410c; --hot-soft: #fff1e6; --bk: #5b3fd1; --bk-soft: #eeeaff;
+  --bad: #b42323; --bad-soft: #fcebea; --ok: #217a3c; --ok-soft: #e4f3e8; --warn: #946200; --warn-soft: #fbf0d4;
+  --f-body: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1318; --surface: #151e26; --surface2: #1b2630; --ink: #e6ecf1; --muted: #93a3b1; --line: #2b3946;
+    --hot: #ff9f5c; --hot-soft: #3a2314; --bk: #b6a2ff; --bk-soft: #2a2250;
+    --bad: #ff8d85; --bad-soft: #3b1f1d; --ok: #74d39b; --ok-soft: #14301f; --warn: #f0b64f; --warn-soft: #382b10;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1318; --surface: #151e26; --surface2: #1b2630; --ink: #e6ecf1; --muted: #93a3b1; --line: #2b3946;
+  --hot: #ff9f5c; --hot-soft: #3a2314; --bk: #b6a2ff; --bk-soft: #2a2250;
+  --bad: #ff8d85; --bad-soft: #3b1f1d; --ok: #74d39b; --ok-soft: #14301f; --warn: #f0b64f; --warn-soft: #382b10;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.5 var(--f-body); padding-inline: 16px; }
+.wrap { max-width: 1240px; margin-inline: auto; padding-block: 18px 60px; }
+h1, h2, h3, h4 { margin: 0; font-weight: 700; text-wrap: balance; }
+h1 { font-size: 1.7rem; line-height: 1.15; letter-spacing: -.01em; }
+h2 { font-size: 1.2rem; }
+h3 { font-size: 1rem; }
+p { margin: 0; }
+.mono { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted); }
+.small { font-size: .82rem; }
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 3px solid var(--bk); outline-offset: 2px; }
+header.top { display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between; align-items: end; margin-bottom: 12px; }
+.ctl { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 30; background: var(--bg); border-bottom: 1px solid var(--line); padding-block: 8px; display: grid; gap: 8px; margin-bottom: 14px; }
+.row { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface); }
+.seg button { border: 0; background: transparent; padding: 7px 12px; border-right: 1px solid var(--line); white-space: nowrap; }
+.seg button:last-child { border-right: 0; }
+.seg button[aria-pressed="true"], .seg button[aria-selected="true"] { background: var(--ink); color: var(--bg); font-weight: 600; }
+.chip { font: 600 .68rem/1 var(--f-mono); letter-spacing: .05em; text-transform: uppercase; padding: 4px 7px; border-radius: 4px; display: inline-block; white-space: nowrap; }
+.chip.ex { background: var(--surface2); color: var(--muted); border: 1px solid var(--line); }
+.chip.hot { background: var(--hot); color: var(--surface); }
+.chip.bk { background: var(--bk); color: var(--surface); }
+.chip.v { background: var(--ok-soft); color: var(--ok); }
+.chip.m { background: var(--bk-soft); color: var(--bk); }
+.chip.p { background: var(--warn-soft); color: var(--warn); }
+.chip.bad { background: var(--bad-soft); color: var(--bad); }
+label.sw { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
+label.sw input { width: 17px; height: 17px; accent-color: var(--bk); }
+section.panel[hidden] { display: none; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px; min-width: 0; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 12px; }
+/* journey */
+.loop { display: flex; flex-wrap: wrap; gap: 6px 4px; align-items: center; margin-bottom: 10px; font-size: .84rem; }
+.loop .lp { border: 1px solid var(--line); background: var(--surface); border-radius: 99px; padding: 5px 11px; font-weight: 600; }
+.loop .lp.bad { border-color: var(--bad); color: var(--bad); }
+.loop .lp.fix { border: 2px solid var(--hot); background: var(--hot-soft); color: var(--hot); }
+.canvas { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.jgrid { display: grid; grid-template-columns: 124px repeat(9, 196px); min-width: max-content; }
+.jh { position: sticky; top: 0; font: 600 .72rem var(--f-mono); text-transform: uppercase; letter-spacing: .05em; color: var(--muted); padding: 10px; border-bottom: 1px solid var(--line); border-left: 1px dashed var(--line); background: var(--surface); }
+.jl { position: sticky; left: 0; z-index: 2; background: var(--surface2); border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); padding: 10px; font-weight: 600; font-size: .85rem; }
+.jc { border-bottom: 1px solid var(--line); border-left: 1px dashed var(--line); padding: 8px; display: flex; flex-direction: column; gap: 8px; min-height: 112px; }
+.stk { text-align: left; border: 1px solid var(--line); border-radius: 6px; padding: 8px 9px; background: var(--surface2); display: grid; gap: 4px; width: 100%; position: relative; }
+.stk:hover { border-color: var(--ink); }
+.stk .ty { font: 500 .62rem var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); display: flex; justify-content: space-between; gap: 6px; }
+.stk .tx { font-weight: 600; font-size: .86rem; line-height: 1.3; }
+.stk.hotspot { border-left: 5px solid var(--bad); }
+.stk.hi-hot { background: var(--hot-soft); border: 2px solid var(--hot); }
+.stk.hi-bk { background: var(--bk-soft); border: 2px dashed var(--bk); }
+.stk.off { opacity: .38; border-style: dashed; }
+.stk[aria-expanded="true"] { box-shadow: 0 0 0 3px var(--ink); }
+.cond { font: 500 .62rem var(--f-mono); color: var(--bk); }
+/* drawer */
+.dcard { border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: var(--surface2); }
+.dcard .t { font-weight: 600; font-size: .88rem; margin-bottom: 4px; }
+.dcard .src { font: .68rem/1.35 var(--f-mono); color: var(--muted); margin-top: 6px; }
+svg { display: block; width: 100%; height: auto; }
+svg .ax { fill: var(--muted); font: 10px var(--f-mono); }
+svg .lb { fill: var(--ink); font: 11px var(--f-body); }
+svg .gr { stroke: var(--line); }
+svg .hit { fill: transparent; }
+#tip { position: fixed; z-index: 60; pointer-events: none; background: var(--ink); color: var(--bg); font: .76rem/1.35 var(--f-mono); padding: 6px 8px; border-radius: 4px; max-width: 240px; white-space: pre-line; }
+/* change highlighting */
+.chg { position: relative; }
+.chg.hi.chg-hot { outline: 2px solid var(--hot); outline-offset: 2px; background: var(--hot-soft); border-radius: 6px; }
+.chg.hi.chg-bk { outline: 2px dashed var(--bk); outline-offset: 2px; background: var(--bk-soft); border-radius: 6px; }
+.chg .ct { display: none; }
+.chg.hi .ct { display: inline-block; position: absolute; top: -9px; right: 8px; font: 700 .6rem/1 var(--f-mono); letter-spacing: .06em; padding: 3px 5px; border-radius: 3px; color: var(--surface); z-index: 3; }
+.chg-hot .ct { background: var(--hot); }
+.chg-bk .ct { background: var(--bk); }
+/* device frames */
+.frames { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; }
+.frame { background: var(--surface); border: 1px solid var(--ink); border-radius: 10px; overflow: hidden; min-width: 0; position: relative; }
+.frame.console { flex: 1 1 520px; max-width: 760px; }
+.frame.phone { flex: 0 0 320px; width: 320px; border-radius: 26px; border-width: 3px; }
+.fbar { background: var(--ink); color: var(--bg); padding: 8px 12px; font-size: .8rem; display: flex; justify-content: space-between; gap: 8px; }
+.ill { font: 500 .62rem var(--f-mono); letter-spacing: .05em; text-transform: uppercase; opacity: .85; }
+.cbody { display: grid; grid-template-columns: 120px 1fr; }
+.cnav { background: var(--surface2); border-right: 1px solid var(--line); padding: 10px; display: grid; gap: 4px; align-content: start; font-size: .82rem; }
+.cnav span { padding: 5px 6px; border-radius: 4px; }
+.cnav span.on { background: var(--ink); color: var(--bg); }
+.cmain { padding: 12px; display: grid; gap: 12px; min-width: 0; }
+@media (max-width: 560px) { .cbody { grid-template-columns: 1fr; } .cnav { display: none; } }
+.rcard { border: 1px solid var(--line); border-radius: 8px; padding: 10px; display: grid; gap: 6px; background: var(--surface); }
+.rcard .nm { font-weight: 700; display: flex; justify-content: space-between; gap: 8px; }
+.rcard .nm { align-items: flex-start; }
+.badge { align-self: flex-start; font: 600 .66rem var(--f-mono); padding: 3px 6px; border-radius: 4px; background: var(--ok-soft); color: var(--ok); }
+.lvl { font: 700 .72rem var(--f-mono); padding: 3px 7px; border-radius: 99px; }
+.lvl.Good { background: var(--ok-soft); color: var(--ok); }
+.lvl.Fair { background: var(--warn-soft); color: var(--warn); }
+.lvl.Low { background: var(--bad-soft); color: var(--bad); }
+.pbody { padding: 14px; display: grid; gap: 12px; min-height: 470px; align-content: start; }
+.btnbig { border: 0; border-radius: 10px; padding: 12px; font-weight: 700; width: 100%; }
+.btnbig.go { background: var(--ok); color: var(--surface); }
+.btnbig.no { background: var(--surface2); border: 1px solid var(--line); }
+.ptabs { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--line); }
+.ptabs button { border: 0; background: var(--surface2); padding: 10px; font-size: .85rem; }
+.ptabs button[aria-pressed="true"] { background: var(--ink); color: var(--bg); font-weight: 600; }
+.ring { width: 110px; height: 110px; margin-inline: auto; }
+.persona { display: flex; gap: 10px; align-items: center; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; background: var(--surface); text-align: left; }
+.persona[aria-pressed="true"] { border: 2px solid var(--ink); }
+.avatar { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; background: var(--ink); color: var(--bg); flex: none; }
+table { border-collapse: collapse; width: 100%; font-size: .84rem; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font: 500 .66rem var(--f-mono); text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+td.n, th.n { text-align: right; font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+.tw { overflow-x: auto; }
+.rk1 td { background: var(--ok-soft); }
+.moved td:first-child { box-shadow: inset 4px 0 0 var(--hot); }
+input[type=range] { width: 100%; accent-color: var(--bk); }
+.note { border-left: 4px solid var(--warn); background: var(--warn-soft); padding: 8px 10px; border-radius: 0 6px 6px 0; font-size: .85rem; }
+.mapwrap { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(320px, 1fr); gap: 12px; }
+@media (max-width: 1100px) { .mapwrap { grid-template-columns: 1fr; } }
+svg.map text { font: 12px var(--f-body); fill: var(--muted); }
+svg.map .area { fill: var(--surface2); stroke: var(--line); }
+svg.map .pin text { fill: var(--surface); }
+.simgrid { display: grid; grid-template-columns: minmax(260px, 320px) minmax(0, 1fr); gap: 12px; }
+@media (max-width: 860px) { .simgrid { grid-template-columns: 1fr; } }
+.field { display: grid; gap: 3px; margin-bottom: 10px; }
+.field label { font-size: .82rem; font-weight: 600; display: flex; justify-content: space-between; }
+select { font: inherit; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; width: 100%; }
+.qb { border: 1px solid var(--line); background: var(--surface); border-radius: 6px; padding: 4px 9px; font-size: .8rem; }
+.qb:hover { border-color: var(--ink); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+.pv { margin-top: 14px; }
+.pvhead { display: grid; gap: 6px; margin-bottom: 10px; }
+.pvtabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 10px 0; }
+.pvtabs button { border: 1px solid var(--line); background: var(--surface); border-radius: 6px; padding: 6px 12px; }
+.pvtabs button[aria-pressed="true"] { background: var(--ink); color: var(--bg); font-weight: 600; }
+.persona-strip { display: flex; gap: 10px; align-items: center; margin-bottom: 12px; }
+.moment { font-size: .82rem; color: var(--muted); margin-top: 6px; }
+.charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 12px; }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Quiet Responders</h1>
+      <p class="muted small" style="max-width:70ch">What happens to a callout, where the hotfix and the backlog change it, and what the handler and the responder see. Click a step to preview its screen, map or data. Screens and the map are illustrative.</p>
+    </div>
+    <div class="row small"><span class="chip v">verified</span> from data or code <span class="chip m">modelled</span> replay of real pings <span class="chip p">proposal</span> our choice</div>
+  </header>
+
+  <div class="ctl">
+    <div class="row">
+      <span class="small muted" style="font-weight:600">Show</span>
+      <div class="seg" id="viewSeg" role="group" aria-label="Which version to show">
+        <button data-v="0" aria-pressed="false">Today</button>
+        <button data-v="1" aria-pressed="false">+ Hotfix</button>
+        <button data-v="2" aria-pressed="true">+ Hotfix and backlog</button>
+      </div>
+      <label class="sw small"><input type="checkbox" id="hiChk" checked> Highlight what is new</label>
+      <span class="row small"><span class="chip ex">existing</span><span class="chip hot">hotfix</span><span class="chip bk">backlog</span></span>
+    </div>
+    <div class="seg" id="tabSeg" role="tablist" aria-label="Sections" style="justify-self:start">
+      <button role="tab" data-t="journey" aria-selected="true">Journey</button>
+      <button role="tab" data-t="sim" aria-selected="false">Simulator</button>
+    </div>
+  </div>
+
+  <section class="panel" id="p-journey">
+    <p class="muted small" style="margin:0 0 10px;max-width:80ch">Read left to right. Red edge: where the problem sits. Orange: in the hotfix. Violet dashed: in the backlog.</p>
+    <div class="loop" id="loop"></div>
+    <div class="canvas"><div class="jgrid" id="jgrid"></div></div>
+    <div class="pv" id="preview"></div>
+  </section>
+
+  <section class="panel" id="p-sim" hidden>
+    <h2>Score simulator</h2>
+    <p class="muted small" style="margin:2px 0 10px;max-width:80ch">Recent acceptance under today's rule next to the proposed fade. Replay uses the real pings from 12 Aug to 6 Sep. The what-if holds pings per day constant to isolate the rule.</p>
+    <div class="simgrid"><div class="card" id="simCtl"></div><div id="simOut" style="display:grid;gap:12px;min-width:0"></div></div>
+  </section>
+</div>
+<div id="tip" hidden></div>
+
+<script>
+
+(function () {
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+  var esc = function (s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); };
+
+  /* ================= data ================= */
+  var S0 = {"Captain Vantage":.96,"Cindermark":.96,"Corporal Ashgrove":.88,"Farlight":.84,"Halfmoon":.88,"Ironvale":1.0,"Meteor Mite":1.0,"Nightwell":.96,"Sgt. Bulwark":.80,"Sgt. Falkirk":1.0,"Stormwrack":.88,"The Drift":1.0,"The Gale":.96,"The Longcast":1.0,"The Undertow":.88,"Vesper":.96};
+  var SEQ = {
+    "Captain Vantage":"0D,0M,1D,1T,2T,2T,4T,4T,4D,5T,6T,7T,7M,7T,8M,8D,8T,8T,9T,9T,10T,10T,10D,11T,12T,12T,12T,13M,14T,14T,14T,14D,15T,15T,15D,16T,17T,17T,18T,18T,18D,19T,20T,20D,21T,21T,21T,22T,22M,23T,23T,23D,24T,24T,24T,25D,25M,25T,25T",
+    "Cindermark":"0D,0T,1D,2T,2T,3M,4T,5T,5T,6T,6T,6T,8T,9M,10T,10D,11D,11T,12T,13T,13D,13T,14T,15D,15T,16T,16M,17M,18T,18T,19T,19T,19D,19D,21T,22T,22T,22T,23T,24T,25M,25T",
+    "Corporal Ashgrove":"0T,1T,1D,2M,2D,3T,4T,5T,5D,5T,8T,8M,11D,11T,11T,12M,13T,14T,15T,16T,17D,18T,20M,20D,20T,20T,22T,23T,24T",
+    "Farlight":"0T,0M,0D,1M,1M,2M,2T,7M,10D,11M,16M",
+    "Halfmoon":"0D,1M,2T,2T,2T,3M,4D,4T,5T,7D,7M,7T,8T,8T,9D,9T,11M,14T,14T,14T,14D,15T,16D,18T,18M,20T,20T,21T,22D,22T,23T,23T,24T",
+    "Ironvale":"0T,0D,2M,2T,2D,3T,5T,6T,6T,6M,7D,7M,8D,9T,11T,11T,12T,13T,13T,14M,14D,16T,16T,16T,18M,18T,18T,19T,19T,21T,21T,22T,23T,23T,23T,23M,23M,24T,24D",
+    "Meteor Mite":"0D,1M,1M,2M,3T,3T,4M,6D,7T,8M,10M,15D,17M,24M",
+    "Nightwell":"0T,0T,1T,2D,3D,3T,3M,4M,4D,4D,4T,5M,5T,6D,6T,6T,7T,7T,8T,8D,9T,9T,9T,10T,10T,10T,11M,11T,11T,12T,12T,14T,14T,14T,15T,15D,15T,15D,16D,16D,16T,16T,17T,17M,17T,17T,17M,18T,18D,19T,20D,20T,20M,20T,21T,21D,21D,22T,22T,22T,23D,23T,23T,23T,24T,24T,24T,25T,25T,25M",
+    "Sgt. Bulwark":"2M,2T,3T,3D,3M,4D,4T,5T,6T,6D,6T,7T,7T,8T,9T,9M,9T,13D,13T,15D,15M,15T,16T,17M,17T,18T,18T,18T,19M,19T,19D,20T,22T,22T,23M,23T,24T,24T,25T",
+    "Sgt. Falkirk":"0D,0T,1T,1M,1T,1M,2T,3T,5T,6T,6D,6T,6T,7T,7D,7T,9M,9T,11T,11T,11M,12D,12T,13M,14T,14T,14T,15T,17T,17T,17T,17D,18M,18T,18T,18T,19T,19T,19T,19T,20T,20D,20T,21T,21T,21M,22T,22D,23T,24T,25D,25M",
+    "Stormwrack":"0T,0T,0T,0M,0M,1M,2D,3T,3T,3D,5D,5T,6T,6D,6T,7T,7T,8T,8T,9T,9M,9M,9T,11T,11T,11T,12T,12T,12T,12D,12T,12M,13T,13M,13D,14T,15T,16T,16D,16T,17T,17T,17T,18T,19T,20T,21M,21T,22T,22T,23T,23T,23D,23T,24T,24T,24T,24T,24T,24T,25T,25D,25M",
+    "The Drift":"0M,0T,3D,3M,4T,5T,7T,7T,8M,8T,9T,10D,12T,12T,14T,15T,15T,17D,18M,18T,20T,20T,21M,22T,22T,22D,25D,25T",
+    "The Gale":"0M,1M,1T,2T,2T,2D,2T,3D,4T,4D,4T,5T,5T,5D,5T,5T,6T,6T,6D,7M,8D,9T,9T,10T,10T,10M,11T,11T,12T,12M,12M,13T,13T,13D,14T,14T,16T,16D,16T,16T,16T,17T,18T,18D,18D,18T,18T,18T,19D,19D,20T,20T,20T,20M,21T,22T,22T,22M,23T,23T,23T,23T,23T,24T,24T,24T,24T,24D,24T",
+    "The Longcast":"1T,1T,2D,2T,3D,3M,5T,7T,9T,9M,9T,10D,10T,11T,12M,12M,12D,13T,13T,17T,18D,18T,18T,19M,20T,22T,23T,23T,24T,24T,25D,25T",
+    "The Undertow":"0M,1M,1T,1T,1M,2M,2M,4D,5D,5T,6M,9M,15M,24M",
+    "Vesper":"1M,2T,2M,3T,3D,3T,4M,4M,4T,5T,7M,11M,11D,11M,12D,14M,20M"
+  };
+  var EV = {}; Object.keys(SEQ).forEach(function (n) { EV[n] = SEQ[n].split(",").map(function (x) { return [parseInt(x, 10), x.slice(-1)]; }); });
+  var NAMES = Object.keys(SEQ).sort();
+  var FOUR = ["Farlight", "The Undertow", "Meteor Mite", "Vesper"];
+  var MAXD = 25; // 6 Sep
+  var WEEKS = ["29 Jun","6 Jul","13 Jul","20 Jul","27 Jul","3 Aug","10 Aug","17 Aug","24 Aug","31 Aug"];
+  var W4 = [49,48,48,50,50,49,43,16,6,3], W12 = [123,122,126,126,120,123,134,142,156,162];
+  var NOBODY = [9,8,5,12,5,4,14,17,16,7], CALLS = [141,139,138,144,137,138,110,121,124,127];
+  var P90 = [38,41,45,45,43,32,82,77,69,70];
+  var GOOD = 0.70, LOW = 0.45; // level bands (proposal; design's call). A new responder starts at 0.5, so the line stays hidden until there is something to explain.
+  var MONTHS = ["Aug","Sep"];
+  function dlabel(d) { var n = 12 + d; return n <= 31 ? n + " Aug" : (n - 31) + " Sep"; }
+
+  /* ================= score engine ================= */
+  function clamp(x) { return Math.max(0, Math.min(1, x)); }
+  function todayScore(n, d) { var h = S0[n]; EV[n].forEach(function (e) { if (e[0] <= d) h = e[1] === "T" ? Math.min(1, h + .08) : Math.max(0, h - .12); }); return h; }
+  function fadeParts(n, d, hl) {
+    var B = S0[n], D = 0, last = 0, i, e;
+    for (i = 0; i < EV[n].length; i++) {
+      e = EV[n][i]; if (e[0] > d) break;
+      D *= Math.pow(.5, (e[0] - last) / hl); last = e[0];
+      if (e[1] === "M") D += .12;
+      else if (e[1] === "D") B = Math.max(0, B - .12);
+      else { var pay = Math.min(D, .08); D -= pay; B = Math.min(1, B + (.08 - pay)); }
+    }
+    D *= Math.pow(.5, (d - last) / hl);
+    return { B: B, D: D, s: clamp(B - D) };
+  }
+  function fadeScore(n, d, hl) { return fadeParts(n, d, hl).s; }
+  function recoverDays(n, d, hl) {
+    var p = fadeParts(n, d, hl); if (p.s >= GOOD) return 0; if (p.B < GOOD) return null;
+    return Math.ceil(hl * Math.log(p.D / (p.B - GOOD)) / Math.LN2);
+  }
+  function level(x) { return x >= GOOD ? "Good" : x >= LOW ? "Fair" : "Low"; }
+  function lastN(n, d, k) { var a = EV[n].filter(function (e) { return e[0] <= d; }); return a.slice(-k); }
+  function pings7(n, d) { return EV[n].filter(function (e) { return e[0] <= d && e[0] > d - 7; }).length; }
+  function rule() { return state.view >= 1 ? "fade" : "today"; }
+  function scoreFor(n, d) { return rule() === "fade" ? fadeScore(n, d, state.hl) : todayScore(n, d); }
+
+  /* ================= state ================= */
+  var state = { view: 2, hi: true, tab: "journey", day: 2, hl: 2, showModel: false, sel: null, pv: "", phone: { tab: "pings", st: "ping", t: 60 }, simResp: "Meteor Mite", simMode: "replay", sim: { ppd: 1.5, miss: 59, ref: 18, days: 60 } };
+  function on(kind) { return kind === "existing" || (kind === "hotfix" && state.view >= 1) || (kind === "backlog" && state.view >= 2); }
+  function chg(kind, html, label) {
+    if (!on(kind)) return "";
+    var cls = kind === "hotfix" ? "chg-hot" : kind === "backlog" ? "chg-bk" : "";
+    var lab = kind === "hotfix" ? "HOTFIX" : "BACKLOG";
+    return '<div class="chg ' + cls + (state.hi ? " hi" : "") + '" style="padding:' + (state.hi ? "8px" : "0") + '"><span class="ct">' + (label || lab) + '</span>' + html + '</div>';
+  }
+
+  /* ================= tooltip ================= */
+  var tip = $("#tip");
+  document.addEventListener("pointermove", function (e) {
+    var t = e.target.closest ? e.target.closest("[data-tip]") : null;
+    if (!t) { tip.hidden = true; return; }
+    tip.textContent = t.getAttribute("data-tip"); tip.hidden = false;
+    var x = Math.min(e.clientX + 12, window.innerWidth - tip.offsetWidth - 8), y = e.clientY + 14;
+    if (y + tip.offsetHeight > window.innerHeight - 8) y = e.clientY - tip.offsetHeight - 10;
+    tip.style.left = Math.max(8, x) + "px"; tip.style.top = Math.max(8, y) + "px";
+  });
+
+  /* ================= charts (viewBox 400 wide) ================= */
+  function svgOpen(h) { return '<svg viewBox="0 0 400 ' + h + '" role="img">'; }
+  function chWeekly() {
+    var h = 180, l = 30, r = 8, t = 10, b = 26, iw = 400 - l - r, n = 10, ymax = 180;
+    var x = function (i) { return l + iw * (i + .5) / n; }, y = function (v) { return h - b - (h - t - b) * v / ymax; };
+    var s = svgOpen(h);
+    [0, 60, 120, 180].forEach(function (g) { s += '<line class="gr" x1="' + l + '" x2="' + (400 - r) + '" y1="' + y(g) + '" y2="' + y(g) + '"/><text class="ax" x="' + (l - 4) + '" y="' + (y(g) + 3) + '" text-anchor="end">' + g + '</text>'; });
+    var line = function (a, col) { return '<polyline fill="none" stroke="' + col + '" stroke-width="2.5" points="' + a.map(function (v, i) { return x(i) + "," + y(v); }).join(" ") + '"/>'; };
+    s += line(W12, "var(--ink)") + line(W4, "var(--bad)");
+    var mx = l + iw * (6 + 2 / 7) / n; s += '<line x1="' + mx + '" x2="' + mx + '" y1="' + t + '" y2="' + (h - b) + '" stroke="var(--hot)" stroke-dasharray="4 3"/><text class="ax" x="' + (mx - 4) + '" y="' + (t + 8) + '" text-anchor="end">4.2 ships</text>';
+    WEEKS.forEach(function (w, i) { if (i % 2 === 0) s += '<text class="ax" x="' + x(i) + '" y="' + (h - 10) + '" text-anchor="middle">' + w + '</text>'; s += '<rect class="hit" x="' + (x(i) - iw / n / 2) + '" y="' + t + '" width="' + (iw / n) + '" height="' + (h - t - b) + '" data-tip="Week of ' + w + '\nThe four: ' + W4[i] + '\nOther twelve: ' + W12[i] + '"/>'; });
+    return s + '</svg><div class="small"><span style="color:var(--bad)">&#9632;</span> the four &nbsp; <span>&#9632;</span> other twelve</div>';
+  }
+  function stack(rows) {
+    var h = rows.length * 34 + 8, s = svgOpen(h), lw = 118, iw = 400 - lw - 8;
+    rows.forEach(function (r, i) {
+      var y0 = 6 + i * 34, x0 = lw, tot = r.v.reduce(function (a, b) { return a + b[1]; }, 0);
+      s += '<text class="lb" x="' + (lw - 6) + '" y="' + (y0 + 17) + '" text-anchor="end">' + esc(r.l) + '</text>';
+      r.v.forEach(function (p) { var w = iw * p[1] / tot; s += '<rect x="' + x0 + '" y="' + y0 + '" width="' + w + '" height="24" fill="' + p[2] + '" data-tip="' + esc(r.l + "\n" + p[0] + ": " + p[1] + " (" + (100 * p[1] / tot).toFixed(1) + "%)") + '"/>'; if (w > 28) s += '<text x="' + (x0 + w / 2) + '" y="' + (y0 + 16) + '" text-anchor="middle" style="fill:var(--surface);font:600 10px var(--f-mono)">' + Math.round(100 * p[1] / tot) + '%</text>'; x0 += w; });
+    });
+    return s + '</svg>';
+  }
+  function chMiss() {
+    return stack([{ l: "Before 12 Aug", v: [["Taken", 831, "var(--ok)"], ["Turned down", 229, "var(--warn)"], ["Missed", 25, "var(--bad)"]] }, { l: "From 12 Aug", v: [["Taken", 391, "var(--ok)"], ["Turned down", 110, "var(--warn)"], ["Missed", 110, "var(--bad)"]] }]) + '<div class="small"><span style="color:var(--ok)">&#9632;</span> taken <span style="color:var(--warn)">&#9632;</span> turned down <span style="color:var(--bad)">&#9632;</span> missed</div>';
+  }
+  function bars(items, max, unit) {
+    var h = items.length * 30 + 8, s = svgOpen(h), lw = 150, iw = 400 - lw - 46;
+    items.forEach(function (it, i) { var y0 = 6 + i * 30, w = iw * it[1] / max; s += '<text class="lb" x="' + (lw - 6) + '" y="' + (y0 + 15) + '" text-anchor="end">' + esc(it[0]) + '</text><rect x="' + lw + '" y="' + y0 + '" width="' + w + '" height="20" rx="2" fill="' + it[2] + '" data-tip="' + esc(it[0] + ": " + it[1] + unit) + '"/><text class="ax" x="' + (lw + w + 4) + '" y="' + (y0 + 14) + '">' + it[1] + unit + '</text>'; });
+    return s + '</svg>';
+  }
+  function chFirst() { return bars([["The four, first pings", 70, "var(--bad)"], ["Everyone else, first pings", 16.5, "var(--ink)"], ["The four, before 12 Aug", 3.6, "var(--muted)"], ["Everyone else, before", 2.4, "var(--muted)"]], 80, "%") + '<div class="small muted">28 of 40 first pings missed (the four) against 66 of 400.</div>'; }
+  function chGap() {
+    var s = bars([["Median gap to next ping, before", 25, "var(--muted)"], ["Median gap, from 12 Aug", 61, "var(--hot)"]], 70, " s");
+    var h = 130, l = 30, r = 8, t = 10, b = 24, iw = 400 - l - r, n = 10, ymax = 90, x = function (i) { return l + iw * (i + .5) / n; }, y = function (v) { return h - b - (h - t - b) * v / ymax; };
+    s += '<div class="small" style="margin-top:8px"><b>Slowest 10% of callouts: seconds to a taker, by week</b></div>' + svgOpen(h);
+    [0, 30, 60, 90].forEach(function (g) { s += '<line class="gr" x1="' + l + '" x2="' + (400 - r) + '" y1="' + y(g) + '" y2="' + y(g) + '"/><text class="ax" x="' + (l - 4) + '" y="' + (y(g) + 3) + '" text-anchor="end">' + g + '</text>'; });
+    P90.forEach(function (v, i) { s += '<rect x="' + (x(i) - 12) + '" y="' + y(v) + '" width="24" height="' + (y(0) - y(v)) + '" fill="' + (i >= 6 ? "var(--bad)" : "var(--muted)") + '" data-tip="Week of ' + WEEKS[i] + '\n' + v + ' s"/>'; if (i % 2 === 0) s += '<text class="ax" x="' + x(i) + '" y="' + (h - 8) + '" text-anchor="middle">' + WEEKS[i] + '</text>'; });
+    return s + '</svg>';
+  }
+  function chUnserved() {
+    var h = 150, l = 30, r = 8, t = 10, b = 24, iw = 400 - l - r, n = 10, ymax = 16, x = function (i) { return l + iw * (i + .5) / n; }, y = function (v) { return h - b - (h - t - b) * v / ymax; };
+    var s = svgOpen(h);
+    [0, 4, 8, 12, 16].forEach(function (g) { s += '<line class="gr" x1="' + l + '" x2="' + (400 - r) + '" y1="' + y(g) + '" y2="' + y(g) + '"/><text class="ax" x="' + (l - 4) + '" y="' + (y(g) + 3) + '" text-anchor="end">' + g + '%</text>'; });
+    NOBODY.forEach(function (v, i) { var p = 100 * v / CALLS[i]; s += '<rect x="' + (x(i) - 12) + '" y="' + y(p) + '" width="24" height="' + (y(0) - y(p)) + '" fill="' + (i >= 6 ? "var(--bad)" : "var(--muted)") + '" data-tip="Week of ' + WEEKS[i] + '\n' + v + ' of ' + CALLS[i] + ' callouts\nnobody took (' + p.toFixed(1) + '%)"/>'; if (i % 2 === 0) s += '<text class="ax" x="' + x(i) + '" y="' + (h - 8) + '" text-anchor="middle">' + WEEKS[i] + '</text>'; });
+    return s + '</svg><div class="small muted">Back to 5.5% in the 31 Aug week; one week is thin evidence.</div>';
+  }
+  function chRule() {
+    return '<table><tr><th>Part</th><th class="n">Today</th></tr><tr><td>Score</td><td class="n">0.60 proximity + 0.25 recent acceptance + 0.15 skills</td></tr><tr><td>Taken</td><td class="n">+0.08</td></tr><tr><td>Turned down</td><td class="n">&minus;0.12</td></tr><tr><td>Missed</td><td class="n">&minus;0.12, never fades</td></tr><tr><td>Range</td><td class="n">0 to 1, starts at 0.5</td></tr><tr><td>Ping wait</td><td class="n">60 s (was 90 s)</td></tr></table><div class="small muted">History: <span class="mono">history.py</span>, <span class="mono">config.py</span>. Break-even take rate: 60%.</div>';
+  }
+  function chFade() {
+    var h = 150, l = 34, r = 8, t = 10, b = 24, iw = 400 - l - r, x = function (d) { return l + iw * d / 14; }, y = function (v) { return h - b - (h - t - b) * v / 0.12; };
+    var s = svgOpen(h), i, pts = [];
+    [0, .06, .12].forEach(function (g) { s += '<line class="gr" x1="' + l + '" x2="' + (400 - r) + '" y1="' + y(g) + '" y2="' + y(g) + '"/><text class="ax" x="' + (l - 4) + '" y="' + (y(g) + 3) + '" text-anchor="end">' + g.toFixed(2) + '</text>'; });
+    s += '<line x1="' + l + '" x2="' + (400 - r) + '" y1="' + y(.12) + '" y2="' + y(.12) + '" stroke="var(--bad)" stroke-width="2" stroke-dasharray="5 3"/><text class="ax" x="' + (400 - r) + '" y="' + (y(.12) + 12) + '" text-anchor="end" style="fill:var(--bad)">today: stays at 0.12</text>';
+    for (i = 0; i <= 14; i += .5) pts.push(x(i) + "," + y(.12 * Math.pow(.5, i / state.hl)));
+    s += '<polyline fill="none" stroke="var(--hot)" stroke-width="2.5" points="' + pts.join(" ") + '"/>';
+    [0, 2, 4, 7, 14].forEach(function (d) { s += '<text class="ax" x="' + x(d) + '" y="' + (h - 8) + '" text-anchor="middle">day ' + d + '</text>'; });
+    return s + '</svg><div class="small">One miss: penalty left after <b>' + state.hl + '-day</b> half-lives. After 7 days: <b class="mono">' + (.12 * Math.pow(.5, 7 / state.hl)).toFixed(3) + '</b>.</div>';
+  }
+  function chShare() {
+    return bars([["The four, before 4.2", 28.5, "var(--muted)"], ["The four, week of 31 Aug", 1.8, "var(--bad)"], ["Measure: second full week", 14, "var(--hot)"]], 32, "%") + '<div class="small muted">Share of all weekly pings. Measured in the second full week after launch so any score reset from the deploy has settled.</div>';
+  }
+  var CHARTS = {
+    weekly: ["Weekly pings: the four against the other twelve", chWeekly, "callout-history.csv. Verified.", "v"],
+    miss: ["Outcome of every ping, before and after 12 Aug", chMiss, "pings table (SQL-A). Verified.", "v"],
+    first: ["First pings missed", chFirst, "pings ordered per callout. Verified.", "v"],
+    gap: ["The 60-second wait is real; dispatch is not slower", chGap, "Gap 25 s to 61 s; first ping 14 s to 15 s. Verified.", "v"],
+    unserved: ["Callouts nobody took, by week", chUnserved, "callouts joined to pings (SQL-G). Verified.", "v"],
+    rule: ["The rule in code today", chRule, "00-rook/code/dispatch-routing/. Verified.", "v"],
+    fade: ["Hotfix: how a miss fades", chFade, "Proposed rule; half-life is adjustable in the simulator.", "p"],
+    share: ["Measure for the hotfix", chShare, "Proposal; baseline verified from callout-history.csv.", "p"]
+  };
+  function chartCard(k) { var c = CHARTS[k]; return '<div class="dcard"><div class="t">' + c[0] + ' <span class="chip ' + c[3] + '">' + (c[3] === "v" ? "verified" : "proposal") + '</span></div>' + c[1]() + '<div class="src">' + esc(c[2]) + '</div></div>'; }
+
+  /* ================= journey ================= */
+  var LANES = ["Handler &middot; Kip", "Dispatch (system)", "Responder &middot; Meteor Mite", "Data and views"];
+  var PHASES = ["Incident", "Ranking", "Ping", "Answer in 60 s", "Score", "Quiet", "Recovery", "Seen", "Review"];
+  var ST = [
+    { id: "s1", c: 0, l: 0, ty: "Event", k: "existing", tx: "Callout raised", what: "Kip, or an intake system, enters an incident: area, what happened, required tags. Example used throughout: callout 41380, Eastgate, 4 Sep 21:47, \"A woman in a beekeeping suit is emptying a bank.\"", charts: [], screen: "K2" },
+    { id: "s2", c: 1, l: 1, ty: "Event", k: "existing", tx: "Responders ranked by routing priority", what: "Dispatch scores everyone available: 0.60 proximity, 0.25 recent acceptance, 0.15 skills. Highest is asked first. Nobody is removed, only ordered.", charts: ["rule"], map: true },
+    { id: "s3", c: 1, l: 3, ty: "Event", k: "backlog", tx: "Ranking saved", what: "Not recorded today: we cannot say who else was on the list or why. Backlog 1 saves the ranked list, each responder's three score parts and the weights for every dispatched callout.", charts: [], map: true },
+    { id: "s5", c: 2, l: 1, ty: "Event", k: "existing", tx: "Ping sent to the top responder", what: "One responder at a time. The first ping leaves about 14 seconds after the callout (15 s since 4.2, so dispatch itself is not slower).", charts: ["gap"] },
+    { id: "s6", c: 2, l: 2, ty: "Event", k: "existing", tx: "Ping appears on the phone", what: "A 60-second countdown with Take and Turn down. Try it in the screen.", charts: [], screen: "R1" },
+    { id: "s7", c: 3, l: 2, ty: "Event", k: "existing", tx: "Ping taken or turned down", what: "A take closes the loop. A refusal moves the callout to the next responder. Refusals fell from 21% to 18% after 4.2; takes fell from 77% to 64%.", charts: ["miss"] },
+    { id: "s8", c: 3, l: 2, ty: "Event", k: "existing", hot: true, tx: "Ping missed: 60 s ran out", what: "Misses went from 2.3% to 18.0% on release day. The four miss 70% of their first pings, against 16.5% for everyone else. Cause unknown: push delivery or slow answers.", charts: ["miss", "first"], screen: "R1" },
+    { id: "s9", c: 3, l: 1, ty: "Event", k: "existing", tx: "Next responder pinged", what: "After a refusal or a miss the next responder is asked. The callout is never dropped, but each miss costs up to 60 seconds.", charts: ["gap"] },
+    { id: "s10", c: 3, l: 3, ty: "Policy", k: "backlog", cond: "only if the data says so", tx: "Delivery confirmed before the 60 s clock", what: "Backlog 2. No delivery confirmation exists today, so a push that never arrives counts as a miss. Starts only if the push logs for the four on 12 and 13 Aug show undelivered pings. It would also give a responder a way to report a ping that never rang.", charts: [] },
+    { id: "s11", c: 4, l: 1, ty: "Event", k: "existing", hot: true, tx: "Recent acceptance lowered: \u22120.12", what: "A miss costs the same as a refusal, and a score only rises on a yes. Nothing lets it recover on its own (Wen's 2019 note in history.py). One bad run is permanent.", charts: ["rule"] },
+    { id: "s12", c: 4, l: 1, ty: "Policy", k: "hotfix", tx: "Miss penalty fades: halves every 2 days", what: "Hotfix. A miss still adds a 0.12 penalty, and the penalty halves every 2 days, so it is mostly gone after about a week. A take pays outstanding penalty down first, so healthy responders behave almost as today. Refusals work as today. Needs the scorer to receive a miss separately from a refusal (offer.py already returns MISSED), and one extra stored value and a timestamp per responder. Scores live in memory today, so a restart resets everyone to 0.5.", charts: ["fade"], sim: true },
+    { id: "s14", c: 5, l: 1, ty: "Event", k: "existing", tx: "Ranked lower on later callouts", what: "At 0.00 a responder gives up as much as 0.25 of the score, worth about 19 minutes of travel against a healthy neighbour. With few offers, there are few chances to earn it back.", charts: [], map: true },
+    { id: "s13", c: 5, l: 2, ty: "Hotspot", k: "existing", hot: true, tx: "Responder goes quiet", what: "Four responders went from 49 pings a week together to 3. In Kip's words, one card is \"dead quiet\" and the other \"on fire\".", charts: ["weekly"], screen: "K1" },
+    { id: "s15", c: 6, l: 1, ty: "Event", k: "hotfix", tx: "Recent acceptance recovers toward Good", what: "Hotfix. Replayed on real pings with no restarts, all four go from 0.00 to between 0.55 and 0.67 by 6 Sep, which is Fair, not Good, and the other twelve change little (average 0.90 either way). This is a replay, not a forecast: they would be asked more, and a responder who keeps missing about 60% of pings would fall again. The fade buys them chances; it does not change why they miss.", charts: ["fade"], sim: true },
+    { id: "s16", c: 6, l: 2, ty: "Event", k: "hotfix", tx: "Responder is asked again", what: "Back in rotation. Measure: the four get at least 14% of weekly pings in the second full week after launch (from 1.8%).", charts: ["share"], map: true },
+    { id: "s17", c: 6, l: 3, ty: "Policy", k: "backlog", cond: "only if the measure is missed", tx: "Fair-share offer", what: "Backlog 3. A real callout offered first to someone with no recent offers. Starts only if the hotfix misses its measure; Helen decides.", charts: [] },
+    { id: "s18", c: 7, l: 0, ty: "Read model", k: "hotfix", tx: "Handler sees a \"recent acceptance\" line", what: "Hotfix. On the responder's card in the console: a level, not a number, with the reason and when it recovers.", charts: [], screen: "K1" },
+    { id: "s19", c: 7, l: 2, ty: "Read model", k: "hotfix", tx: "Responder sees recent acceptance", what: "Hotfix. In the phone app's availability screen: the level, why offers are reduced, and that taking a ping raises it straight away.", charts: [], screen: "R2" },
+    { id: "s20", c: 8, l: 0, ty: "Command", k: "backlog", tx: "Handler reviews how a callout was ranked", what: "Backlog 1. On a dispatched callout: every responder in order with the three score parts, the weights and the outcome. Own responders in full, others' order only; Security reviews.", charts: [], screen: "K2", map: true }
+  ];
+  function viewOff(k) { return !on(k); }
+  function renderLoop() {
+    var items = [["Ping missed", "bad"], ["Penalty of 0.12", "bad"], state.view >= 1 ? ["Hotfix: the penalty fades, and takes pay it down", "fix"] : ["Never fades", "bad"], ["Ranked lower", "bad"], ["Fewer pings", "bad"], ["Fewer chances to answer", "bad"]];
+    $("#loop").innerHTML = items.map(function (it, i) { return (i ? '<span class="muted">&rarr;</span>' : "") + '<span class="lp ' + (it[1] === "fix" && !state.hi ? "" : it[1]) + '">' + it[0] + '</span>'; }).join("") + '<span class="muted">&#8635; back to a missed ping</span><div class="small muted" style="flex-basis:100%;margin-top:4px">Whether this loop is the whole cause is not yet confirmed by engineering: Wen Li\'s check before launch (see the brief). It does not explain why the four miss so many pings.</div>';
+  }
+  function renderJourney() {
+    renderLoop();
+    var h = '<div class="jh"></div>' + PHASES.map(function (p) { return '<div class="jh">' + p + '</div>'; }).join("");
+    LANES.forEach(function (ln, li) {
+      h += '<div class="jl">' + ln + '</div>';
+      for (var c = 0; c < 9; c++) {
+        h += '<div class="jc">' + ST.filter(function (s) { return s.l === li && s.c === c; }).map(function (s) {
+          var cls = "stk" + (s.hot ? " hotspot" : "") + (state.hi && s.k === "hotfix" ? " hi-hot" : "") + (state.hi && s.k === "backlog" ? " hi-bk" : "") + (viewOff(s.k) ? " off" : "");
+          var tag = s.k === "hotfix" ? '<span class="chip hot">hotfix</span>' : s.k === "backlog" ? '<span class="chip bk">backlog</span>' : "";
+          return '<button class="' + cls + '" data-s="' + s.id + '" aria-expanded="' + (state.sel === s.id) + '"><span class="ty"><span>' + s.ty + '</span>' + tag + '</span><span class="tx">' + esc(s.tx) + '</span>' + (s.cond ? '<span class="cond">' + esc(s.cond) + '</span>' : "") + '</button>';
+        }).join("") + '</div>';
+      }
+    });
+    $("#jgrid").innerHTML = h;
+    $$("#jgrid .stk").forEach(function (b) { b.addEventListener("click", function () { state.sel = b.getAttribute("data-s"); state.pv = ""; renderJourney(); renderPreview(); var pvEl = $("#preview"); if (pvEl && pvEl.scrollIntoView) pvEl.scrollIntoView({ behavior: "smooth", block: "nearest" }); }); });
+  }
+  /* ================= screens ================= */
+  var PERSONAS = { kip: { n: "Kip", role: "Handler for Meteor Mite and The Gale", q: "\"I just want it to look less like a coincidence when I'm staring at it at midnight and one card's dead quiet and the other's on fire.\"", src: "Interview, 4 Sep", scr: ["K1", "K2"] }, mite: { n: "Meteor Mite", role: "Responder (Eastgate), one of the four", q: "\"Mite thinks Mite's been forgotten.\" (Kip, about his responder)", src: "Interview, 4 Sep", scr: ["R1", "R2"] } };
+  var SCRN = { K1: "Console: coverage", K2: "Console: a dispatched callout", R1: "Phone: a ping", R2: "Phone: availability" };
+  var MON = { T: "taken", D: "turned down", M: "missed" };
+  function lineFor(n, d) {
+    var sc = fadeScore(n, d, state.hl), lv = level(sc), ls = lastN(n, d, 4), m = ls.filter(function (e) { return e[1] === "M"; }).length;
+    var recent = ls.some(function (e) { return e[1] === "M"; });
+    var rd = recoverDays(n, d, state.hl), head = "Recent acceptance (ranking): <b>" + lv + "</b>", next = "";
+    if (!ls.length) head = "Recent acceptance (ranking): <b>no pings yet</b>";
+    else if (lv !== "Good") {
+      head += (m ? " &middot; " + m + " of the last " + ls.length + " pings missed" : "") + " &middot; " + (lv === "Low" ? "Offers are reduced" : "Offers may be slightly reduced");
+      next = "Next: ask the responder to check the app is up to date and notifications are on. " + (rd === null ? "Needs a taken ping to recover." : "Good again about " + dlabel(d + rd) + " if there are no more misses.");
+    } else if (recent) head += " &middot; Recent misses are fading";
+    return { lv: lv, head: head, next: next, sc: sc, rd: rd, ls: ls };
+  }
+  function modelNote(n, d) { return state.showModel ? '<div class="small muted mono">demo only: modelled ' + fadeScore(n, d, state.hl).toFixed(2) + ' (today\'s rule ' + todayScore(n, d).toFixed(2) + ')</div>' : ""; }
+  function renderK1() {
+    var d = state.day, cards = ["Meteor Mite", "The Gale"].map(function (n) {
+      var ls = lastN(n, d, 1)[0], line = lineFor(n, d);
+      var last = ls ? dlabel(ls[0]) + ", " + MON[ls[1]] : "none yet";
+      return '<div class="rcard"><div class="nm"><span>' + n + '</span><span class="badge" title="Set by the responder in the app">Available</span></div><div class="small muted">Eastgate &middot; Pings in the last 7 days: <b class="mono" style="color:var(--ink)">' + pings7(n, d) + '</b> &middot; Last ping: ' + last + ' <span class="chip ex">assumed existing</span></div>' +
+        chg("hotfix", '<div class="small">' + line.head + '</div>' + (line.next ? '<div class="small muted">' + line.next + '</div>' : "") + modelNote(n, d), "HOTFIX: new line") + '</div>';
+    }).join("");
+    return '<div class="frame console"><div class="fbar"><span>Rook Dispatch &middot; Console</span><span class="ill">illustrative</span></div><div class="cbody"><div class="cnav"><span class="on">Coverage</span><span>Incident feed</span><span>Responders</span><span>Activity</span></div><div class="cmain"><div class="row" style="justify-content:space-between"><h3>Coverage</h3><span class="small muted">Handler: Kip &middot; 2 responders</span></div><div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr))">' + cards + '</div>' +
+      '<div class="moment">Example moment: end of 14 Aug, after three misses in two days. Switch the view at the top to compare with today.</div>' + '</div></div></div>';
+  }
+  var QUICK = '<div class="row" style="margin-top:6px"><button class="qb" data-day="2">14 Aug: three misses in two days</button><button class="qb" data-day="25">6 Sep: end of the data</button></div>';
+  var CAND = [["Sgt. Bulwark", "Foundry Row", 6, 1.0], ["The Gale", "Eastgate", 8, 1.0], ["Nightwell", "Midtown", 13, .5], ["Meteor Mite", "Eastgate", 7, 1.0], ["Cindermark", "Mill District", 19, 1.0], ["Sgt. Falkirk", "Kingsbridge", 24, 1.0]];
+  var CAL_DAY = 22;
+  function ranking() {
+    var f = rule() === "fade" ? function (n) { return fadeScore(n, CAL_DAY, state.hl); } : function (n) { return todayScore(n, CAL_DAY); };
+    var base = CAND.map(function (c) { var P = Math.max(0, 1 - c[2] / 45), H = f(c[0]), t = .6 * P + .25 * H + .15 * c[3]; return { n: c[0], a: c[1], m: c[2], P: P, H: H, C: c[3], t: t }; });
+    var tod = CAND.map(function (c) { var P = Math.max(0, 1 - c[2] / 45); return { n: c[0], t: .6 * P + .25 * todayScore(c[0], CAL_DAY) + .15 * c[3] }; }).sort(function (a, b) { return b.t - a.t; });
+    var rt = {}; tod.forEach(function (r, i) { rt[r.n] = i + 1; });
+    base.sort(function (a, b) { return b.t - a.t; }); base.forEach(function (r, i) { r.rank = i + 1; r.was = rt[r.n]; });
+    return base;
+  }
+  var OWN = { "Meteor Mite": 1, "The Gale": 1 };
+  function ord(n) { return n + (n === 1 ? "st" : n === 2 ? "nd" : n === 3 ? "rd" : "th"); }
+  function rankTable() {
+    var rows = ranking();
+    return '<div class="tw"><table><thead><tr><th class="n">#</th><th>Responder</th><th class="n">Min</th><th class="n">0.60 &times; proximity</th><th class="n">0.25 &times; recent acceptance</th><th class="n">0.15 &times; skills</th><th class="n">Score</th></tr></thead><tbody>' + rows.map(function (r) {
+      var moved = state.view >= 1 && r.was !== r.rank, mv = moved ? ' <span class="chip hot">hotfix: was ' + ord(r.was) + '</span>' : "", own = OWN[r.n];
+      var cells = own ? '<td class="n">' + r.m + '</td><td class="n">' + (.6 * r.P).toFixed(2) + ' <span class="muted">(' + r.P.toFixed(2) + ')</span></td><td class="n">' + (.25 * r.H).toFixed(2) + ' <span class="muted">(' + r.H.toFixed(2) + ')</span></td><td class="n">' + (.15 * r.C).toFixed(2) + ' <span class="muted">(' + r.C.toFixed(2) + ')</span></td><td class="n"><b>' + r.t.toFixed(3) + '</b></td>' : '<td class="n muted" colspan="5" title="Order only for other handlers\' responders">order only</td>';
+      return '<tr class="' + (r.rank === 1 ? "rk1" : "") + (moved ? " moved" : "") + '"><td class="n">' + r.rank + '</td><td>' + r.n + mv + '<div class="small muted">' + r.a + '</div></td>' + cells + '</tr>';
+    }).join("") + '</tbody></table></div><div class="small muted" style="margin-top:6px">Kip sees full scores for his own responders and the order only for the rest. Weighted value first, raw value in brackets. Minutes and skills are assumed; recent acceptance is modelled from real pings to the end of 3 Sep under ' + (rule() === "fade" ? "the hotfix rule" : "today's rule") + '. Candidates beyond the two real pings are examples: real lists are often short, and today the full list is not recorded.</div>';
+  }
+  function renderK2() {
+    return '<div class="frame console"><div class="fbar"><span>Rook Dispatch &middot; Console &middot; Callout 41380</span><span class="ill">illustrative</span></div><div class="cbody"><div class="cnav"><span>Coverage</span><span class="on">Incident feed</span><span>Responders</span><span>Activity</span></div><div class="cmain"><div><h3>Callout 41380 &middot; Eastgate</h3><p class="small muted">4 Sep, 21:47 &middot; "A woman in a beekeeping suit is emptying a bank."</p></div>' +
+      '<div class="card" style="background:var(--surface2)"><div class="small" style="font-weight:700;margin-bottom:4px">Activity <span class="chip ex">existing</span></div><div class="small mono">21:47:56 &nbsp;Ping &rarr; Sgt. Bulwark: <span style="color:var(--bad)">missed</span><br>21:48:59 &nbsp;Ping &rarr; The Gale: <span style="color:var(--ok)">taken</span> (78 s after the callout)</div><div class="small muted" style="margin-top:6px">Who else was on the list, and why in this order, is not shown or recorded today.</div><button class="btnbig no" style="margin-top:8px;width:auto;padding:6px 10px" disabled>Override routing</button></div>' +
+      chg("backlog", '<div class="small" style="font-weight:700;margin-bottom:6px">How this was ranked</div>' + rankTable(), "BACKLOG 1: how this was ranked") + '</div></div></div>';
+  }
+  function renderPhone() {
+    var p = state.phone, body = "", n = "Meteor Mite";
+    if (p.tab === "pings") {
+      if (p.st === "ping") {
+        var pct = p.t / 60, circ = 2 * Math.PI * 46;
+        body = '<div class="small muted">New callout &middot; Eastgate</div><h3>A woman in a beekeeping suit is emptying a bank.</h3><div class="ring"><svg viewBox="0 0 110 110"><circle cx="55" cy="55" r="46" fill="none" stroke="var(--line)" stroke-width="9"/><circle cx="55" cy="55" r="46" fill="none" stroke="' + (p.t < 15 ? "var(--bad)" : "var(--ink)") + '" stroke-width="9" stroke-dasharray="' + (circ * pct) + ' ' + circ + '" transform="rotate(-90 55 55)"/><text x="55" y="62" text-anchor="middle" style="font:700 26px var(--f-mono);fill:var(--ink)">' + p.t + '</text></svg></div><p class="small muted" style="text-align:center">Unanswered after 60 seconds (it was 90 seconds until 12 Aug), it moves to the next responder and counts as a missed ping.</p><button class="btnbig go" data-act="take">Take it</button><button class="btnbig no" data-act="decline">Turn down</button><button class="btnbig no" data-act="wait" style="font-size:.8rem">Do nothing: jump to 0 s</button>';
+      } else if (p.st === "taken") body = '<h3>Taken</h3><p>The callout is yours. Your handler has been told.</p><button class="btnbig no" data-act="again">Replay the ping</button>';
+      else if (p.st === "declined") body = '<h3>Turned down</h3><p>The callout moves to the next responder.</p><button class="btnbig no" data-act="again">Replay the ping</button>';
+      else body = '<h3>This callout has moved on</h3><p>The 60 seconds ran out and it went to the next responder. It counts as a missed ping.</p>' + chg("hotfix", '<p class="small">A missed ping lowers your recent acceptance for a few days, whatever the reason, and then fades. See Availability.</p>', "HOTFIX") + '<button class="btnbig no" data-act="again">Replay the ping</button>';
+    } else {
+      var line = lineFor(n, state.day), lv = line.lv, ls = line.ls;
+      var head = !ls.length ? "You have not been asked yet." : lv === "Good" ? "You are in the rotation." : lv === "Fair" ? "You may be asked a bit less often." : "You will be asked less often.";
+      var more = lv === "Good" ? "Missed pings count against this for a few days, whatever the reason, then fade." : "Missed pings count against this for a few days, whatever the reason, then fade. It clears by itself, even if no pings come. " + (line.rd === null ? "Taking a ping raises it straight away." : "Back to Good about " + dlabel(state.day + line.rd) + " if there are no more misses; taking a ping raises it straight away.") + " If pings are not ringing, check the app is up to date and notifications are on, and tell your handler.";
+      body = '<h3>Availability</h3><div class="rcard"><div class="nm"><span>Available now</span><span class="badge">On</span></div><div class="small muted">Windows: Mon to Sun, 06:00 to 23:00 (illustrative)</div></div>' +
+        chg("hotfix", '<div style="display:flex;justify-content:space-between;gap:8px"><b>Recent acceptance</b><span class="lvl ' + lv + '">' + lv + '</span></div><p style="margin-top:6px"><b>' + head + '</b></p><p class="small" style="margin-top:4px">' + more + '</p><div class="small muted mono" style="margin-top:6px">Recorded: ' + (ls.map(function (e) { return dlabel(e[0]) + " " + MON[e[1]]; }).join(" &middot; ") || "none") + '</div>' + modelNote(n, state.day), "HOTFIX: new") +
+        '<div class="moment">Example moment: end of 14 Aug.</div>';
+    }
+    return '<div class="frame phone"><div class="fbar"><span>Rook &middot; ' + n + '</span><span class="ill">illustrative</span></div><div class="pbody">' + body + '</div><div class="ptabs"><button data-ptab="pings" aria-pressed="' + (p.tab === "pings") + '">Pings</button><button data-ptab="avail" aria-pressed="' + (p.tab === "avail") + '">Availability</button></div></div>';
+  }
+  function renderScreenById(id) {
+    if (id === "K1") return renderK1();
+    if (id === "K2") return renderK2();
+    if (id === "R1") { state.phone.tab = "pings"; return renderPhone(); }
+    if (id === "R2") { state.phone.tab = "avail"; return renderPhone(); }
+    return "";
+  }
+  var timer = null;
+  function startTimer() {
+    if (timer) clearInterval(timer);
+    timer = setInterval(function () { if (!(state.sel && state.pv === "screen" && state.tab === "journey")) return; if (state.phone.tab === "pings" && state.phone.st === "ping") { state.phone.t = Math.max(0, state.phone.t - 1); if (state.phone.t === 0) state.phone.st = "missed"; refreshPhone(); } }, 1000);
+  }
+  function refreshPhone() { $$(".frame.phone").forEach(function (f) { var tmp = document.createElement("div"); tmp.innerHTML = renderPhone(); f.replaceWith(tmp.firstChild); }); $$(".frame.phone").forEach(function (f) { bindScreenEvents(f.parentNode); }); }
+  function bindScreenEvents(root) {
+    $$("[data-act]", root).forEach(function (b) { b.onclick = function () { var a = b.getAttribute("data-act"); if (a === "take") state.phone.st = "taken"; else if (a === "decline") state.phone.st = "declined"; else if (a === "wait") state.phone.st = "missed"; else { state.phone.st = "ping"; state.phone.t = 60; } refreshPhone(); }; });
+    $$("[data-ptab]", root).forEach(function (b) { b.onclick = function () { state.phone.tab = b.getAttribute("data-ptab"); refreshPhone(); }; });
+  }
+  /* ================= map ================= */
+  var AREAS = { "Uptown": [300, 40], "Northfield": [150, 70], "Hillcrest": [450, 70], "Lakeshore": [560, 120], "Westbury": [50, 150], "Midtown": [300, 160], "Old Town": [190, 190], "Mill District": [180, 270], "Foundry Row": [420, 200], "Eastgate": [540, 230], "Riverside": [330, 290], "Kingsbridge": [90, 250], "Greenway": [70, 350], "Harborside": [240, 370], "Southport": [400, 360] };
+  function mapStory() {
+    var rows = ranking(), m = rows.filter(function (r) { return r.n === "Meteor Mite"; })[0];
+    if (state.view < 1) return 'Today, recent acceptance at ' + todayScore("Meteor Mite", CAL_DAY).toFixed(2) + ' ranks Meteor Mite ' + ord(m.was) + ', so she is not asked. Switch to "+ Hotfix" to compare.';
+    var same = m.rank > 2 ? " On this callout The Gale took it second, so the outcome would be the same: the gain is that she is back on the list at a useful position, not that this callout changes." : "";
+    return 'With the hotfix, <b>Meteor Mite moves from ' + ord(m.was) + ' to ' + ord(m.rank) + '</b>.' + same + ' The minutes are invented, so the exact rank is an example.';
+  }
+  function mapHTML() {
+    var rows = ranking(), W = 640, H = 410, s = '<svg class="map" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Schematic city map with the callout in Eastgate and six candidate responders"><rect x="0" y="0" width="' + W + '" height="' + H + '" fill="var(--surface2)" rx="8"/>';
+    Object.keys(AREAS).forEach(function (a) { var p = AREAS[a]; s += '<rect class="area" x="' + (p[0] - 52) + '" y="' + (p[1] - 30) + '" width="104" height="62" rx="6"/><text x="' + p[0] + '" y="' + (p[1] - 16) + '" text-anchor="middle" style="font:600 12px var(--f-body)">' + a + '</text>'; });
+    var cal = [606, 178]; s += '<circle cx="' + cal[0] + '" cy="' + cal[1] + '" r="18" fill="var(--bad)" opacity=".18"/><circle cx="' + cal[0] + '" cy="' + cal[1] + '" r="8" fill="var(--bad)"/><text x="' + (cal[0] + 22) + '" y="' + (cal[1] - 26) + '" text-anchor="end" style="fill:var(--bad);font:700 13px var(--f-body)">Callout 41380</text>';
+    var PINPOS = { "The Gale": [572, 262], "Meteor Mite": [504, 256], "Sgt. Bulwark": [418, 212], "Nightwell": [300, 172], "Cindermark": [200, 292], "Sgt. Falkirk": [92, 270] };
+    rows.forEach(function (r) {
+      var pp = PINPOS[r.n], x = pp[0], y = pp[1], lv = level(r.H), col = lv === "Good" ? "var(--ok)" : lv === "Fair" ? "var(--warn)" : "var(--bad)", below = r.a === "Eastgate";
+      var real = r.n === "Sgt. Bulwark" ? "ping 1 (missed)" : r.n === "The Gale" ? "ping 2 (taken)" : "not asked";
+      s += '<line x1="' + x + '" y1="' + y + '" x2="' + cal[0] + '" y2="' + cal[1] + '" stroke="var(--ink)" stroke-opacity=".4" stroke-dasharray="5 4"/>';
+      s += '<g class="pin" data-tip="' + esc(r.n + " (" + r.a + ")\n" + r.m + " min, assumed\nRecent acceptance " + r.H.toFixed(2) + " (" + lv + ")\nWhat happened: " + real) + '">';
+      s += '<circle cx="' + x + '" cy="' + y + '" r="15" fill="' + (state.view >= 1 && OWN[r.n] ? col : "var(--ink)") + '"/>' + (state.view >= 2 ? '<text x="' + x + '" y="' + (y + 5) + '" text-anchor="middle" style="font:700 13px var(--f-mono)">' + r.rank + '</text>' : '') + '</g>';
+      s += '<text x="' + x + '" y="' + (y + 31) + '" text-anchor="middle" style="fill:var(--ink);font:600 12px var(--f-body)">' + r.n.replace("Sgt. ", "") + '</text><text x="' + x + '" y="' + (y + 45) + '" text-anchor="middle" style="font:500 11px var(--f-mono)">' + r.m + ' min</text>';
+    });
+    s += '</svg>';
+    var legend = '<div class="row small" style="margin-top:6px">' + (state.view >= 1 ? chg("hotfix", '<span class="row"><span class="lvl Good">Good</span><span class="lvl Fair">Fair</span><span class="lvl Low">Low</span> pin colour = recent acceptance, shown for the two responders Kip looks after</span>', "HOTFIX") : '<span class="muted">Today the map shows pings only: no levels, no ranking.</span>') + '</div>';
+    var mapCard = '<div class="row" style="justify-content:space-between;margin-bottom:6px"><h3>Where everyone was</h3><span class="chip p">positions assumed</span></div>' + s + legend +
+      '<div class="card" style="background:var(--surface2);margin-top:10px"><div class="small" style="font-weight:700">What really happened <span class="chip v">verified</span></div><div class="small mono">21:47:41 callout &middot; 21:47:56 ping Bulwark: missed &middot; 21:48:59 ping The Gale: taken (78 s after the callout)</div><div class="small muted">Meteor Mite, whose home is Eastgate, was not asked at all.</div></div>';
+    var rankCard = '<h3 style="margin-bottom:6px">Ranked list</h3>' + (state.view >= 2 ? chg("backlog", '<div class="small" style="font-weight:700;margin-bottom:6px">How this was ranked</div>' + rankTable(), "BACKLOG 1") + '<div class="small" style="margin-top:8px">' + mapStory() + '</div>' : '<div class="note">Not available in this view. Today a handler sees only who was pinged (Bulwark, then The Gale). Switch to "+ Hotfix and backlog" to see the ranked list the backlog item would add.</div>');
+    return '<p class="small muted" style="max-width:80ch;margin-bottom:8px">Real callout 41380 (Eastgate, 4 Sep 21:47). What really happened is checked data. Positions and travel minutes are assumed because the data has none; recent acceptance is replayed from real pings to the end of 3 Sep.</p><div class="mapwrap"><div class="card">' + mapCard + '</div><div class="card">' + rankCard + '</div></div>';
+  }
+
+  /* ================= simulator ================= */
+  function rng(seed) { return function () { seed |= 0; seed = seed + 0x6D2B79F5 | 0; var t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  function poisson(l, r) { var L = Math.exp(-l), k = 0, p = 1; do { k++; p *= r(); } while (p > L); return k - 1; }
+  function whatIf(p, hl) {
+    var N = 200, days = p.days, tod = new Array(days).fill(0), fd = new Array(days).fill(0), r = rng(7);
+    for (var run = 0; run < N; run++) {
+      var H = .5, B = .5, D = 0;
+      for (var d = 0; d < days; d++) {
+        D *= Math.pow(.5, 1 / hl);
+        var n = poisson(p.ppd, r);
+        for (var i = 0; i < n; i++) {
+          var q = r() * 100;
+          if (q < p.miss) { H = Math.max(0, H - .12); D += .12; }
+          else if (q < p.miss + p.ref) { H = Math.max(0, H - .12); B = Math.max(0, B - .12); }
+          else { H = Math.min(1, H + .08); var pay = Math.min(D, .08); D -= pay; B = Math.min(1, B + (.08 - pay)); }
+        }
+        tod[d] += H / N; fd[d] += clamp(B - D) / N;
+      }
+    }
+    return { tod: tod, fd: fd };
+  }
+  function lineChart(series, n, xlab, extra) {
+    var h = 230, l = 34, r = 10, t = 12, b = 28, w = 640, iw = w - l - r, x = function (i) { return l + iw * i / (n - 1); }, y = function (v) { return h - b - (h - t - b) * v; };
+    var s = '<svg viewBox="0 0 ' + w + ' ' + h + '" role="img">';
+    s += '<rect x="' + l + '" y="' + y(LOW) + '" width="' + iw + '" height="' + (y(0) - y(LOW)) + '" fill="var(--bad-soft)" opacity=".7"/><rect x="' + l + '" y="' + y(GOOD) + '" width="' + iw + '" height="' + (y(LOW) - y(GOOD)) + '" fill="var(--warn-soft)" opacity=".7"/><rect x="' + l + '" y="' + y(1) + '" width="' + iw + '" height="' + (y(GOOD) - y(1)) + '" fill="var(--ok-soft)" opacity=".7"/>';
+    [0, .25, .5, .75, 1].forEach(function (g) { s += '<text class="ax" x="' + (l - 4) + '" y="' + (y(g) + 3) + '" text-anchor="end">' + g.toFixed(2) + '</text>'; });
+    s += '<text class="ax" x="' + (w - r - 2) + '" y="' + (y(.2)) + '" text-anchor="end">Low</text><text class="ax" x="' + (w - r - 2) + '" y="' + (y(.58)) + '" text-anchor="end">Fair</text><text class="ax" x="' + (w - r - 2) + '" y="' + (y(.88)) + '" text-anchor="end">Good</text>';
+    series.forEach(function (sr) { s += '<polyline fill="none" stroke="' + sr.c + '" stroke-width="2.6" ' + (sr.dash ? 'stroke-dasharray="6 4"' : "") + ' points="' + sr.v.map(function (v, i) { return x(i) + "," + y(v); }).join(" ") + '"/>'; });
+    var step = Math.ceil(n / 8); for (var i = 0; i < n; i += step) s += '<text class="ax" x="' + x(i) + '" y="' + (h - 10) + '" text-anchor="middle">' + xlab(i) + '</text>';
+    if (extra) s += extra(x, y);
+    for (var j = 0; j < n; j++) s += '<rect class="hit" x="' + (x(j) - iw / n / 2) + '" y="' + t + '" width="' + (iw / n) + '" height="' + (h - t - b) + '" data-tip="' + esc(xlab(j) + series.map(function (sr) { return "\n" + sr.n + ": " + sr.v[j].toFixed(2); }).join("")) + '"/>';
+    return s + '</svg><div class="row small" style="margin-top:4px">' + series.map(function (sr) { return '<span><span style="color:' + sr.c + '">&#9632;</span> ' + sr.n + '</span>'; }).join("") + '</div>';
+  }
+  function renderSim() {
+    var s = state.sim, opts = NAMES.map(function (n) { return '<option' + (n === state.simResp ? " selected" : "") + '>' + n + '</option>'; }).join("");
+    $("#simCtl").innerHTML = '<div class="seg" role="group" style="margin-bottom:12px"><button data-m="replay" aria-pressed="' + (state.simMode === "replay") + '">Replay real pings</button><button data-m="whatif" aria-pressed="' + (state.simMode === "whatif") + '">What if</button></div>' +
+      '<div class="field"><label>Half-life of a miss <span class="mono">' + state.hl + ' days</span></label><input type="range" id="hlR" min="1" max="7" step="1" value="' + state.hl + '"><span class="small muted">Proposal: 2 days.</span></div>' +
+      (state.simMode === "replay" ? '<div class="field"><label for="respS">Responder</label><select id="respS">' + opts + '</select></div><p class="small muted">Day 0 is 12 Aug. Starting scores come from replaying the pings since 29 Jun (modelled). Assumes scores survive restarts; today they live in memory, so a restart resets everyone to 0.5.</p>' :
+      '<div class="field"><label>Pings per day <span class="mono">' + s.ppd.toFixed(1) + '</span></label><input type="range" id="ppdR" min="0.3" max="3" step="0.1" value="' + s.ppd + '"></div><div class="field"><label>Missed <span class="mono">' + s.miss + '%</span></label><input type="range" id="missR" min="0" max="80" step="1" value="' + s.miss + '"></div><div class="field"><label>Turned down <span class="mono">' + s.ref + '%</span></label><input type="range" id="refR" min="0" max="40" step="1" value="' + s.ref + '"></div><p class="small muted">Defaults are the four\u2019s real rates after 12 Aug (59% missed, 18% turned down). Pings per day is held constant here; in reality a low score gets fewer. 200 seeded runs.</p>');
+    var out = "";
+    if (state.simMode === "replay") {
+      var n = state.simResp, td = [], fd = [], i; for (i = 0; i <= MAXD; i++) { td.push(todayScore(n, i)); fd.push(fadeScore(n, i, state.hl)); }
+      var evs = EV[n];
+      var ex = function (x, y) { var q = ""; evs.forEach(function (e, k) { var c = e[1] === "T" ? "var(--ok)" : e[1] === "D" ? "var(--warn)" : "var(--bad)"; q += '<circle cx="' + (x(e[0]) + ((k % 3) - 1) * 3) + '" cy="' + (y(0) - 6 - ((k % 3) * 5)) + '" r="3" fill="' + c + '"><title>' + dlabel(e[0]) + ': ' + ({ T: "taken", D: "turned down", M: "missed" })[e[1]] + '</title></circle>'; }); return q; };
+      var below = td.filter(function (v) { return v < LOW; }).length, below2 = fd.filter(function (v) { return v < LOW; }).length;
+      out = '<div class="card"><h3>' + n + ': recent acceptance, 12 Aug to 6 Sep</h3>' + lineChart([{ n: "Today's rule", v: td, c: "var(--ink)", dash: true }, { n: "Hotfix (" + state.hl + "-day fade)", v: fd, c: "var(--hot)" }], MAXD + 1, dlabel, ex) + '<div class="small muted">Dots: pings (green taken, amber turned down, red missed). Bands are a proposal: Good ' + GOOD.toFixed(2) + ' and up (a new responder starts at 0.50, which reads as Fair, so the line stays hidden until there is something to explain), Fair ' + LOW.toFixed(2) + ' to ' + GOOD.toFixed(2) + ', Low under ' + LOW.toFixed(2) + '. Modelled replay with no restarts, not a forecast: under the hotfix they would be asked more.</div></div>' +
+        '<div class="grid2"><div class="card"><div class="small muted">On 6 Sep</div><div class="mono" style="font-size:1.4rem"><span>' + td[MAXD].toFixed(2) + '</span> &rarr; <span style="color:var(--hot)">' + fd[MAXD].toFixed(2) + '</span></div><div class="small muted">today &rarr; hotfix &middot; days in Low: ' + below + ' &rarr; ' + below2 + '</div></div><div class="card"><div class="small muted">Rank cost against a neighbour at 0.85</div><div class="mono" style="font-size:1.4rem"><span>' + (.25 * Math.max(0, .85 - td[MAXD]) / .6 * 45).toFixed(1) + '</span> &rarr; <span style="color:var(--hot)">' + (.25 * Math.max(0, .85 - fd[MAXD]) / .6 * 45).toFixed(1) + '</span> <span class="small">min of travel</span></div><div class="small muted">0.25 weight on recent acceptance, 0.60 on proximity</div></div></div>';
+    } else {
+      var r = whatIf(s, state.hl), n2 = s.days, avg = function (a) { var z = a.slice(30), t = 0; z.forEach(function (v) { t += v; }); return t / z.length; };
+      out = '<div class="card"><h3>What if a responder keeps missing?</h3>' + lineChart([{ n: "Today's rule", v: r.tod, c: "var(--ink)", dash: true }, { n: "Hotfix (" + state.hl + "-day fade)", v: r.fd, c: "var(--hot)" }], n2, function (i) { return "day " + i; }) + '<div class="small muted">Average of 200 runs. Misses fade; refusals and takes work as today.</div></div>' +
+        '<div class="grid2"><div class="card"><div class="small muted">Average, days 30 to 60</div><div class="mono" style="font-size:1.4rem"><span>' + avg(r.tod).toFixed(2) + '</span> &rarr; <span style="color:var(--hot)">' + avg(r.fd).toFixed(2) + '</span></div><div class="small muted">today &rarr; hotfix</div></div><div class="card"><div class="small muted">What this says</div><p class="small">' + (avg(r.fd) < 0.1 ? 'At these rates the fade does not help: a responder who really does miss most pings still ends near zero. The fade helps responders who stop being asked, because their penalty clears and they are asked again; it does not change why they miss.' : 'At these rates the fade lifts the average, but a responder who keeps missing stays well below a healthy one. It does not change why they miss.') + '</p></div></div>';
+    }
+    $("#simOut").innerHTML = out;
+    $$("#simCtl [data-m]").forEach(function (b) { b.onclick = function () { state.simMode = b.getAttribute("data-m"); renderSim(); }; });
+    var bind = function (id, fn) { var e = $("#" + id); if (e) e.oninput = function () { fn(+e.value); renderSim(); }; };
+    bind("hlR", function (v) { state.hl = v; }); bind("ppdR", function (v) { state.sim.ppd = v; }); bind("missR", function (v) { state.sim.miss = v; }); bind("refR", function (v) { state.sim.ref = v; });
+    var rs = $("#respS"); if (rs) rs.onchange = function () { state.simResp = rs.value; renderSim(); };
+  }
+
+  /* ================= preview under the journey ================= */
+  var PERS = { K: { n: "Kip", role: "Handler for Meteor Mite and The Gale", q: "\"I just want it to look less like a coincidence when I'm staring at it at midnight and one card's dead quiet and the other's on fire.\" (interview, 4 Sep)" }, R: { n: "Meteor Mite", role: "Responder, Eastgate, one of the four", q: "\"Mite thinks Mite's been forgotten.\" (Kip, about his responder, interview 4 Sep)" } };
+  function renderPreview() {
+    var box = $("#preview");
+    if (!state.sel) { box.innerHTML = '<div class="card muted">Click a step above to preview it: the screen the handler or responder sees, the map, or the data behind it.</div>'; return; }
+    var s = ST.filter(function (x) { return x.id === state.sel; })[0], views = [];
+    if (s.screen) views.push(["screen", "Screen"]); if (s.map) views.push(["map", "Map"]); if (s.charts.length) views.push(["data", "Data"]);
+    if (!views.some(function (v) { return v[0] === state.pv; })) state.pv = views.length ? views[0][0] : "";
+    var kchip = s.k === "hotfix" ? '<span class="chip hot">hotfix</span>' : s.k === "backlog" ? '<span class="chip bk">backlog</span>' : '<span class="chip ex">existing</span>';
+    var h = '<div class="card"><div class="pvhead"><div class="row">' + kchip + '<span class="chip ex">' + s.ty + '</span>' + (s.hot ? '<span class="chip bad">problem</span>' : "") + '<button class="qb" id="pvClose" style="margin-left:auto">Close</button></div><h3>' + esc(s.tx) + '</h3><p class="small" style="max-width:90ch">' + esc(s.what) + '</p>' + (!on(s.k) ? '<div class="note">Not shown in the "' + ["Today", "+ Hotfix", "+ Hotfix and backlog"][state.view] + '" view. Switch the view at the top to see it.</div>' : "") + '</div>';
+    if (views.length) h += '<div class="pvtabs">' + views.map(function (v) { return '<button data-pv="' + v[0] + '" aria-pressed="' + (state.pv === v[0]) + '">' + v[1] + '</button>'; }).join("") + '</div>';
+    if (state.pv === "screen") { var P = PERS[s.screen[0]]; h += '<div class="persona-strip"><span class="avatar">' + P.n[0] + '</span><div><b>' + P.n + '</b> <span class="small muted">' + P.role + '</span><div class="small muted">' + esc(P.q) + '</div></div></div><div class="frames">' + renderScreenById(s.screen) + '</div>'; }
+    else if (state.pv === "map") h += mapHTML();
+    else if (state.pv === "data") h += '<div class="charts">' + s.charts.map(chartCard).join("") + '</div>';
+    h += '</div>'; box.innerHTML = h;
+    $("#pvClose").onclick = function () { state.sel = null; renderJourney(); renderPreview(); };
+    $$("[data-pv]", box).forEach(function (b) { b.onclick = function () { state.pv = b.getAttribute("data-pv"); renderPreview(); }; });
+    bindScreenEvents(box);
+  }
+
+  /* ================= wiring ================= */
+  function setTab(t) {
+    state.tab = t;
+    ["journey", "sim"].forEach(function (k) { $("#p-" + k).hidden = k !== t; });
+    $$("#tabSeg button").forEach(function (b) { b.setAttribute("aria-selected", b.getAttribute("data-t") === t ? "true" : "false"); });
+    try { history.replaceState(null, "", "#" + t); } catch (e) {}
+    renderAll();
+  }
+  function renderAll() {
+    $$("#viewSeg button").forEach(function (b) { b.setAttribute("aria-pressed", String(+b.getAttribute("data-v") === state.view)); });
+    if (state.tab === "journey") { renderJourney(); renderPreview(); } else renderSim();
+  }
+  $$("#viewSeg button").forEach(function (b) { b.addEventListener("click", function () { state.view = +b.getAttribute("data-v"); renderAll(); }); });
+  $("#hiChk").addEventListener("change", function () { state.hi = this.checked; renderAll(); });
+  $$("#tabSeg button").forEach(function (b) { b.addEventListener("click", function () { setTab(b.getAttribute("data-t")); window.scrollTo(0, 0); }); });
+  var h0 = (location.hash || "").replace("#", ""); if (["journey", "sim"].indexOf(h0) >= 0) state.tab = h0;
+  startTimer();
+  setTab(state.tab);
+})();
+</script>

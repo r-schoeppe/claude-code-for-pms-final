@@ -1,0 +1,484 @@
+<title>Quiet Responders Demonstrator</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Public+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: sticky control bar (view switch, highlight toggle, tabs) over four working areas: journey canvas, screens, map, simulator. */
+:root {
+  --bg: #edf1f4; --surface: #ffffff; --surface2: #f5f7f9; --ink: #14202b; --muted: #55646f; --line: #d3dce3;
+  --hot: #c2410c; --hot-soft: #fff1e6; --bk: #5b3fd1; --bk-soft: #eeeaff;
+  --bad: #b42323; --bad-soft: #fcebea; --ok: #217a3c; --ok-soft: #e4f3e8; --warn: #946200; --warn-soft: #fbf0d4;
+  --f-body: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1318; --surface: #151e26; --surface2: #1b2630; --ink: #e6ecf1; --muted: #93a3b1; --line: #2b3946;
+    --hot: #ff9f5c; --hot-soft: #3a2314; --bk: #b6a2ff; --bk-soft: #2a2250;
+    --bad: #ff8d85; --bad-soft: #3b1f1d; --ok: #74d39b; --ok-soft: #14301f; --warn: #f0b64f; --warn-soft: #382b10;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1318; --surface: #151e26; --surface2: #1b2630; --ink: #e6ecf1; --muted: #93a3b1; --line: #2b3946;
+  --hot: #ff9f5c; --hot-soft: #3a2314; --bk: #b6a2ff; --bk-soft: #2a2250;
+  --bad: #ff8d85; --bad-soft: #3b1f1d; --ok: #74d39b; --ok-soft: #14301f; --warn: #f0b64f; --warn-soft: #382b10;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.5 var(--f-body); padding-inline: 16px; }
+.wrap { max-width: 1240px; margin-inline: auto; padding-block: 18px 60px; }
+h1, h2, h3, h4 { margin: 0; font-weight: 700; text-wrap: balance; }
+h1 { font-size: 1.7rem; line-height: 1.15; letter-spacing: -.01em; }
+h2 { font-size: 1.2rem; }
+h3 { font-size: 1rem; }
+p { margin: 0; }
+.mono { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted); }
+.small { font-size: .82rem; }
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 3px solid var(--bk); outline-offset: 2px; }
+header.top { display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between; align-items: end; margin-bottom: 12px; }
+.ctl { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 30; background: var(--bg); border-bottom: 1px solid var(--line); padding-block: 8px; display: grid; gap: 8px; margin-bottom: 14px; }
+.row { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface); }
+.seg button { border: 0; background: transparent; padding: 7px 12px; border-right: 1px solid var(--line); white-space: nowrap; }
+.seg button:last-child { border-right: 0; }
+.seg button[aria-pressed="true"], .seg button[aria-selected="true"] { background: var(--ink); color: var(--bg); font-weight: 600; }
+.chip { font: 600 .68rem/1 var(--f-mono); letter-spacing: .05em; text-transform: uppercase; padding: 4px 7px; border-radius: 4px; display: inline-block; white-space: nowrap; }
+.chip.ex { background: var(--surface2); color: var(--muted); border: 1px solid var(--line); }
+.chip.hot { background: var(--hot); color: var(--surface); }
+.chip.bk { background: var(--bk); color: var(--surface); }
+.chip.v { background: var(--ok-soft); color: var(--ok); }
+.chip.m { background: var(--bk-soft); color: var(--bk); }
+.chip.p { background: var(--warn-soft); color: var(--warn); }
+.chip.bad { background: var(--bad-soft); color: var(--bad); }
+label.sw { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
+label.sw input { width: 17px; height: 17px; accent-color: var(--bk); }
+section.panel[hidden] { display: none; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px; min-width: 0; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 12px; }
+/* journey */
+.loop { display: flex; flex-wrap: wrap; gap: 6px 4px; align-items: center; margin-bottom: 10px; font-size: .84rem; }
+.loop .lp { border: 1px solid var(--line); background: var(--surface); border-radius: 99px; padding: 5px 11px; font-weight: 600; }
+.loop .lp.bad { border-color: var(--bad); color: var(--bad); }
+.loop .lp.fix { border: 2px solid var(--hot); background: var(--hot-soft); color: var(--hot); }
+.canvas { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.jgrid { display: grid; grid-template-columns: 124px repeat(9, 196px); min-width: max-content; }
+.jh { position: sticky; top: 0; font: 600 .72rem var(--f-mono); text-transform: uppercase; letter-spacing: .05em; color: var(--muted); padding: 10px; border-bottom: 1px solid var(--line); border-left: 1px dashed var(--line); background: var(--surface); }
+.jl { position: sticky; left: 0; z-index: 2; background: var(--surface2); border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); padding: 10px; font-weight: 600; font-size: .85rem; }
+.jc { border-bottom: 1px solid var(--line); border-left: 1px dashed var(--line); padding: 8px; display: flex; flex-direction: column; gap: 8px; min-height: 112px; }
+.stk { text-align: left; border: 1px solid var(--line); border-radius: 6px; padding: 8px 9px; background: var(--surface2); display: grid; gap: 4px; width: 100%; position: relative; }
+.stk:hover { border-color: var(--ink); }
+.stk .ty { font: 500 .62rem var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); display: flex; justify-content: space-between; gap: 6px; }
+.stk .tx { font-weight: 600; font-size: .86rem; line-height: 1.3; }
+.stk.hotspot { border-left: 5px solid var(--bad); }
+.stk.hi-hot { background: var(--hot-soft); border: 2px solid var(--hot); }
+.stk.hi-bk { background: var(--bk-soft); border: 2px dashed var(--bk); }
+.stk.off { opacity: .38; border-style: dashed; }
+.stk[aria-expanded="true"] { box-shadow: 0 0 0 3px var(--ink); }
+.cond { font: 500 .62rem var(--f-mono); color: var(--bk); }
+/* drawer */
+.dcard { border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: var(--surface2); }
+.dcard .t { font-weight: 600; font-size: .88rem; margin-bottom: 4px; }
+.dcard .src { font: .68rem/1.35 var(--f-mono); color: var(--muted); margin-top: 6px; }
+svg { display: block; width: 100%; height: auto; }
+svg .ax { fill: var(--muted); font: 10px var(--f-mono); }
+svg .lb { fill: var(--ink); font: 11px var(--f-body); }
+svg .gr { stroke: var(--line); }
+svg .hit { fill: transparent; }
+#tip { position: fixed; z-index: 60; pointer-events: none; background: var(--ink); color: var(--bg); font: .76rem/1.35 var(--f-mono); padding: 6px 8px; border-radius: 4px; max-width: 240px; white-space: pre-line; }
+/* change highlighting */
+.chg { position: relative; }
+.chg.hi.chg-hot { outline: 2px solid var(--hot); outline-offset: 2px; background: var(--hot-soft); border-radius: 6px; }
+.chg.hi.chg-bk { outline: 2px dashed var(--bk); outline-offset: 2px; background: var(--bk-soft); border-radius: 6px; }
+.chg .ct { display: none; }
+.chg.hi .ct { display: inline-block; position: absolute; top: -9px; right: 8px; font: 700 .6rem/1 var(--f-mono); letter-spacing: .06em; padding: 3px 5px; border-radius: 3px; color: var(--surface); z-index: 3; }
+.chg-hot .ct { background: var(--hot); }
+.chg-bk .ct { background: var(--bk); }
+/* device frames */
+.frames { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; }
+.frame { background: var(--surface); border: 1px solid var(--ink); border-radius: 10px; overflow: hidden; min-width: 0; position: relative; }
+.frame.console { flex: 1 1 520px; max-width: 760px; }
+.frame.phone { flex: 0 0 320px; width: 320px; border-radius: 26px; border-width: 3px; }
+.fbar { background: var(--ink); color: var(--bg); padding: 8px 12px; font-size: .8rem; display: flex; justify-content: space-between; gap: 8px; }
+.ill { font: 500 .62rem var(--f-mono); letter-spacing: .05em; text-transform: uppercase; opacity: .85; }
+.cbody { display: grid; grid-template-columns: 120px 1fr; }
+.cnav { background: var(--surface2); border-right: 1px solid var(--line); padding: 10px; display: grid; gap: 4px; align-content: start; font-size: .82rem; }
+.cnav span { padding: 5px 6px; border-radius: 4px; }
+.cnav span.on { background: var(--ink); color: var(--bg); }
+.cmain { padding: 12px; display: grid; gap: 12px; min-width: 0; }
+@media (max-width: 560px) { .cbody { grid-template-columns: 1fr; } .cnav { display: none; } }
+.rcard { border: 1px solid var(--line); border-radius: 8px; padding: 10px; display: grid; gap: 6px; background: var(--surface); }
+.rcard .nm { font-weight: 700; display: flex; justify-content: space-between; gap: 8px; }
+.rcard .nm { align-items: flex-start; }
+.badge { align-self: flex-start; font: 600 .66rem var(--f-mono); padding: 3px 6px; border-radius: 4px; background: var(--ok-soft); color: var(--ok); }
+.lvl { font: 700 .72rem var(--f-mono); padding: 3px 7px; border-radius: 99px; }
+.lvl.Good { background: var(--ok-soft); color: var(--ok); }
+.lvl.Fair { background: var(--warn-soft); color: var(--warn); }
+.lvl.Low { background: var(--bad-soft); color: var(--bad); }
+.pbody { padding: 14px; display: grid; gap: 12px; min-height: 470px; align-content: start; }
+.btnbig { border: 0; border-radius: 10px; padding: 12px; font-weight: 700; width: 100%; }
+.btnbig.go { background: var(--ok); color: var(--surface); }
+.btnbig.no { background: var(--surface2); border: 1px solid var(--line); }
+.ptabs { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--line); }
+.ptabs button { border: 0; background: var(--surface2); padding: 10px; font-size: .85rem; }
+.ptabs button[aria-pressed="true"] { background: var(--ink); color: var(--bg); font-weight: 600; }
+.ring { width: 110px; height: 110px; margin-inline: auto; }
+.persona { display: flex; gap: 10px; align-items: center; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; background: var(--surface); text-align: left; }
+.persona[aria-pressed="true"] { border: 2px solid var(--ink); }
+.avatar { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; background: var(--ink); color: var(--bg); flex: none; }
+table { border-collapse: collapse; width: 100%; font-size: .84rem; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font: 500 .66rem var(--f-mono); text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+td.n, th.n { text-align: right; font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+.tw { overflow-x: auto; }
+.rk1 td { background: var(--ok-soft); }
+.moved td:first-child { box-shadow: inset 4px 0 0 var(--hot); }
+input[type=range] { width: 100%; accent-color: var(--bk); }
+.note { border-left: 4px solid var(--warn); background: var(--warn-soft); padding: 8px 10px; border-radius: 0 6px 6px 0; font-size: .85rem; }
+.mapwrap { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(320px, 1fr); gap: 12px; }
+@media (max-width: 1100px) { .mapwrap { grid-template-columns: 1fr; } }
+svg.map text { font: 12px var(--f-body); fill: var(--muted); }
+svg.map .area { fill: var(--surface2); stroke: var(--line); }
+svg.map .pin text { fill: var(--surface); }
+.simgrid { display: grid; grid-template-columns: minmax(260px, 320px) minmax(0, 1fr); gap: 12px; }
+@media (max-width: 860px) { .simgrid { grid-template-columns: 1fr; } }
+.field { display: grid; gap: 3px; margin-bottom: 10px; }
+.field label { font-size: .82rem; font-weight: 600; display: flex; justify-content: space-between; }
+select { font: inherit; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; width: 100%; }
+.qb { border: 1px solid var(--line); background: var(--surface); border-radius: 6px; padding: 4px 9px; font-size: .8rem; }
+.qb:hover { border-color: var(--ink); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+.pv { margin-top: 14px; }
+.pvhead { display: grid; gap: 6px; margin-bottom: 10px; }
+.pvtabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 10px 0; }
+.pvtabs button { border: 1px solid var(--line); background: var(--surface); border-radius: 6px; padding: 6px 12px; }
+.pvtabs button[aria-pressed="true"] { background: var(--ink); color: var(--bg); font-weight: 600; }
+.persona-strip { display: flex; gap: 10px; align-items: center; margin-bottom: 12px; }
+.moment { font-size: .82rem; color: var(--muted); margin-top: 6px; }
+.charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 12px; }
+
+.seqhead, .seqrow { display: grid; grid-template-columns: minmax(0, 1.55fr) 190px minmax(0, 1fr); gap: 0 18px; }
+.seqhead { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 96px); z-index: 5; background: var(--bg); padding: 8px 0; border-bottom: 1px solid var(--line); font: 600 .72rem var(--f-mono); letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+.seqhead div:nth-child(2) { text-align: center; }
+.seqrow { padding: 18px 0; position: relative; }
+.seqrow .spine { position: relative; display: grid; justify-items: center; align-content: start; gap: 6px; text-align: center; }
+.seqrow .spine::before { content: ""; position: absolute; top: -18px; bottom: -18px; left: 50%; width: 2px; background: var(--line); z-index: 0; }
+.seqrow:first-of-type .spine::before { top: 18px; }
+.seqrow:last-of-type .spine::before { bottom: calc(100% - 40px); }
+.node { position: relative; z-index: 1; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font: 700 .9rem var(--f-mono); background: var(--ink); color: var(--bg); }
+.node.hot { background: var(--hot); color: var(--surface); }
+.node.bk { background: var(--bk); color: var(--surface); }
+.node.prob { box-shadow: 0 0 0 4px var(--bad-soft), 0 0 0 6px var(--bad); }
+.evl { position: relative; z-index: 1; background: var(--bg); padding: 2px 4px; font-weight: 700; font-size: .9rem; line-height: 1.25; }
+.evn { font-size: .76rem; color: var(--muted); max-width: 170px; background: var(--bg); position: relative; z-index: 1; padding: 1px 4px; }
+.seqrow .side { min-width: 0; }
+.seqrow .off .ph { border: 2px dashed var(--line); border-radius: 10px; padding: 16px; text-align: center; font-size: .82rem; color: var(--muted); }
+.seqrow.dim .spine { opacity: .45; }
+.frame.console.mini { max-width: none; width: 100%; }
+.mini .cmain { padding: 10px; gap: 8px; }
+.mini .fbar { font-size: .76rem; }
+.frame.phone.mini { flex: none; width: 300px; max-width: 100%; margin-inline: auto; }
+.frame.phone.mini .pbody { min-height: 0; }
+@media (max-width: 900px) {
+  .seqhead { display: none; }
+  .seqrow { grid-template-columns: 1fr; gap: 10px; }
+  .seqrow .spine { grid-template-columns: auto 1fr; justify-items: start; text-align: left; align-items: center; }
+  .seqrow .spine::before { display: none; }
+  .seqrow .left, .seqrow .right { order: 2; }
+}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <h1>Quiet Responders</h1>
+    <div class="row small"><span class="chip v">verified</span> data or code <span class="chip m">modelled</span> replay <span class="chip p">proposal</span> our choice</div>
+  </header>
+
+  <div class="ctl">
+    <div class="row">
+      <span class="small muted" style="font-weight:600">Show</span>
+      <div class="seg" id="viewSeg" role="group" aria-label="Which version to show">
+        <button data-v="0" aria-pressed="false">Today</button>
+        <button data-v="1" aria-pressed="false">+ Hotfix</button>
+        <button data-v="2" aria-pressed="true">+ Hotfix and backlog</button>
+      </div>
+      <label class="sw small"><input type="checkbox" id="hiChk" checked> Highlight what is new</label>
+      <span class="row small"><span class="chip ex">existing</span><span class="chip hot">hotfix</span><span class="chip bk">backlog</span></span>
+    </div>
+    <div class="seg" id="tabSeg" role="tablist" aria-label="Sections" style="justify-self:start">
+      <button role="tab" data-t="journey" aria-selected="true">Journey</button>
+      <button role="tab" data-t="sim" aria-selected="false">Simulator</button>
+    </div>
+  </div>
+
+  <section class="panel" id="p-journey">
+    <div class="seqhead"><div>Kip &middot; handler &middot; console</div><div>Event</div><div>Meteor Mite &middot; responder &middot; phone</div></div>
+    <div id="seq"></div>
+  </section>
+
+  <section class="panel" id="p-sim" hidden>
+    <h2>Score simulator</h2>
+    <p class="muted small" style="margin:2px 0 10px;max-width:80ch">Recent acceptance under today's rule next to the proposed fade. Replay uses the real pings from 12 Aug to 6 Sep. The what-if holds pings per day constant to isolate the rule.</p>
+    <div class="simgrid"><div class="card" id="simCtl"></div><div id="simOut" style="display:grid;gap:12px;min-width:0"></div></div>
+  </section>
+</div>
+<div id="tip" hidden></div>
+
+<script>
+
+
+(function () {
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+  var esc = function (s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); };
+
+  /* ================= data ================= */
+  var S0 = {"Captain Vantage":.96,"Cindermark":.96,"Corporal Ashgrove":.88,"Farlight":.84,"Halfmoon":.88,"Ironvale":1.0,"Meteor Mite":1.0,"Nightwell":.96,"Sgt. Bulwark":.80,"Sgt. Falkirk":1.0,"Stormwrack":.88,"The Drift":1.0,"The Gale":.96,"The Longcast":1.0,"The Undertow":.88,"Vesper":.96};
+  var SEQ = {
+    "Captain Vantage":"0D,0M,1D,1T,2T,2T,4T,4T,4D,5T,6T,7T,7M,7T,8M,8D,8T,8T,9T,9T,10T,10T,10D,11T,12T,12T,12T,13M,14T,14T,14T,14D,15T,15T,15D,16T,17T,17T,18T,18T,18D,19T,20T,20D,21T,21T,21T,22T,22M,23T,23T,23D,24T,24T,24T,25D,25M,25T,25T",
+    "Cindermark":"0D,0T,1D,2T,2T,3M,4T,5T,5T,6T,6T,6T,8T,9M,10T,10D,11D,11T,12T,13T,13D,13T,14T,15D,15T,16T,16M,17M,18T,18T,19T,19T,19D,19D,21T,22T,22T,22T,23T,24T,25M,25T",
+    "Corporal Ashgrove":"0T,1T,1D,2M,2D,3T,4T,5T,5D,5T,8T,8M,11D,11T,11T,12M,13T,14T,15T,16T,17D,18T,20M,20D,20T,20T,22T,23T,24T",
+    "Farlight":"0T,0M,0D,1M,1M,2M,2T,7M,10D,11M,16M",
+    "Halfmoon":"0D,1M,2T,2T,2T,3M,4D,4T,5T,7D,7M,7T,8T,8T,9D,9T,11M,14T,14T,14T,14D,15T,16D,18T,18M,20T,20T,21T,22D,22T,23T,23T,24T",
+    "Ironvale":"0T,0D,2M,2T,2D,3T,5T,6T,6T,6M,7D,7M,8D,9T,11T,11T,12T,13T,13T,14M,14D,16T,16T,16T,18M,18T,18T,19T,19T,21T,21T,22T,23T,23T,23T,23M,23M,24T,24D",
+    "Meteor Mite":"0D,1M,1M,2M,3T,3T,4M,6D,7T,8M,10M,15D,17M,24M",
+    "Nightwell":"0T,0T,1T,2D,3D,3T,3M,4M,4D,4D,4T,5M,5T,6D,6T,6T,7T,7T,8T,8D,9T,9T,9T,10T,10T,10T,11M,11T,11T,12T,12T,14T,14T,14T,15T,15D,15T,15D,16D,16D,16T,16T,17T,17M,17T,17T,17M,18T,18D,19T,20D,20T,20M,20T,21T,21D,21D,22T,22T,22T,23D,23T,23T,23T,24T,24T,24T,25T,25T,25M",
+    "Sgt. Bulwark":"2M,2T,3T,3D,3M,4D,4T,5T,6T,6D,6T,7T,7T,8T,9T,9M,9T,13D,13T,15D,15M,15T,16T,17M,17T,18T,18T,18T,19M,19T,19D,20T,22T,22T,23M,23T,24T,24T,25T",
+    "Sgt. Falkirk":"0D,0T,1T,1M,1T,1M,2T,3T,5T,6T,6D,6T,6T,7T,7D,7T,9M,9T,11T,11T,11M,12D,12T,13M,14T,14T,14T,15T,17T,17T,17T,17D,18M,18T,18T,18T,19T,19T,19T,19T,20T,20D,20T,21T,21T,21M,22T,22D,23T,24T,25D,25M",
+    "Stormwrack":"0T,0T,0T,0M,0M,1M,2D,3T,3T,3D,5D,5T,6T,6D,6T,7T,7T,8T,8T,9T,9M,9M,9T,11T,11T,11T,12T,12T,12T,12D,12T,12M,13T,13M,13D,14T,15T,16T,16D,16T,17T,17T,17T,18T,19T,20T,21M,21T,22T,22T,23T,23T,23D,23T,24T,24T,24T,24T,24T,24T,25T,25D,25M",
+    "The Drift":"0M,0T,3D,3M,4T,5T,7T,7T,8M,8T,9T,10D,12T,12T,14T,15T,15T,17D,18M,18T,20T,20T,21M,22T,22T,22D,25D,25T",
+    "The Gale":"0M,1M,1T,2T,2T,2D,2T,3D,4T,4D,4T,5T,5T,5D,5T,5T,6T,6T,6D,7M,8D,9T,9T,10T,10T,10M,11T,11T,12T,12M,12M,13T,13T,13D,14T,14T,16T,16D,16T,16T,16T,17T,18T,18D,18D,18T,18T,18T,19D,19D,20T,20T,20T,20M,21T,22T,22T,22M,23T,23T,23T,23T,23T,24T,24T,24T,24T,24D,24T",
+    "The Longcast":"1T,1T,2D,2T,3D,3M,5T,7T,9T,9M,9T,10D,10T,11T,12M,12M,12D,13T,13T,17T,18D,18T,18T,19M,20T,22T,23T,23T,24T,24T,25D,25T",
+    "The Undertow":"0M,1M,1T,1T,1M,2M,2M,4D,5D,5T,6M,9M,15M,24M",
+    "Vesper":"1M,2T,2M,3T,3D,3T,4M,4M,4T,5T,7M,11M,11D,11M,12D,14M,20M"
+  };
+  var EV = {}; Object.keys(SEQ).forEach(function (n) { EV[n] = SEQ[n].split(",").map(function (x) { return [parseInt(x, 10), x.slice(-1)]; }); });
+  var NAMES = Object.keys(SEQ).sort();
+  var FOUR = ["Farlight", "The Undertow", "Meteor Mite", "Vesper"];
+  var MAXD = 25; // 6 Sep
+  var WEEKS = ["29 Jun","6 Jul","13 Jul","20 Jul","27 Jul","3 Aug","10 Aug","17 Aug","24 Aug","31 Aug"];
+  var W4 = [49,48,48,50,50,49,43,16,6,3], W12 = [123,122,126,126,120,123,134,142,156,162];
+  var NOBODY = [9,8,5,12,5,4,14,17,16,7], CALLS = [141,139,138,144,137,138,110,121,124,127];
+  var P90 = [38,41,45,45,43,32,82,77,69,70];
+  var GOOD = 0.70, LOW = 0.45; // level bands (proposal; design's call). A new responder starts at 0.5, so the line stays hidden until there is something to explain.
+  var MONTHS = ["Aug","Sep"];
+  function dlabel(d) { var n = 12 + d; return n <= 31 ? n + " Aug" : (n - 31) + " Sep"; }
+
+  /* ================= score engine ================= */
+  function clamp(x) { return Math.max(0, Math.min(1, x)); }
+  function todayScore(n, d) { var h = S0[n]; EV[n].forEach(function (e) { if (e[0] <= d) h = e[1] === "T" ? Math.min(1, h + .08) : Math.max(0, h - .12); }); return h; }
+  function fadeParts(n, d, hl) {
+    var B = S0[n], D = 0, last = 0, i, e;
+    for (i = 0; i < EV[n].length; i++) {
+      e = EV[n][i]; if (e[0] > d) break;
+      D *= Math.pow(.5, (e[0] - last) / hl); last = e[0];
+      if (e[1] === "M") D += .12;
+      else if (e[1] === "D") B = Math.max(0, B - .12);
+      else { var pay = Math.min(D, .08); D -= pay; B = Math.min(1, B + (.08 - pay)); }
+    }
+    D *= Math.pow(.5, (d - last) / hl);
+    return { B: B, D: D, s: clamp(B - D) };
+  }
+  function fadeScore(n, d, hl) { return fadeParts(n, d, hl).s; }
+  function recoverDays(n, d, hl) {
+    var p = fadeParts(n, d, hl); if (p.s >= GOOD) return 0; if (p.B < GOOD) return null;
+    return Math.ceil(hl * Math.log(p.D / (p.B - GOOD)) / Math.LN2);
+  }
+  function level(x) { return x >= GOOD ? "Good" : x >= LOW ? "Fair" : "Low"; }
+  function lastN(n, d, k) { var a = EV[n].filter(function (e) { return e[0] <= d; }); return a.slice(-k); }
+  function pings7(n, d) { return EV[n].filter(function (e) { return e[0] <= d && e[0] > d - 7; }).length; }
+  function rule() { return state.view >= 1 ? "fade" : "today"; }
+  function scoreFor(n, d) { return rule() === "fade" ? fadeScore(n, d, state.hl) : todayScore(n, d); }
+
+  /* ================= state ================= */
+  var state = { view: 2, hi: true, tab: "journey", day: 25, hl: 2, simResp: "Meteor Mite", simMode: "replay", sim: { ppd: 1.5, miss: 59, ref: 18, days: 60 } };
+  function on(kind) { return kind === "existing" || (kind === "hotfix" && state.view >= 1) || (kind === "backlog" && state.view >= 2); }
+  function chg(kind, html, label) {
+    if (!on(kind)) return "";
+    var cls = kind === "hotfix" ? "chg-hot" : kind === "backlog" ? "chg-bk" : "";
+    var lab = kind === "hotfix" ? "HOTFIX" : "BACKLOG";
+    return '<div class="chg ' + cls + (state.hi ? " hi" : "") + '" style="padding:' + (state.hi ? "8px" : "0") + '"><span class="ct">' + (label || lab) + '</span>' + html + '</div>';
+  }
+  function rule() { return state.view >= 1 ? "fade" : "today"; }
+
+  /* ================= tooltip ================= */
+  var tip = $("#tip");
+  document.addEventListener("pointermove", function (e) {
+    var t = e.target.closest ? e.target.closest("[data-tip]") : null;
+    if (!t) { tip.hidden = true; return; }
+    tip.textContent = t.getAttribute("data-tip"); tip.hidden = false;
+    var x = Math.min(e.clientX + 12, window.innerWidth - tip.offsetWidth - 8), y = e.clientY + 14;
+    if (y + tip.offsetHeight > window.innerHeight - 8) y = e.clientY - tip.offsetHeight - 10;
+    tip.style.left = Math.max(8, x) + "px"; tip.style.top = Math.max(8, y) + "px";
+  });
+
+  var MON = { T: "taken", D: "turned down", M: "missed" };
+  function lineFor(n, d) {
+    var sc = fadeScore(n, d, state.hl), lv = level(sc), ls = lastN(n, d, 4), m = ls.filter(function (e) { return e[1] === "M"; }).length;
+    var recent = ls.some(function (e) { return e[1] === "M"; });
+    var rd = recoverDays(n, d, state.hl), head = "Recent acceptance (ranking): <b>" + lv + "</b>", next = "";
+    if (!ls.length) head = "Recent acceptance (ranking): <b>no pings yet</b>";
+    else if (lv !== "Good") {
+      head += (m ? " &middot; " + m + " of the last " + ls.length + " pings missed" : "") + " &middot; " + (lv === "Low" ? "Offers are reduced" : "Offers may be slightly reduced");
+      next = "Next: ask the responder to check the app is up to date and notifications are on. " + (rd === null ? "Needs a taken ping to recover." : "Good again about " + dlabel(d + rd) + " if there are no more misses.");
+    } else if (recent) head += " &middot; Recent misses are fading";
+    return { lv: lv, head: head, next: next, sc: sc, rd: rd, ls: ls };
+  }
+  var CAND = [["Sgt. Bulwark", "Foundry Row", 6, 1.0], ["The Gale", "Eastgate", 8, 1.0], ["Nightwell", "Midtown", 13, .5], ["Meteor Mite", "Eastgate", 7, 1.0], ["Cindermark", "Mill District", 19, 1.0], ["Sgt. Falkirk", "Kingsbridge", 24, 1.0]];
+  var CAL_DAY = 22;
+  function ranking() {
+    var f = rule() === "fade" ? function (n) { return fadeScore(n, CAL_DAY, state.hl); } : function (n) { return todayScore(n, CAL_DAY); };
+    var base = CAND.map(function (c) { var P = Math.max(0, 1 - c[2] / 45), H = f(c[0]), t = .6 * P + .25 * H + .15 * c[3]; return { n: c[0], a: c[1], m: c[2], P: P, H: H, C: c[3], t: t }; });
+    var tod = CAND.map(function (c) { var P = Math.max(0, 1 - c[2] / 45); return { n: c[0], t: .6 * P + .25 * todayScore(c[0], CAL_DAY) + .15 * c[3] }; }).sort(function (a, b) { return b.t - a.t; });
+    var rt = {}; tod.forEach(function (r, i) { rt[r.n] = i + 1; });
+    base.sort(function (a, b) { return b.t - a.t; }); base.forEach(function (r, i) { r.rank = i + 1; r.was = rt[r.n]; });
+    return base;
+  }
+  var OWN = { "Meteor Mite": 1, "The Gale": 1 };
+  function ord(n) { return n + (n === 1 ? "st" : n === 2 ? "nd" : n === 3 ? "rd" : "th"); }
+  function rankTable() {
+    var rows = ranking();
+    return '<div class="tw"><table><thead><tr><th class="n">#</th><th>Responder</th><th>Proximity &middot; recent acceptance &middot; skills</th><th class="n">Score</th></tr></thead><tbody>' + rows.map(function (r) {
+      var moved = state.view >= 1 && r.was !== r.rank, mv = moved ? ' <span class="chip hot">was ' + ord(r.was) + '</span>' : "", own = OWN[r.n];
+      var cells = own ? '<td class="mono small">' + (.6 * r.P).toFixed(2) + ' &middot; ' + (.25 * r.H).toFixed(2) + ' &middot; ' + (.15 * r.C).toFixed(2) + '<div class="muted">' + r.m + ' min, recent acceptance ' + r.H.toFixed(2) + '</div></td><td class="n"><b>' + r.t.toFixed(3) + '</b></td>' : '<td class="n muted" colspan="2">order only</td>';
+      return '<tr class="' + (r.rank === 1 ? "rk1" : "") + (moved ? " moved" : "") + '"><td class="n">' + r.rank + '</td><td>' + r.n + mv + '<div class="small muted">' + r.a + '</div></td>' + cells + '</tr>';
+    }).join("") + '</tbody></table></div><div class="small muted" style="margin-top:6px">Full scores for Kip\'s own responders, order only for the rest. Weighted parts (0.60, 0.25, 0.15). Minutes and skills are assumed; recent acceptance is replayed from real pings to the end of 3 Sep. Candidates beyond the two real pings are examples.</div>';
+  }
+  function rankTableFull() {
+    var rows = ranking();
+    return '<div class="tw"><table><thead><tr><th class="n">#</th><th>Responder</th><th class="n">Min</th><th class="n">0.60 &times; proximity</th><th class="n">0.25 &times; recent acceptance</th><th class="n">0.15 &times; skills</th><th class="n">Score</th></tr></thead><tbody>' + rows.map(function (r) {
+      var moved = state.view >= 1 && r.was !== r.rank, mv = moved ? ' <span class="chip hot">hotfix: was ' + ord(r.was) + '</span>' : "", own = OWN[r.n];
+      var cells = own ? '<td class="n">' + r.m + '</td><td class="n">' + (.6 * r.P).toFixed(2) + ' <span class="muted">(' + r.P.toFixed(2) + ')</span></td><td class="n">' + (.25 * r.H).toFixed(2) + ' <span class="muted">(' + r.H.toFixed(2) + ')</span></td><td class="n">' + (.15 * r.C).toFixed(2) + ' <span class="muted">(' + r.C.toFixed(2) + ')</span></td><td class="n"><b>' + r.t.toFixed(3) + '</b></td>' : '<td class="n muted" colspan="5" title="Order only for other handlers\' responders">order only</td>';
+      return '<tr class="' + (r.rank === 1 ? "rk1" : "") + (moved ? " moved" : "") + '"><td class="n">' + r.rank + '</td><td>' + r.n + mv + '<div class="small muted">' + r.a + '</div></td>' + cells + '</tr>';
+    }).join("") + '</tbody></table></div><div class="small muted" style="margin-top:6px">Kip sees full scores for his own responders and the order only for the rest. Weighted value first, raw value in brackets. Minutes and skills are assumed; recent acceptance is modelled from real pings to the end of 3 Sep under ' + (rule() === "fade" ? "the hotfix rule" : "today's rule") + '. Candidates beyond the two real pings are examples: real lists are often short, and today the full list is not recorded.</div>';
+  }
+  /* ================= simulator ================= */
+  function rng(seed) { return function () { seed |= 0; seed = seed + 0x6D2B79F5 | 0; var t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  function poisson(l, r) { var L = Math.exp(-l), k = 0, p = 1; do { k++; p *= r(); } while (p > L); return k - 1; }
+  function whatIf(p, hl) {
+    var N = 200, days = p.days, tod = new Array(days).fill(0), fd = new Array(days).fill(0), r = rng(7);
+    for (var run = 0; run < N; run++) {
+      var H = .5, B = .5, D = 0;
+      for (var d = 0; d < days; d++) {
+        D *= Math.pow(.5, 1 / hl);
+        var n = poisson(p.ppd, r);
+        for (var i = 0; i < n; i++) {
+          var q = r() * 100;
+          if (q < p.miss) { H = Math.max(0, H - .12); D += .12; }
+          else if (q < p.miss + p.ref) { H = Math.max(0, H - .12); B = Math.max(0, B - .12); }
+          else { H = Math.min(1, H + .08); var pay = Math.min(D, .08); D -= pay; B = Math.min(1, B + (.08 - pay)); }
+        }
+        tod[d] += H / N; fd[d] += clamp(B - D) / N;
+      }
+    }
+    return { tod: tod, fd: fd };
+  }
+  function lineChart(series, n, xlab, extra) {
+    var h = 230, l = 34, r = 10, t = 12, b = 28, w = 640, iw = w - l - r, x = function (i) { return l + iw * i / (n - 1); }, y = function (v) { return h - b - (h - t - b) * v; };
+    var s = '<svg viewBox="0 0 ' + w + ' ' + h + '" role="img">';
+    s += '<rect x="' + l + '" y="' + y(LOW) + '" width="' + iw + '" height="' + (y(0) - y(LOW)) + '" fill="var(--bad-soft)" opacity=".7"/><rect x="' + l + '" y="' + y(GOOD) + '" width="' + iw + '" height="' + (y(LOW) - y(GOOD)) + '" fill="var(--warn-soft)" opacity=".7"/><rect x="' + l + '" y="' + y(1) + '" width="' + iw + '" height="' + (y(GOOD) - y(1)) + '" fill="var(--ok-soft)" opacity=".7"/>';
+    [0, .25, .5, .75, 1].forEach(function (g) { s += '<text class="ax" x="' + (l - 4) + '" y="' + (y(g) + 3) + '" text-anchor="end">' + g.toFixed(2) + '</text>'; });
+    s += '<text class="ax" x="' + (w - r - 2) + '" y="' + (y(.2)) + '" text-anchor="end">Low</text><text class="ax" x="' + (w - r - 2) + '" y="' + (y(.58)) + '" text-anchor="end">Fair</text><text class="ax" x="' + (w - r - 2) + '" y="' + (y(.88)) + '" text-anchor="end">Good</text>';
+    series.forEach(function (sr) { s += '<polyline fill="none" stroke="' + sr.c + '" stroke-width="2.6" ' + (sr.dash ? 'stroke-dasharray="6 4"' : "") + ' points="' + sr.v.map(function (v, i) { return x(i) + "," + y(v); }).join(" ") + '"/>'; });
+    var step = Math.ceil(n / 8); for (var i = 0; i < n; i += step) s += '<text class="ax" x="' + x(i) + '" y="' + (h - 10) + '" text-anchor="middle">' + xlab(i) + '</text>';
+    if (extra) s += extra(x, y);
+    for (var j = 0; j < n; j++) s += '<rect class="hit" x="' + (x(j) - iw / n / 2) + '" y="' + t + '" width="' + (iw / n) + '" height="' + (h - t - b) + '" data-tip="' + esc(xlab(j) + series.map(function (sr) { return "\n" + sr.n + ": " + sr.v[j].toFixed(2); }).join("")) + '"/>';
+    return s + '</svg><div class="row small" style="margin-top:4px">' + series.map(function (sr) { return '<span><span style="color:' + sr.c + '">&#9632;</span> ' + sr.n + '</span>'; }).join("") + '</div>';
+  }
+  function renderSim() {
+    var s = state.sim, opts = NAMES.map(function (n) { return '<option' + (n === state.simResp ? " selected" : "") + '>' + n + '</option>'; }).join("");
+    $("#simCtl").innerHTML = '<div class="seg" role="group" style="margin-bottom:12px"><button data-m="replay" aria-pressed="' + (state.simMode === "replay") + '">Replay real pings</button><button data-m="whatif" aria-pressed="' + (state.simMode === "whatif") + '">What if</button></div>' +
+      '<div class="field"><label>Half-life of a miss <span class="mono">' + state.hl + ' days</span></label><input type="range" id="hlR" min="1" max="7" step="1" value="' + state.hl + '"><span class="small muted">Proposal: 2 days.</span></div>' +
+      (state.simMode === "replay" ? '<div class="field"><label for="respS">Responder</label><select id="respS">' + opts + '</select></div><p class="small muted">Day 0 is 12 Aug. Starting scores come from replaying the pings since 29 Jun (modelled). Assumes scores survive restarts; today they live in memory, so a restart resets everyone to 0.5.</p>' :
+      '<div class="field"><label>Pings per day <span class="mono">' + s.ppd.toFixed(1) + '</span></label><input type="range" id="ppdR" min="0.3" max="3" step="0.1" value="' + s.ppd + '"></div><div class="field"><label>Missed <span class="mono">' + s.miss + '%</span></label><input type="range" id="missR" min="0" max="80" step="1" value="' + s.miss + '"></div><div class="field"><label>Turned down <span class="mono">' + s.ref + '%</span></label><input type="range" id="refR" min="0" max="40" step="1" value="' + s.ref + '"></div><p class="small muted">Defaults are the four\u2019s real rates after 12 Aug (59% missed, 18% turned down). Pings per day is held constant here; in reality a low score gets fewer. 200 seeded runs.</p>');
+    var out = "";
+    if (state.simMode === "replay") {
+      var n = state.simResp, td = [], fd = [], i; for (i = 0; i <= MAXD; i++) { td.push(todayScore(n, i)); fd.push(fadeScore(n, i, state.hl)); }
+      var evs = EV[n];
+      var ex = function (x, y) { var q = ""; evs.forEach(function (e, k) { var c = e[1] === "T" ? "var(--ok)" : e[1] === "D" ? "var(--warn)" : "var(--bad)"; q += '<circle cx="' + (x(e[0]) + ((k % 3) - 1) * 3) + '" cy="' + (y(0) - 6 - ((k % 3) * 5)) + '" r="3" fill="' + c + '"><title>' + dlabel(e[0]) + ': ' + ({ T: "taken", D: "turned down", M: "missed" })[e[1]] + '</title></circle>'; }); return q; };
+      var below = td.filter(function (v) { return v < LOW; }).length, below2 = fd.filter(function (v) { return v < LOW; }).length;
+      out = '<div class="card"><h3>' + n + ': recent acceptance, 12 Aug to 6 Sep</h3>' + lineChart([{ n: "Today's rule", v: td, c: "var(--ink)", dash: true }, { n: "Hotfix (" + state.hl + "-day fade)", v: fd, c: "var(--hot)" }], MAXD + 1, dlabel, ex) + '<div class="small muted">Dots: pings (green taken, amber turned down, red missed). Bands are a proposal: Good ' + GOOD.toFixed(2) + ' and up (a new responder starts at 0.50, which reads as Fair, so the line stays hidden until there is something to explain), Fair ' + LOW.toFixed(2) + ' to ' + GOOD.toFixed(2) + ', Low under ' + LOW.toFixed(2) + '. Modelled replay with no restarts, not a forecast: under the hotfix they would be asked more.</div></div>' +
+        '<div class="grid2"><div class="card"><div class="small muted">On 6 Sep</div><div class="mono" style="font-size:1.4rem"><span>' + td[MAXD].toFixed(2) + '</span> &rarr; <span style="color:var(--hot)">' + fd[MAXD].toFixed(2) + '</span></div><div class="small muted">today &rarr; hotfix &middot; days in Low: ' + below + ' &rarr; ' + below2 + '</div></div><div class="card"><div class="small muted">Rank cost against a neighbour at 0.85</div><div class="mono" style="font-size:1.4rem"><span>' + (.25 * Math.max(0, .85 - td[MAXD]) / .6 * 45).toFixed(1) + '</span> &rarr; <span style="color:var(--hot)">' + (.25 * Math.max(0, .85 - fd[MAXD]) / .6 * 45).toFixed(1) + '</span> <span class="small">min of travel</span></div><div class="small muted">0.25 weight on recent acceptance, 0.60 on proximity</div></div></div>';
+    } else {
+      var r = whatIf(s, state.hl), n2 = s.days, avg = function (a) { var z = a.slice(30), t = 0; z.forEach(function (v) { t += v; }); return t / z.length; };
+      out = '<div class="card"><h3>What if a responder keeps missing?</h3>' + lineChart([{ n: "Today's rule", v: r.tod, c: "var(--ink)", dash: true }, { n: "Hotfix (" + state.hl + "-day fade)", v: r.fd, c: "var(--hot)" }], n2, function (i) { return "day " + i; }) + '<div class="small muted">Average of 200 runs. Misses fade; refusals and takes work as today.</div></div>' +
+        '<div class="grid2"><div class="card"><div class="small muted">Average, days 30 to 60</div><div class="mono" style="font-size:1.4rem"><span>' + avg(r.tod).toFixed(2) + '</span> &rarr; <span style="color:var(--hot)">' + avg(r.fd).toFixed(2) + '</span></div><div class="small muted">today &rarr; hotfix</div></div><div class="card"><div class="small muted">What this says</div><p class="small">' + (avg(r.fd) < 0.1 ? 'At these rates the fade does not help: a responder who really does miss most pings still ends near zero. The fade helps responders who stop being asked, because their penalty clears and they are asked again; it does not change why they miss.' : 'At these rates the fade lifts the average, but a responder who keeps missing stays well below a healthy one. It does not change why they miss.') + '</p></div></div>';
+    }
+    $("#simOut").innerHTML = out;
+    $$("#simCtl [data-m]").forEach(function (b) { b.onclick = function () { state.simMode = b.getAttribute("data-m"); renderSim(); }; });
+    var bind = function (id, fn) { var e = $("#" + id); if (e) e.oninput = function () { fn(+e.value); renderSim(); }; };
+    bind("hlR", function (v) { state.hl = v; }); bind("ppdR", function (v) { state.sim.ppd = v; }); bind("missR", function (v) { state.sim.miss = v; }); bind("refR", function (v) { state.sim.ref = v; });
+    var rs = $("#respS"); if (rs) rs.onchange = function () { state.simResp = rs.value; renderSim(); };
+  }
+
+  /* ================= journey: events with application mockups ================= */
+  function consoleFrame(title, inner) { return '<div class="frame console mini"><div class="fbar"><span>Rook Dispatch &middot; Console &middot; ' + title + '</span><span class="ill">illustrative</span></div><div class="cmain">' + inner + '</div></div>'; }
+  function phoneFrame(title, inner) { return '<div class="frame phone mini"><div class="fbar"><span>Rook &middot; Meteor Mite</span><span class="ill">illustrative</span></div><div class="pbody" style="padding:12px"><b>' + title + '</b>' + inner + '</div></div>'; }
+  function cardsHTML(d) {
+    return '<div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">' + ["Meteor Mite", "The Gale"].map(function (n) {
+      var ls = lastN(n, d, 1)[0], line = lineFor(n, d), last = ls ? dlabel(ls[0]) + ", " + MON[ls[1]] : "none yet";
+      return '<div class="rcard"><div class="nm"><span>' + n + '</span><span class="badge" title="Set by the responder in the app">Available</span></div><div class="small muted">Eastgate &middot; Pings in the last 7 days: <b class="mono" style="color:var(--ink)">' + pings7(n, d) + '</b> &middot; Last ping: ' + last + '</div>' +
+        chg("hotfix", '<div class="small">' + line.head + '</div>' + (line.next ? '<div class="small muted">' + line.next + '</div>' : ""), "HOTFIX: new line") + '</div>';
+    }).join("") + '</div>';
+  }
+  function mkCallout() { return consoleFrame("Incident feed", '<div class="rcard"><div class="nm"><span>Callout 41380 &middot; Eastgate</span><span class="chip ex">new</span></div><div class="small muted">4 Sep, 21:47</div><div>"A woman in a beekeeping suit is emptying a bank."</div><div class="small muted">Entered by Kip, or pushed from an intake system. Dispatching&hellip;</div></div>'); }
+  function mkRanking() {
+    var inner = '<div class="small muted">Callout 41380 &middot; Eastgate</div>' + (on("backlog") ? chg("backlog", '<div class="small" style="font-weight:700;margin-bottom:6px">How this was ranked</div>' + rankTable(), "BACKLOG 1: how this was ranked") : '<div class="card" style="background:var(--surface2)"><div class="small">Who else was on the list, and why in this order, is not shown or recorded today. Kip sees only who was pinged.</div></div>');
+    return consoleFrame("Callout", inner);
+  }
+  function mkPing() {
+    var circ = 2 * Math.PI * 46, pct = 44 / 60;
+    return phoneFrame("New callout &middot; Eastgate", '<div class="small muted">A woman in a beekeeping suit is emptying a bank.</div><div class="ring"><svg viewBox="0 0 110 110"><circle cx="55" cy="55" r="46" fill="none" stroke="var(--line)" stroke-width="9"/><circle cx="55" cy="55" r="46" fill="none" stroke="var(--ink)" stroke-width="9" stroke-dasharray="' + (circ * pct) + ' ' + circ + '" transform="rotate(-90 55 55)"/><text x="55" y="62" text-anchor="middle" style="font:700 26px var(--f-mono);fill:var(--ink)">44</text></svg></div><div class="small muted" style="text-align:center">Unanswered after 60 seconds (it was 90 until 12 Aug), it moves to the next responder and counts as a missed ping.</div><button class="btnbig go" disabled>Take it</button><button class="btnbig no" disabled>Turn down</button>');
+  }
+  function mkMissed() { return phoneFrame("This callout has moved on", '<p class="small">The 60 seconds ran out and it went to the next responder. It counts as a missed ping.</p>' + chg("hotfix", '<p class="small">A missed ping lowers your recent acceptance for a few days, whatever the reason, and then fades. See Availability.</p>', "HOTFIX")); }
+  function mkNext() { return consoleFrame("Callout 41380 &middot; Activity", '<div class="small mono">21:47:56 &nbsp;Ping &rarr; Sgt. Bulwark: <span style="color:var(--bad)">missed</span><br>21:48:59 &nbsp;Ping &rarr; The Gale: <span style="color:var(--ok)">taken</span> (78 s after the callout)</div><div class="small muted">The callout moves on after each refusal or miss. Each miss costs up to 60 seconds.</div>'); }
+  function mkQuiet() { return consoleFrame("Coverage", '<div class="row" style="justify-content:space-between"><b>Coverage</b><span class="small muted">Handler: Kip &middot; end of ' + dlabel(state.day) + '</span></div>' + cardsHTML(state.day)); }
+  function mkAvail() {
+    var n = "Meteor Mite", d = state.day, line = lineFor(n, d), lv = line.lv, ls = line.ls;
+    var head = !ls.length ? "You have not been asked yet." : lv === "Good" ? "You are in the rotation." : lv === "Fair" ? "You may be asked a bit less often." : "You will be asked less often.";
+    var more = "Missed pings count against this for a few days, whatever the reason, then fade. It clears by itself, even if no pings come." + (lv === "Good" ? "" : " " + (line.rd === null ? "Taking a ping raises it straight away." : "Back to Good about " + dlabel(d + line.rd) + " if there are no more misses; taking a ping raises it straight away.") + " If pings are not ringing, check the app is up to date and notifications are on, and tell your handler.");
+    return phoneFrame("Availability", '<div class="rcard"><div class="nm"><span>Available now</span><span class="badge">On</span></div><div class="small muted">Windows: Mon to Sun, 06:00 to 23:00</div></div>' + chg("hotfix", '<div style="display:flex;justify-content:space-between;gap:8px"><b>Recent acceptance</b><span class="lvl ' + lv + '">' + lv + '</span></div><p style="margin-top:6px"><b>' + head + '</b></p><p class="small" style="margin-top:4px">' + more + '</p><div class="small muted mono" style="margin-top:6px">Recorded: ' + (ls.map(function (e) { return dlabel(e[0]) + " " + MON[e[1]]; }).join(" &middot; ") || "none") + '</div>', "HOTFIX: new"));
+  }
+  function mkDelivery() { return consoleFrame("Callout 41380 &middot; Activity", chg("backlog", '<div class="small mono">21:47:56 &nbsp;Ping &rarr; Sgt. Bulwark<br>21:47:57 &nbsp;<span style="color:var(--ok)">delivered to phone</span> &middot; 60 s clock starts<br>&hellip;<br>21:49:10 &nbsp;Ping &rarr; Nightwell: <span style="color:var(--bad)">not delivered</span> &middot; moved on after 5 s</div><div class="small muted">A responder can also report a ping that never rang.</div>', "BACKLOG 2: delivery")); }
+  function mkFair() { return consoleFrame("Callout &middot; Activity", chg("backlog", '<div class="small mono">Fair-share offer &rarr; Meteor Mite<br><span class="muted">no offers in 7 days &middot; offered first on a real callout in Eastgate</span></div>', "BACKLOG 3: fair share")); }
+  var EVENTS = [
+    { l: "Callout raised", who: "console", k: "existing", mk: mkCallout },
+    { l: "Responders ranked", who: "console", k: "existing", mk: mkRanking, note: "Backlog 1 adds the saved, reviewable ranking" },
+    { l: "Ping sent to the top responder", who: "phone", k: "existing", mk: mkPing },
+    { l: "Ping missed", who: "phone", k: "existing", hot: true, mk: mkMissed, note: "2.3% of pings before 12 Aug, 18.0% since" },
+    { l: "Next responder pinged", who: "console", k: "existing", mk: mkNext },
+    { l: "Responder goes quiet", who: "console", k: "existing", hot: true, mk: mkQuiet, note: "A miss costs 0.12 and never fades. Hotfix: it halves every 2 days" },
+    { l: "Responder sees recent acceptance", who: "phone", k: "hotfix", mk: mkAvail },
+    { l: "Delivery confirmed before the clock", who: "console", k: "backlog", cond: "only if the push logs show undelivered pings", mk: mkDelivery },
+    { l: "Fair-share offer", who: "console", k: "backlog", cond: "only if the hotfix misses its measure", mk: mkFair }
+  ];
+  function renderJourney() {
+    $("#seq").innerHTML = EVENTS.map(function (e, i) {
+      var shown = on(e.k), mock = shown ? e.mk() : '<div class="ph">Not in this version</div>';
+      var kchip = e.k === "hotfix" ? '<span class="chip hot">hotfix</span>' : e.k === "backlog" ? '<span class="chip bk">backlog</span>' : '<span class="chip ex">existing</span>';
+      var nodeCls = "node" + (state.hi && e.k === "hotfix" ? " hot" : "") + (state.hi && e.k === "backlog" ? " bk" : "") + (e.hot ? " prob" : "");
+      var spine = '<div class="spine"><span class="' + nodeCls + '">' + (i + 1) + '</span><span class="evl">' + e.l + '</span>' + kchip + (e.cond ? '<span class="evn" style="color:var(--bk)">' + e.cond + '</span>' : "") + (e.note ? '<span class="evn">' + e.note + '</span>' : "") + '</div>';
+      var left = '<div class="side left">' + (e.who === "console" ? '<div class="' + (shown ? "" : "off") + '">' + mock + '</div>' : "") + '</div>', right = '<div class="side right">' + (e.who === "phone" ? '<div class="' + (shown ? "" : "off") + '">' + mock + '</div>' : "") + '</div>';
+      return '<div class="seqrow' + (shown ? "" : " dim") + '">' + left + spine + right + '</div>';
+    }).join("");
+  }
+
+  /* ================= wiring ================= */
+  function setTab(t) {
+    state.tab = t;
+    ["journey", "sim"].forEach(function (k) { $("#p-" + k).hidden = k !== t; });
+    $$("#tabSeg button").forEach(function (b) { b.setAttribute("aria-selected", b.getAttribute("data-t") === t ? "true" : "false"); });
+    try { history.replaceState(null, "", "#" + t); } catch (e) {}
+    renderAll();
+  }
+  function renderAll() {
+    $$("#viewSeg button").forEach(function (b) { b.setAttribute("aria-pressed", String(+b.getAttribute("data-v") === state.view)); });
+    if (state.tab === "journey") renderJourney(); else renderSim();
+  }
+  $$("#viewSeg button").forEach(function (b) { b.addEventListener("click", function () { state.view = +b.getAttribute("data-v"); renderAll(); }); });
+  $("#hiChk").addEventListener("change", function () { state.hi = this.checked; renderAll(); });
+  $$("#tabSeg button").forEach(function (b) { b.addEventListener("click", function () { setTab(b.getAttribute("data-t")); window.scrollTo(0, 0); }); });
+  var h0 = (location.hash || "").replace("#", ""); if (["journey", "sim"].indexOf(h0) >= 0) state.tab = h0;
+  setTab(state.tab);
+})();
+</script>
