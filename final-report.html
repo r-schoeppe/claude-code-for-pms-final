@@ -1,0 +1,984 @@
+<title>Release 4.2 Final Report</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Public+Sans:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: a sticky chapter bar over five full-width chapters; each chapter pairs a plain statement with a diagram, a chart or a quote. */
+:root {
+  --bg: #eef2f5; --surface: #ffffff; --surface2: #f4f7f9; --ink: #14202b; --muted: #56646f; --line: #d3dce3;
+  --hot: #c2410c; --hot-soft: #fff1e6; --bk: #5b3fd1; --bk-soft: #eeeaff;
+  --bad: #b42323; --bad-soft: #fcebea; --ok: #217a3c; --ok-soft: #e4f3e8; --warn: #946200; --warn-soft: #fbf0d4;
+  --night: #0f1b26; --night-ink: #e8eef3; --night-muted: #9db0bf;
+  --f-body: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0b1218; --surface: #141d26; --surface2: #1a2530; --ink: #e6ecf1; --muted: #93a3b1; --line: #2b3946;
+    --hot: #ff9f5c; --hot-soft: #3a2314; --bk: #b6a2ff; --bk-soft: #2a2250;
+    --bad: #ff8d85; --bad-soft: #3b1f1d; --ok: #74d39b; --ok-soft: #14301f; --warn: #f0b64f; --warn-soft: #382b10;
+    --night: #070d12; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0b1218; --surface: #141d26; --surface2: #1a2530; --ink: #e6ecf1; --muted: #93a3b1; --line: #2b3946;
+  --hot: #ff9f5c; --hot-soft: #3a2314; --bk: #b6a2ff; --bk-soft: #2a2250;
+  --bad: #ff8d85; --bad-soft: #3b1f1d; --ok: #74d39b; --ok-soft: #14301f; --warn: #f0b64f; --warn-soft: #382b10;
+  --night: #070d12; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.55 var(--f-body); padding-inline: 0; }
+h1, h2, h3, h4 { margin: 0; text-wrap: balance; }
+p { margin: 0; }
+a { color: inherit; }
+.mono { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted); }
+.small { font-size: .85rem; }
+.wrap { max-width: 1180px; margin-inline: auto; padding-inline: 16px; }
+#bar { position: fixed; top: 0; left: 0; height: 3px; width: 0; background: var(--hot); z-index: 60; }
+nav.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 50; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(6px); border-bottom: 1px solid var(--line); }
+nav.top .wrap { display: flex; gap: 6px; align-items: center; overflow-x: auto; padding-block: 8px; }
+nav.top b { font: 700 .8rem var(--f-mono); letter-spacing: .04em; margin-right: 10px; white-space: nowrap; }
+nav.top a { text-decoration: none; font-size: .86rem; padding: 6px 11px; border-radius: 99px; border: 1px solid transparent; white-space: nowrap; color: var(--muted); }
+nav.top a.on { background: var(--ink); color: var(--bg); }
+nav.top a:hover { border-color: var(--line); }
+.hero { background: var(--night); color: var(--night-ink); padding-block: 56px 48px; }
+.hero h1 { font-size: clamp(2rem, 5.2vw, 3.6rem); line-height: 1.04; font-weight: 800; letter-spacing: -.02em; max-width: 18ch; }
+.hero h1 em { font-style: normal; color: #ff9f5c; }
+.hero .lede { max-width: 62ch; margin-top: 16px; color: var(--night-muted); font-size: 1.08rem; }
+.kick { font: 600 .74rem var(--f-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--night-muted); margin-bottom: 14px; }
+.hero-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: 32px; align-items: end; }
+@media (max-width: 860px) { .hero-grid { grid-template-columns: 1fr; } }
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 26px; }
+.stat { border: 1px solid #2a3b4a; border-radius: 10px; padding: 12px 14px; background: #132130; }
+.stat .n { font: 800 1.55rem/1.1 var(--f-body); letter-spacing: -.02em; }
+.stat .n small { display: block; font: 500 .74rem var(--f-mono); color: var(--night-muted); white-space: normal; margin-top: 2px; }
+.stat .l { font-size: .8rem; color: var(--night-muted); margin-top: 4px; }
+.stat .s { font: .66rem/1.3 var(--f-mono); color: #7f93a3; margin-top: 6px; }
+@media (max-width: 560px) { .stats { grid-template-columns: 1fr; } }
+section.ch { padding-block: 56px 8px; scroll-margin-top: 54px; }
+.ch .num { font: 700 .78rem var(--f-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--hot); }
+.ch h2 { font-size: clamp(1.6rem, 3.4vw, 2.4rem); line-height: 1.1; letter-spacing: -.015em; margin-top: 6px; max-width: 24ch; font-weight: 800; }
+.ch .plain { font-size: 1.12rem; max-width: 66ch; margin-top: 14px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; min-width: 0; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+.chip { font: 600 .66rem/1 var(--f-mono); letter-spacing: .05em; text-transform: uppercase; padding: 4px 7px; border-radius: 4px; display: inline-block; white-space: nowrap; }
+.chip.v { background: var(--ok-soft); color: var(--ok); }
+.chip.m { background: var(--bk-soft); color: var(--bk); }
+.chip.p { background: var(--warn-soft); color: var(--warn); }
+.chip.hot { background: var(--hot); color: var(--surface); }
+.chip.bk { background: var(--bk); color: var(--surface); }
+.chip.ex { background: var(--surface2); color: var(--muted); border: 1px solid var(--line); }
+.chip.bad { background: var(--bad-soft); color: var(--bad); }
+/* flow */
+.flow { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 26px; margin-top: 28px; position: relative; }
+.node { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; position: relative; display: grid; gap: 6px; align-content: start; }
+.node .no { width: 26px; height: 26px; border-radius: 50%; background: var(--ink); color: var(--bg); display: grid; place-items: center; font: 700 .8rem var(--f-mono); }
+.node b { font-size: .98rem; line-height: 1.25; }
+.node .big { font: 800 1.5rem/1.1 var(--f-body); color: var(--bad); }
+.node.hotn { border: 2px solid var(--bad); background: var(--bad-soft); }
+.node:not(:last-child)::after { content: ""; position: absolute; right: -22px; top: 36px; width: 18px; height: 18px; border-top: 3px solid var(--ink); border-right: 3px solid var(--ink); transform: rotate(45deg) translate(-3px, 3px); }
+.loopbar { margin-top: 14px; border: 2px dashed var(--bad); border-radius: 12px; padding: 10px 14px; color: var(--bad); font-weight: 600; display: flex; gap: 10px; align-items: center; background: var(--bad-soft); }
+@media (max-width: 960px) { .flow { grid-template-columns: 1fr; gap: 26px; } .node:not(:last-child)::after { right: auto; left: 28px; top: auto; bottom: -22px; transform: rotate(135deg); } }
+svg.ch-svg { display: block; width: 100%; height: auto; overflow: visible; }
+svg .ax { fill: var(--muted); font: 10px var(--f-mono); }
+svg .lb { fill: var(--ink); font: 600 11px var(--f-body); }
+svg .gr { stroke: var(--line); }
+svg .hit { fill: transparent; }
+#tip { position: fixed; z-index: 80; pointer-events: none; background: var(--ink); color: var(--bg); font: .76rem/1.35 var(--f-mono); padding: 6px 8px; border-radius: 4px; max-width: 240px; white-space: pre-line; }
+/* quotes */
+.quotes { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 14px; margin-top: 22px; }
+blockquote { margin: 0; background: var(--surface); border: 1px solid var(--line); border-left: 6px solid var(--ink); border-radius: 0 12px 12px 0; padding: 14px 16px; }
+blockquote p { font-size: 1.04rem; font-weight: 600; line-height: 1.4; }
+blockquote cite { display: block; margin-top: 8px; font: 500 .74rem var(--f-mono); color: var(--muted); font-style: normal; }
+blockquote.bad { border-left-color: var(--bad); }
+blockquote.ok { border-left-color: var(--ok); }
+blockquote.hotq { border-left-color: var(--hot); }
+/* journey */
+.metro { position: relative; margin-top: 30px; display: grid; gap: 22px; }
+.metro::before { content: ""; position: absolute; left: 21px; top: 18px; bottom: 18px; width: 4px; background: linear-gradient(var(--ink), var(--hot)); border-radius: 4px; }
+.station { display: grid; grid-template-columns: 46px minmax(0, 1fr); gap: 16px; }
+.dot { width: 46px; height: 46px; border-radius: 50%; background: var(--ink); color: var(--bg); display: grid; place-items: center; font: 800 1.1rem var(--f-mono); position: relative; z-index: 1; box-shadow: 0 0 0 6px var(--bg); }
+.station.s6 .dot { background: var(--bk); color: var(--surface); }
+.st-card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.st-head { padding: 14px 18px; display: grid; gap: 4px; border-bottom: 1px solid var(--line); background: var(--surface2); }
+.st-head .mod { font: 600 .72rem var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.st-head h3 { font-size: 1.3rem; font-weight: 800; letter-spacing: -.01em; }
+.st-head p { color: var(--muted); font-size: .95rem; max-width: 70ch; }
+.st-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0; }
+@media (max-width: 900px) { .st-body { grid-template-columns: 1fr; } }
+.st-col { padding: 16px 18px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+.st-col + .st-col { border-left: 1px solid var(--line); }
+@media (max-width: 900px) { .st-col + .st-col { border-left: 0; border-top: 1px solid var(--line); } }
+.lab { font: 700 .68rem var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.skills { display: flex; flex-wrap: wrap; gap: 6px; }
+.skill { font-size: .8rem; font-weight: 600; padding: 4px 10px; border-radius: 99px; background: var(--hot-soft); color: var(--hot); border: 1px solid color-mix(in srgb, var(--hot) 40%, transparent); }
+.skill.built { background: var(--bk-soft); color: var(--bk); border-color: color-mix(in srgb, var(--bk) 40%, transparent); }
+.finding { font-size: 1.02rem; font-weight: 600; line-height: 1.4; }
+pre.prompt { margin: 0; padding: 12px 14px; background: var(--night); color: var(--night-ink); border-radius: 10px; font: .8rem/1.5 var(--f-mono); white-space: pre-wrap; overflow-wrap: anywhere; border-left: 5px solid var(--hot); }
+.pfile { font: .68rem var(--f-mono); color: var(--muted); }
+.copy { font: 600 .7rem var(--f-mono); border: 1px solid var(--line); background: var(--surface); border-radius: 6px; padding: 3px 8px; cursor: pointer; color: var(--ink); }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.minichart { background: var(--surface2); border: 1px solid var(--line); border-radius: 10px; padding: 10px; }
+.minichart .t { font-size: .8rem; font-weight: 700; margin-bottom: 4px; }
+.minichart .src { font: .66rem/1.3 var(--f-mono); color: var(--muted); margin-top: 4px; }
+.checks { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 14px; font-size: .86rem; }
+.checks span::before { font-weight: 800; margin-right: 6px; }
+.checks .y::before { content: "\2713"; color: var(--ok); }
+.checks .n::before { content: "\2717"; color: var(--bad); }
+.checks .n { color: var(--bad); }
+/* fix */
+.proto-wrap { margin-top: 24px; border: 2px solid var(--ink); border-radius: 14px; overflow: hidden; background: var(--surface); }
+.proto-bar { background: var(--ink); color: var(--bg); padding: 8px 14px; display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: .85rem; }
+iframe.proto { width: 100%; height: 780px; border: 0; display: block; background: var(--bg); }
+.hb { display: grid; grid-template-columns: minmax(0, 1fr) 40px minmax(0, 1.2fr); gap: 8px; align-items: stretch; margin-top: 22px; }
+.hb .arrow { display: grid; place-items: center; font-size: 1.6rem; color: var(--muted); }
+@media (max-width: 860px) { .hb { grid-template-columns: 1fr; } .hb .arrow { transform: rotate(90deg); height: 30px; } }
+.box { border-radius: 12px; padding: 14px 16px; border: 2px solid var(--line); background: var(--surface); display: grid; gap: 6px; align-content: start; }
+.box.today { border-color: var(--bad); background: var(--bad-soft); }
+.box.hotfix { border-color: var(--hot); background: var(--hot-soft); }
+.box h4 { font-size: 1rem; }
+.bklist { display: grid; gap: 6px; margin-top: 4px; }
+.bkitem { border: 2px dashed var(--bk); background: var(--bk-soft); border-radius: 10px; padding: 8px 10px; font-size: .88rem; }
+.decide { margin-top: 22px; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.decide .card b.nn { font: 800 1.6rem var(--f-mono); color: var(--hot); display: block; }
+/* prevention */
+.pipe { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 24px; margin-top: 26px; }
+.pstep { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px; position: relative; display: grid; gap: 4px; align-content: start; }
+.pstep.skillstep { border: 2px solid var(--bk); background: var(--bk-soft); }
+.pstep:not(:last-child)::after { content: ""; position: absolute; right: -19px; top: 30px; width: 14px; height: 14px; border-top: 3px solid var(--ink); border-right: 3px solid var(--ink); transform: rotate(45deg); }
+.pstep b { font-size: .92rem; line-height: 1.25; }
+.pstep .small { color: var(--muted); }
+@media (max-width: 960px) { .pipe { grid-template-columns: 1fr; } .pstep:not(:last-child)::after { right: auto; left: 24px; top: auto; bottom: -19px; transform: rotate(135deg); } }
+table { border-collapse: collapse; width: 100%; font-size: .88rem; }
+th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+th { font: 600 .68rem var(--f-mono); letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+.tw { overflow-x: auto; }
+td.f { color: var(--bad); font-weight: 700; }
+td.p { color: var(--ok); font-weight: 700; }
+td.h { color: var(--warn); font-weight: 700; }
+.note { border-left: 4px solid var(--warn); background: var(--warn-soft); padding: 10px 12px; border-radius: 0 8px 8px 0; font-size: .88rem; }
+footer { margin-top: 64px; padding-block: 30px 60px; border-top: 1px solid var(--line); color: var(--muted); font-size: .85rem; }
+footer ul { columns: 2; padding-left: 18px; }
+@media (max-width: 700px) { footer ul { columns: 1; } }
+:focus-visible { outline: 3px solid var(--bk); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { transition: none !important; animation: none !important; } }
+</style>
+
+<div id="bar"></div>
+<nav class="top"><div class="wrap">
+  <b>RELEASE 4.2</b>
+  <a href="#happened">What happened</a><a href="#journey">The journey</a><a href="#fix">The fix</a><a href="#never">Never again</a><a href="#open">Still open</a>
+</div></nav>
+
+<header class="hero"><div class="wrap hero-grid">
+  <div>
+    <div class="kick">Rook Dispatch &middot; final report for a new PM</div>
+    <h1>Release 4.2 shipped clean, and <em>four responders went quiet.</em></h1>
+    <p class="lede">What happened, how you found out across six modules, the fix as a working prototype, and the skill that stops an unchecked release from happening again.</p>
+    <div class="stats">
+      <div class="stat"><div class="n">49&nbsp;&rarr; 3 <small>a week</small></div><div class="l">pings to the four who went quiet</div><div class="s">callout-history.csv, weeks of 6 Jul to 31 Aug</div></div>
+      <div class="stat"><div class="n">2.3%&nbsp;&rarr; 18.0%</div><div class="l">of pings missed after 12 Aug</div><div class="s">pings table, before and after release</div></div>
+      <div class="stat"><div class="n">83 <small>of 108</small></div><div class="l">tickets since 12 Aug still open</div><div class="s">support_tickets, to 7 Sep</div></div>
+    </div>
+  </div>
+  <div class="card" style="background:#132130;border-color:#2a3b4a;color:var(--night-ink)">
+    <div class="small" style="color:var(--night-muted);font-weight:600;margin-bottom:6px">Pings a week: the four, against the other twelve</div>
+    <div id="heroChart"></div>
+  </div>
+</div></header>
+
+<main>
+<section class="ch" id="happened"><div class="wrap">
+  <div class="num">1 &middot; What happened</div>
+  <h2>A small change made a bad week permanent.</h2>
+  <p class="plain">On 12 August 2026 Rook shipped release 4.2. It cut the time a ping waits for an answer from 90 to 60 seconds, shifted the ranking toward proximity, and made console filters persist. A missed ping lowers a responder's score by the same amount as a refusal, and a score only rises when they say yes. So when misses jumped, four responders sank to the bottom of the list, stopped being asked, and had no way to earn their way back. Nobody had written a brief, a spec or tests for any of it.</p>
+
+  <div class="flow">
+    <div class="node"><span class="no">1</span><b>4.2 ships on 12 Aug</b><span class="small muted">Ping wait 90 s &rarr; 60 s. Ranking leans on proximity. Filters persist.</span></div>
+    <div class="node"><span class="no">2</span><b>More pings go unanswered</b><span class="big">2.3% &rarr; 18.0%</span><span class="small muted">A step on release day, not a drift.</span></div>
+    <div class="node"><span class="no">3</span><b>A miss costs &minus;0.12</b><span class="small muted">The same as a refusal. A take adds only +0.08. Nothing lets the score recover on its own.</span></div>
+    <div class="node hotn"><span class="no">4</span><b>Four responders sink and go quiet</b><span class="big">49 &rarr; 3 pings a week</span><span class="small muted">Farlight, The Undertow, Meteor Mite, Vesper.</span></div>
+    <div class="node"><span class="no">5</span><b>Handlers write in</b><span class="big">83 of 108</span><span class="small muted">tickets since 12 Aug are still open.</span></div>
+  </div>
+  <div class="loopbar"><span style="font-size:1.4rem">&#8635;</span><span>No way back: fewer pings means fewer chances to earn the score back, so the silence feeds itself.</span></div>
+
+  <div class="grid2" style="margin-top:22px">
+    <div class="card"><div class="lab">The four against the other twelve</div><div id="weeklyChart" style="margin-top:8px"></div><div class="small muted" style="margin-top:6px">Pings a week. Source: <span class="mono">00-rook/data/callout-history.csv</span>. <span class="chip v">verified</span></div></div>
+    <div class="card"><div class="lab">Missed pings a day</div><div id="dailyChart" style="margin-top:8px"></div><div class="small muted" style="margin-top:6px">0 or 1 a day until 11 Aug, 7 on release day, 12 the day after. Source: pings table. <span class="chip v">verified</span></div></div>
+  </div>
+
+  <div class="quotes">
+    <blockquote class="ok"><p>"4.2 is out. Went clean, no rollback, no overnight pages. Nice work everyone."</p><cite>Engineering manager, 13 Aug, release page</cite></blockquote>
+    <blockquote class="bad"><p>"Heads up &mdash; callout tickets are running about 3x normal since Wednesday."</p><cite>Support lead, 18 Aug, release page</cite></blockquote>
+    <blockquote class="bad"><p>"starting to wonder if im still even in the system"</p><cite>The Undertow, passed on by his handler, ticket 3121</cite></blockquote>
+    <blockquote class="hotq"><p>"I made calls faster than I checked them."</p><cite>Priya, previous PM, handover note, 21 Aug</cite></blockquote>
+  </div>
+</div></section>
+
+<section class="ch" id="journey"><div class="wrap">
+  <div class="num">2 &middot; The onboarding journey</div>
+  <h2>Six modules, six findings, one prompt each.</h2>
+  <p class="plain">You joined as the new PM with no overlap. Each module taught one way of getting to the truth faster. For every stop: what it teaches, the skills you applied, one real finding or artifact, and the exact prompt you typed to get it.</p>
+  <div class="row small" style="margin-top:12px"><span class="skill">skill applied</span><span class="skill built">skill you built</span><span class="muted">Prompts are copied exactly as typed, typos included.</span></div>
+
+  <div class="metro">
+
+    <div class="station"><div class="dot">1</div><div class="st-card">
+      <div class="st-head"><span class="mod">Module 1 &middot; Origin Story &middot; 01-origin-story</span><h3>Get your bearings</h3><p>Connect Claude to the company's wiki and database, write down what you know, and ask what evidence stood behind the last release.</p></div>
+      <div class="st-body"><div class="st-col">
+        <div class="lab">Skills applied</div><div class="skills"><span class="skill">Context file (CLAUDE.md)</span><span class="skill">Wiki and database access</span><span class="skill">Questioning the evidence</span></div>
+        <div class="lab">Finding</div><div class="finding">4.2 has no brief, spec, design or test docs. The evidence behind it is thin.</div>
+        <div class="minichart"><div class="t">What exists for release 4.2</div><div class="checks"><span class="n">Brief</span><span class="n">Spec</span><span class="n">Design</span><span class="n">Tests</span><span class="y">Roadmap one-liner</span><span class="y">Release page and thread</span><span class="y">Priya's handover</span></div><div class="src">CLAUDE.md, "Session 1 found"</div></div>
+      </div><div class="st-col">
+        <div class="lab">You typed</div><pre class="prompt">Which problems where tried to be solved in the last release, based on which evidence and how?</pre><div class="pfile">01-origin-story/prompts.md, prompt 5</div>
+      </div></div></div></div>
+
+    <div class="station"><div class="dot">2</div><div class="st-card">
+      <div class="st-head"><span class="mod">Module 2 &middot; Super Hearing &middot; 02-super-hearing</span><h3>Listen before you fix</h3><p>Four handler interviews and 147 tickets, grouped and ranked. Customers rarely agree across the two piles.</p></div>
+      <div class="st-body"><div class="st-col">
+        <div class="lab">Skills applied</div><div class="skills"><span class="skill">Clustering feedback</span><span class="skill">Quoting evidence</span><span class="skill">Prioritising against success criteria</span></div>
+        <div class="lab">Artifact</div><div class="finding">A ranked table of five problems, each tied to a success criterion. Problem 2, responders gone quiet, has the most tickets of the five.</div>
+        <div class="minichart"><div class="t">Tickets behind each ranked problem</div><div id="ticketChart"></div><div class="src">00-rook/feedback/problem-statements-prioritized.md</div></div>
+      </div><div class="st-col">
+        <div class="lab">You typed</div><pre class="prompt">Save me this in a priotized table and add to which success criteria of the product success you would connect this problem to</pre><div class="pfile">02-super-hearing/prompts.md, prompt 12</div>
+        <blockquote class="hotq"><p>"I just want it to look less like a coincidence when I'm staring at it at midnight and one card's dead quiet and the other's on fire."</p><cite>Kip, handler, interview 4 Sep</cite></blockquote>
+      </div></div></div></div>
+
+    <div class="station"><div class="dot">3</div><div class="st-card">
+      <div class="st-head"><span class="mod">Module 3 &middot; Rewind &middot; 03-rewind</span><h3>Put a date on the damage</h3><p>Pull the weekly ping history, compare before and after the release, and find the day things changed.</p></div>
+      <div class="st-body"><div class="st-col">
+        <div class="lab">Skills applied</div><div class="skills"><span class="skill">Retrieving data</span><span class="skill">Before and after comparison</span><span class="skill">Reconciling two sources</span></div>
+        <div class="lab">Finding</div><div class="finding">Missed pings were 2.3% in the six weeks before 12 Aug and 15.1% in the three full weeks after. The step shows on release day itself.</div>
+        <div class="minichart"><div class="t">Share of pings missed, weekly</div><div id="missWeekChart"></div><div class="src">00-rook/data/callout-history.csv</div></div>
+      </div><div class="st-col">
+        <div class="lab">You typed</div><pre class="prompt">Open retrieve the callout-history and save it  under 00-rook/data/callout-history.csv . Every row is one responder in one week: how many times we pinged them, and how many of those they took. Release 4.2 shipped on 12 August. Tell me what changed after that date. Show me the weekly numbers before and after, and show me the rows you used to get them.</pre><div class="pfile">03-rewind/prompts.md, prompt 1</div>
+      </div></div></div></div>
+
+    <div class="station"><div class="dot">4</div><div class="st-card">
+      <div class="st-head"><span class="mod">Module 4 &middot; X-Ray Vision &middot; 04-x-ray-vision</span><h3>See the rule behind the behaviour</h3><p>Read the routing code without writing any, then test a theory against the real pings.</p></div>
+      <div class="st-body"><div class="st-col">
+        <div class="lab">Skills applied</div><div class="skills"><span class="skill">Reading code in plain English</span><span class="skill">Hypothesis, then validate</span><span class="skill">Asking what the code does not do</span></div>
+        <div class="lab">Finding</div><div class="finding">Replaying the real pings through the real scoring rule leaves exactly the four quiet responders at 0.00. Everyone else ends at 0.72 or higher.</div>
+        <div class="minichart"><div class="t">Recent acceptance on 6 Sep, replayed from real pings</div><div id="scoreChart"></div><div class="src">00-rook/feedback/score-replay-real-pings.py &middot; modelled</div></div>
+      </div><div class="st-col">
+        <div class="lab">You typed</div><pre class="prompt">Based on what I found, the reason some responders are getting no pings at all is ___, because ___.
+
+
+Fill the blanks, provide code evidence and validate it</pre><div class="pfile">04-x-ray-vision/prompts.md, prompt 3</div>
+        <div class="minichart"><div class="t">The rule in code</div><div class="small mono">taken &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+0.08<br>turned down &minus;0.12<br>missed &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&minus;0.12 &middot; never fades<br>start 0.5 &middot; range 0 to 1</div><div class="src">00-rook/code/dispatch-routing/history.py</div></div>
+      </div></div></div></div>
+
+    <div class="station"><div class="dot">5</div><div class="st-card">
+      <div class="st-head"><span class="mod">Module 5 &middot; Super Speed &middot; 05-super-speed</span><h3>From diagnosis to a decision</h3><p>The Director asked for something real and clickable. You turned the findings into a one-release hotfix, a backlog, and a person who can say yes.</p></div>
+      <div class="st-body"><div class="st-col">
+        <div class="lab">Skills applied</div><div class="skills"><span class="skill">Briefing a decider</span><span class="skill">Persona reviews with subagents</span><span class="skill">Clickable demonstrator</span><span class="skill built">pm-demonstrator</span></div>
+        <div class="lab">Artifact</div><div class="finding">A decision brief with one hotfix and a backlog, and a working demonstrator of both.</div>
+        <div class="minichart"><div class="t">The split you asked for</div><div class="small"><span class="chip hot">hotfix</span> a missed ping fades, one plain line for handler and responder<br><span class="chip bk" style="margin-top:6px">backlog</span> ranking review, delivery confirmation, fair-share offer</div><div class="src">05-super-speed/quiet-responders-decision-brief.md</div></div>
+      </div><div class="st-col">
+        <div class="lab">You typed</div><pre class="prompt">so problem definitions where clear, so you propose a 2 leveled approach:
+hotfix: availability score penalties (when missing a ping) need to be time-based -&gt; handler an responder should see a small info somwhere of a drained availability score (using domain langauge)
+midterm backlog: post ranking review for handlers for dispatchers inlcluding scores)</pre><div class="pfile">05-super-speed/prompts.md, prompt 10</div>
+        <div class="lab">And for the prototype</div><pre class="prompt">on the journey I just want to see a diagram with application mockups for each event, reduce all the rest of it .</pre><div class="pfile">05-super-speed/prompts.md, prompt 17</div>
+      </div></div></div></div>
+
+    <div class="station s6"><div class="dot">6</div><div class="st-card">
+      <div class="st-head"><span class="mod">Module 6 &middot; Sidekicks &middot; 06-sidekicks</span><h3>Hand the routine to a sidekick</h3><p>A skill reviews every brief the same way, every time, without you in the room.</p></div>
+      <div class="st-body"><div class="st-col">
+        <div class="lab">Skills applied</div><div class="skills"><span class="skill built">review-checklist</span><span class="skill">Scheduled review</span><span class="skill">Subagents as reviewers</span></div>
+        <div class="lab">Artifact</div><div class="finding">A scheduled run of the same four checks over four real Rook briefs flagged all four, one flag each.</div>
+        <div class="minichart"><div class="t">06-sidekicks/scheduled-run-output.txt</div><div class="small">Bulk callout: <b>no owner</b><br>Routing override audit log: <b>no success measure</b><br>Requisition approval chains: <b>scope grows mid-document</b><br>Handler phone app: <b>solution before problem</b></div><div class="src">Run of 13 Oct 03:00 UTC. Not produced by a prompt recorded in this repo.</div></div>
+      </div><div class="st-col">
+        <div class="lab">You typed</div><pre class="prompt">Make a skill called review-checklist. When I point it at a brief, it checks that the brief: names who owns it, says how we'll know it worked, keeps the same scope start to finish, and explains the problem before the fix.</pre><div class="pfile">05-super-speed/prompts.md, prompt 20</div>
+        <div class="note"><b>Honest gap:</b> <span class="mono">06-sidekicks/prompts.md</span> is still empty, so Module 6 has no prompt of its own. The skill was built in the Module 5 session, so its prompt is quoted from that file. The scheduled-run report comes with the course folder; its origin is not recorded.</div>
+      </div></div></div></div>
+
+  </div>
+</div></section>
+
+<section class="ch" id="fix"><div class="wrap">
+  <div class="num">3 &middot; The fix</div>
+  <h2>Let a missed ping fade, and tell people it has.</h2>
+  <p class="plain">The hotfix is one release. A missed ping still adds a 0.12 penalty, but the penalty halves every two days, so it is mostly gone after about a week. A responder and their handler each see one plain line about it. The rest waits in a backlog. Try it below: switch between Today, plus the hotfix, and plus the backlog, and watch what changes on each screen.</p>
+
+  <div class="proto-wrap">
+    <div class="proto-bar"><b>Your prototype</b><span>Journey: one mockup per event. Simulator: today's rule against the fade. Orange is the hotfix, violet is the backlog.</span></div>
+    <iframe class="proto" title="Quiet Responders demonstrator" sandbox="allow-scripts" srcdoc="&lt;title&gt;Quiet Responders Demonstrator&lt;/title&gt;
+&lt;link rel=&quot;stylesheet&quot; href=&quot;https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&amp;family=Public+Sans:wght@400;500;600;700&amp;display=swap&quot;&gt;
+&lt;style&gt;
+/* Layout: sticky control bar (view switch, highlight toggle, tabs) over four working areas: journey canvas, screens, map, simulator. */
+:root {
+  --bg: #edf1f4; --surface: #ffffff; --surface2: #f5f7f9; --ink: #14202b; --muted: #55646f; --line: #d3dce3;
+  --hot: #c2410c; --hot-soft: #fff1e6; --bk: #5b3fd1; --bk-soft: #eeeaff;
+  --bad: #b42323; --bad-soft: #fcebea; --ok: #217a3c; --ok-soft: #e4f3e8; --warn: #946200; --warn-soft: #fbf0d4;
+  --f-body: &quot;Public Sans&quot;, system-ui, -apple-system, &quot;Segoe UI&quot;, sans-serif;
+  --f-mono: &quot;JetBrains Mono&quot;, ui-monospace, &quot;SF Mono&quot;, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme=&quot;light&quot;]) {
+    --bg: #0d1318; --surface: #151e26; --surface2: #1b2630; --ink: #e6ecf1; --muted: #93a3b1; --line: #2b3946;
+    --hot: #ff9f5c; --hot-soft: #3a2314; --bk: #b6a2ff; --bk-soft: #2a2250;
+    --bad: #ff8d85; --bad-soft: #3b1f1d; --ok: #74d39b; --ok-soft: #14301f; --warn: #f0b64f; --warn-soft: #382b10;
+    color-scheme: dark;
+  }
+}
+:root[data-theme=&quot;dark&quot;] {
+  --bg: #0d1318; --surface: #151e26; --surface2: #1b2630; --ink: #e6ecf1; --muted: #93a3b1; --line: #2b3946;
+  --hot: #ff9f5c; --hot-soft: #3a2314; --bk: #b6a2ff; --bk-soft: #2a2250;
+  --bad: #ff8d85; --bad-soft: #3b1f1d; --ok: #74d39b; --ok-soft: #14301f; --warn: #f0b64f; --warn-soft: #382b10;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.5 var(--f-body); padding-inline: 16px; }
+.wrap { max-width: 1240px; margin-inline: auto; padding-block: 18px 60px; }
+h1, h2, h3, h4 { margin: 0; font-weight: 700; text-wrap: balance; }
+h1 { font-size: 1.7rem; line-height: 1.15; letter-spacing: -.01em; }
+h2 { font-size: 1.2rem; }
+h3 { font-size: 1rem; }
+p { margin: 0; }
+.mono { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted); }
+.small { font-size: .82rem; }
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 3px solid var(--bk); outline-offset: 2px; }
+header.top { display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between; align-items: end; margin-bottom: 12px; }
+.ctl { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 30; background: var(--bg); border-bottom: 1px solid var(--line); padding-block: 8px; display: grid; gap: 8px; margin-bottom: 14px; }
+.row { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface); }
+.seg button { border: 0; background: transparent; padding: 7px 12px; border-right: 1px solid var(--line); white-space: nowrap; }
+.seg button:last-child { border-right: 0; }
+.seg button[aria-pressed=&quot;true&quot;], .seg button[aria-selected=&quot;true&quot;] { background: var(--ink); color: var(--bg); font-weight: 600; }
+.chip { font: 600 .68rem/1 var(--f-mono); letter-spacing: .05em; text-transform: uppercase; padding: 4px 7px; border-radius: 4px; display: inline-block; white-space: nowrap; }
+.chip.ex { background: var(--surface2); color: var(--muted); border: 1px solid var(--line); }
+.chip.hot { background: var(--hot); color: var(--surface); }
+.chip.bk { background: var(--bk); color: var(--surface); }
+.chip.v { background: var(--ok-soft); color: var(--ok); }
+.chip.m { background: var(--bk-soft); color: var(--bk); }
+.chip.p { background: var(--warn-soft); color: var(--warn); }
+.chip.bad { background: var(--bad-soft); color: var(--bad); }
+label.sw { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
+label.sw input { width: 17px; height: 17px; accent-color: var(--bk); }
+section.panel[hidden] { display: none; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px; min-width: 0; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 12px; }
+/* journey */
+.loop { display: flex; flex-wrap: wrap; gap: 6px 4px; align-items: center; margin-bottom: 10px; font-size: .84rem; }
+.loop .lp { border: 1px solid var(--line); background: var(--surface); border-radius: 99px; padding: 5px 11px; font-weight: 600; }
+.loop .lp.bad { border-color: var(--bad); color: var(--bad); }
+.loop .lp.fix { border: 2px solid var(--hot); background: var(--hot-soft); color: var(--hot); }
+.canvas { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.jgrid { display: grid; grid-template-columns: 124px repeat(9, 196px); min-width: max-content; }
+.jh { position: sticky; top: 0; font: 600 .72rem var(--f-mono); text-transform: uppercase; letter-spacing: .05em; color: var(--muted); padding: 10px; border-bottom: 1px solid var(--line); border-left: 1px dashed var(--line); background: var(--surface); }
+.jl { position: sticky; left: 0; z-index: 2; background: var(--surface2); border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); padding: 10px; font-weight: 600; font-size: .85rem; }
+.jc { border-bottom: 1px solid var(--line); border-left: 1px dashed var(--line); padding: 8px; display: flex; flex-direction: column; gap: 8px; min-height: 112px; }
+.stk { text-align: left; border: 1px solid var(--line); border-radius: 6px; padding: 8px 9px; background: var(--surface2); display: grid; gap: 4px; width: 100%; position: relative; }
+.stk:hover { border-color: var(--ink); }
+.stk .ty { font: 500 .62rem var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); display: flex; justify-content: space-between; gap: 6px; }
+.stk .tx { font-weight: 600; font-size: .86rem; line-height: 1.3; }
+.stk.hotspot { border-left: 5px solid var(--bad); }
+.stk.hi-hot { background: var(--hot-soft); border: 2px solid var(--hot); }
+.stk.hi-bk { background: var(--bk-soft); border: 2px dashed var(--bk); }
+.stk.off { opacity: .38; border-style: dashed; }
+.stk[aria-expanded=&quot;true&quot;] { box-shadow: 0 0 0 3px var(--ink); }
+.cond { font: 500 .62rem var(--f-mono); color: var(--bk); }
+/* drawer */
+.dcard { border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: var(--surface2); }
+.dcard .t { font-weight: 600; font-size: .88rem; margin-bottom: 4px; }
+.dcard .src { font: .68rem/1.35 var(--f-mono); color: var(--muted); margin-top: 6px; }
+svg { display: block; width: 100%; height: auto; }
+svg .ax { fill: var(--muted); font: 10px var(--f-mono); }
+svg .lb { fill: var(--ink); font: 11px var(--f-body); }
+svg .gr { stroke: var(--line); }
+svg .hit { fill: transparent; }
+#tip { position: fixed; z-index: 60; pointer-events: none; background: var(--ink); color: var(--bg); font: .76rem/1.35 var(--f-mono); padding: 6px 8px; border-radius: 4px; max-width: 240px; white-space: pre-line; }
+/* change highlighting */
+.chg { position: relative; }
+.chg.hi.chg-hot { outline: 2px solid var(--hot); outline-offset: 2px; background: var(--hot-soft); border-radius: 6px; }
+.chg.hi.chg-bk { outline: 2px dashed var(--bk); outline-offset: 2px; background: var(--bk-soft); border-radius: 6px; }
+.chg .ct { display: none; }
+.chg.hi .ct { display: inline-block; position: absolute; top: -9px; right: 8px; font: 700 .6rem/1 var(--f-mono); letter-spacing: .06em; padding: 3px 5px; border-radius: 3px; color: var(--surface); z-index: 3; }
+.chg-hot .ct { background: var(--hot); }
+.chg-bk .ct { background: var(--bk); }
+/* device frames */
+.frames { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; }
+.frame { background: var(--surface); border: 1px solid var(--ink); border-radius: 10px; overflow: hidden; min-width: 0; position: relative; }
+.frame.console { flex: 1 1 520px; max-width: 760px; }
+.frame.phone { flex: 0 0 320px; width: 320px; border-radius: 26px; border-width: 3px; }
+.fbar { background: var(--ink); color: var(--bg); padding: 8px 12px; font-size: .8rem; display: flex; justify-content: space-between; gap: 8px; }
+.ill { font: 500 .62rem var(--f-mono); letter-spacing: .05em; text-transform: uppercase; opacity: .85; }
+.cbody { display: grid; grid-template-columns: 120px 1fr; }
+.cnav { background: var(--surface2); border-right: 1px solid var(--line); padding: 10px; display: grid; gap: 4px; align-content: start; font-size: .82rem; }
+.cnav span { padding: 5px 6px; border-radius: 4px; }
+.cnav span.on { background: var(--ink); color: var(--bg); }
+.cmain { padding: 12px; display: grid; gap: 12px; min-width: 0; }
+@media (max-width: 560px) { .cbody { grid-template-columns: 1fr; } .cnav { display: none; } }
+.rcard { border: 1px solid var(--line); border-radius: 8px; padding: 10px; display: grid; gap: 6px; background: var(--surface); }
+.rcard .nm { font-weight: 700; display: flex; justify-content: space-between; gap: 8px; }
+.rcard .nm { align-items: flex-start; }
+.badge { align-self: flex-start; font: 600 .66rem var(--f-mono); padding: 3px 6px; border-radius: 4px; background: var(--ok-soft); color: var(--ok); }
+.lvl { font: 700 .72rem var(--f-mono); padding: 3px 7px; border-radius: 99px; }
+.lvl.Good { background: var(--ok-soft); color: var(--ok); }
+.lvl.Fair { background: var(--warn-soft); color: var(--warn); }
+.lvl.Low { background: var(--bad-soft); color: var(--bad); }
+.pbody { padding: 14px; display: grid; gap: 12px; min-height: 470px; align-content: start; }
+.btnbig { border: 0; border-radius: 10px; padding: 12px; font-weight: 700; width: 100%; }
+.btnbig.go { background: var(--ok); color: var(--surface); }
+.btnbig.no { background: var(--surface2); border: 1px solid var(--line); }
+.ptabs { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--line); }
+.ptabs button { border: 0; background: var(--surface2); padding: 10px; font-size: .85rem; }
+.ptabs button[aria-pressed=&quot;true&quot;] { background: var(--ink); color: var(--bg); font-weight: 600; }
+.ring { width: 110px; height: 110px; margin-inline: auto; }
+.persona { display: flex; gap: 10px; align-items: center; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; background: var(--surface); text-align: left; }
+.persona[aria-pressed=&quot;true&quot;] { border: 2px solid var(--ink); }
+.avatar { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; background: var(--ink); color: var(--bg); flex: none; }
+table { border-collapse: collapse; width: 100%; font-size: .84rem; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font: 500 .66rem var(--f-mono); text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+td.n, th.n { text-align: right; font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+.tw { overflow-x: auto; }
+.rk1 td { background: var(--ok-soft); }
+.moved td:first-child { box-shadow: inset 4px 0 0 var(--hot); }
+input[type=range] { width: 100%; accent-color: var(--bk); }
+.note { border-left: 4px solid var(--warn); background: var(--warn-soft); padding: 8px 10px; border-radius: 0 6px 6px 0; font-size: .85rem; }
+.mapwrap { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(320px, 1fr); gap: 12px; }
+@media (max-width: 1100px) { .mapwrap { grid-template-columns: 1fr; } }
+svg.map text { font: 12px var(--f-body); fill: var(--muted); }
+svg.map .area { fill: var(--surface2); stroke: var(--line); }
+svg.map .pin text { fill: var(--surface); }
+.simgrid { display: grid; grid-template-columns: minmax(260px, 320px) minmax(0, 1fr); gap: 12px; }
+@media (max-width: 860px) { .simgrid { grid-template-columns: 1fr; } }
+.field { display: grid; gap: 3px; margin-bottom: 10px; }
+.field label { font-size: .82rem; font-weight: 600; display: flex; justify-content: space-between; }
+select { font: inherit; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; width: 100%; }
+.qb { border: 1px solid var(--line); background: var(--surface); border-radius: 6px; padding: 4px 9px; font-size: .8rem; }
+.qb:hover { border-color: var(--ink); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+.pv { margin-top: 14px; }
+.pvhead { display: grid; gap: 6px; margin-bottom: 10px; }
+.pvtabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 10px 0; }
+.pvtabs button { border: 1px solid var(--line); background: var(--surface); border-radius: 6px; padding: 6px 12px; }
+.pvtabs button[aria-pressed=&quot;true&quot;] { background: var(--ink); color: var(--bg); font-weight: 600; }
+.persona-strip { display: flex; gap: 10px; align-items: center; margin-bottom: 12px; }
+.moment { font-size: .82rem; color: var(--muted); margin-top: 6px; }
+.charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 12px; }
+
+.seqhead, .seqrow { display: grid; grid-template-columns: minmax(0, 1.55fr) 190px minmax(0, 1fr); gap: 0 18px; }
+.seqhead { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 96px); z-index: 5; background: var(--bg); padding: 8px 0; border-bottom: 1px solid var(--line); font: 600 .72rem var(--f-mono); letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+.seqhead div:nth-child(2) { text-align: center; }
+.seqrow { padding: 18px 0; position: relative; }
+.seqrow .spine { position: relative; display: grid; justify-items: center; align-content: start; gap: 6px; text-align: center; }
+.seqrow .spine::before { content: &quot;&quot;; position: absolute; top: -18px; bottom: -18px; left: 50%; width: 2px; background: var(--line); z-index: 0; }
+.seqrow:first-of-type .spine::before { top: 18px; }
+.seqrow:last-of-type .spine::before { bottom: calc(100% - 40px); }
+.node { position: relative; z-index: 1; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font: 700 .9rem var(--f-mono); background: var(--ink); color: var(--bg); }
+.node.hot { background: var(--hot); color: var(--surface); }
+.node.bk { background: var(--bk); color: var(--surface); }
+.node.prob { box-shadow: 0 0 0 4px var(--bad-soft), 0 0 0 6px var(--bad); }
+.evl { position: relative; z-index: 1; background: var(--bg); padding: 2px 4px; font-weight: 700; font-size: .9rem; line-height: 1.25; }
+.evn { font-size: .76rem; color: var(--muted); max-width: 170px; background: var(--bg); position: relative; z-index: 1; padding: 1px 4px; }
+.seqrow .side { min-width: 0; }
+.seqrow .off .ph { border: 2px dashed var(--line); border-radius: 10px; padding: 16px; text-align: center; font-size: .82rem; color: var(--muted); }
+.seqrow.dim .spine { opacity: .45; }
+.frame.console.mini { max-width: none; width: 100%; }
+.mini .cmain { padding: 10px; gap: 8px; }
+.mini .fbar { font-size: .76rem; }
+.frame.phone.mini { flex: none; width: 300px; max-width: 100%; margin-inline: auto; }
+.frame.phone.mini .pbody { min-height: 0; }
+@media (max-width: 900px) {
+  .seqhead { display: none; }
+  .seqrow { grid-template-columns: 1fr; gap: 10px; }
+  .seqrow .spine { grid-template-columns: auto 1fr; justify-items: start; text-align: left; align-items: center; }
+  .seqrow .spine::before { display: none; }
+  .seqrow .left, .seqrow .right { order: 2; }
+}
+&lt;/style&gt;
+
+&lt;div class=&quot;wrap&quot;&gt;
+  &lt;header class=&quot;top&quot;&gt;
+    &lt;h1&gt;Quiet Responders&lt;/h1&gt;
+    &lt;div class=&quot;row small&quot;&gt;&lt;span class=&quot;chip v&quot;&gt;verified&lt;/span&gt; data or code &lt;span class=&quot;chip m&quot;&gt;modelled&lt;/span&gt; replay &lt;span class=&quot;chip p&quot;&gt;proposal&lt;/span&gt; our choice&lt;/div&gt;
+  &lt;/header&gt;
+
+  &lt;div class=&quot;ctl&quot;&gt;
+    &lt;div class=&quot;row&quot;&gt;
+      &lt;span class=&quot;small muted&quot; style=&quot;font-weight:600&quot;&gt;Show&lt;/span&gt;
+      &lt;div class=&quot;seg&quot; id=&quot;viewSeg&quot; role=&quot;group&quot; aria-label=&quot;Which version to show&quot;&gt;
+        &lt;button data-v=&quot;0&quot; aria-pressed=&quot;false&quot;&gt;Today&lt;/button&gt;
+        &lt;button data-v=&quot;1&quot; aria-pressed=&quot;false&quot;&gt;+ Hotfix&lt;/button&gt;
+        &lt;button data-v=&quot;2&quot; aria-pressed=&quot;true&quot;&gt;+ Hotfix and backlog&lt;/button&gt;
+      &lt;/div&gt;
+      &lt;label class=&quot;sw small&quot;&gt;&lt;input type=&quot;checkbox&quot; id=&quot;hiChk&quot; checked&gt; Highlight what is new&lt;/label&gt;
+      &lt;span class=&quot;row small&quot;&gt;&lt;span class=&quot;chip ex&quot;&gt;existing&lt;/span&gt;&lt;span class=&quot;chip hot&quot;&gt;hotfix&lt;/span&gt;&lt;span class=&quot;chip bk&quot;&gt;backlog&lt;/span&gt;&lt;/span&gt;
+    &lt;/div&gt;
+    &lt;div class=&quot;seg&quot; id=&quot;tabSeg&quot; role=&quot;tablist&quot; aria-label=&quot;Sections&quot; style=&quot;justify-self:start&quot;&gt;
+      &lt;button role=&quot;tab&quot; data-t=&quot;journey&quot; aria-selected=&quot;true&quot;&gt;Journey&lt;/button&gt;
+      &lt;button role=&quot;tab&quot; data-t=&quot;sim&quot; aria-selected=&quot;false&quot;&gt;Simulator&lt;/button&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+
+  &lt;section class=&quot;panel&quot; id=&quot;p-journey&quot;&gt;
+    &lt;div class=&quot;seqhead&quot;&gt;&lt;div&gt;Kip &amp;middot; handler &amp;middot; console&lt;/div&gt;&lt;div&gt;Event&lt;/div&gt;&lt;div&gt;Meteor Mite &amp;middot; responder &amp;middot; phone&lt;/div&gt;&lt;/div&gt;
+    &lt;div id=&quot;seq&quot;&gt;&lt;/div&gt;
+  &lt;/section&gt;
+
+  &lt;section class=&quot;panel&quot; id=&quot;p-sim&quot; hidden&gt;
+    &lt;h2&gt;Score simulator&lt;/h2&gt;
+    &lt;p class=&quot;muted small&quot; style=&quot;margin:2px 0 10px;max-width:80ch&quot;&gt;Recent acceptance under today&#x27;s rule next to the proposed fade. Replay uses the real pings from 12 Aug to 6 Sep. The what-if holds pings per day constant to isolate the rule.&lt;/p&gt;
+    &lt;div class=&quot;simgrid&quot;&gt;&lt;div class=&quot;card&quot; id=&quot;simCtl&quot;&gt;&lt;/div&gt;&lt;div id=&quot;simOut&quot; style=&quot;display:grid;gap:12px;min-width:0&quot;&gt;&lt;/div&gt;&lt;/div&gt;
+  &lt;/section&gt;
+&lt;/div&gt;
+&lt;div id=&quot;tip&quot; hidden&gt;&lt;/div&gt;
+
+&lt;script&gt;
+
+
+(function () {
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+  var esc = function (s) { return String(s).replace(/&amp;/g, &quot;&amp;amp;&quot;).replace(/&lt;/g, &quot;&amp;lt;&quot;).replace(/&gt;/g, &quot;&amp;gt;&quot;).replace(/&quot;/g, &quot;&amp;quot;&quot;); };
+
+  /* ================= data ================= */
+  var S0 = {&quot;Captain Vantage&quot;:.96,&quot;Cindermark&quot;:.96,&quot;Corporal Ashgrove&quot;:.88,&quot;Farlight&quot;:.84,&quot;Halfmoon&quot;:.88,&quot;Ironvale&quot;:1.0,&quot;Meteor Mite&quot;:1.0,&quot;Nightwell&quot;:.96,&quot;Sgt. Bulwark&quot;:.80,&quot;Sgt. Falkirk&quot;:1.0,&quot;Stormwrack&quot;:.88,&quot;The Drift&quot;:1.0,&quot;The Gale&quot;:.96,&quot;The Longcast&quot;:1.0,&quot;The Undertow&quot;:.88,&quot;Vesper&quot;:.96};
+  var SEQ = {
+    &quot;Captain Vantage&quot;:&quot;0D,0M,1D,1T,2T,2T,4T,4T,4D,5T,6T,7T,7M,7T,8M,8D,8T,8T,9T,9T,10T,10T,10D,11T,12T,12T,12T,13M,14T,14T,14T,14D,15T,15T,15D,16T,17T,17T,18T,18T,18D,19T,20T,20D,21T,21T,21T,22T,22M,23T,23T,23D,24T,24T,24T,25D,25M,25T,25T&quot;,
+    &quot;Cindermark&quot;:&quot;0D,0T,1D,2T,2T,3M,4T,5T,5T,6T,6T,6T,8T,9M,10T,10D,11D,11T,12T,13T,13D,13T,14T,15D,15T,16T,16M,17M,18T,18T,19T,19T,19D,19D,21T,22T,22T,22T,23T,24T,25M,25T&quot;,
+    &quot;Corporal Ashgrove&quot;:&quot;0T,1T,1D,2M,2D,3T,4T,5T,5D,5T,8T,8M,11D,11T,11T,12M,13T,14T,15T,16T,17D,18T,20M,20D,20T,20T,22T,23T,24T&quot;,
+    &quot;Farlight&quot;:&quot;0T,0M,0D,1M,1M,2M,2T,7M,10D,11M,16M&quot;,
+    &quot;Halfmoon&quot;:&quot;0D,1M,2T,2T,2T,3M,4D,4T,5T,7D,7M,7T,8T,8T,9D,9T,11M,14T,14T,14T,14D,15T,16D,18T,18M,20T,20T,21T,22D,22T,23T,23T,24T&quot;,
+    &quot;Ironvale&quot;:&quot;0T,0D,2M,2T,2D,3T,5T,6T,6T,6M,7D,7M,8D,9T,11T,11T,12T,13T,13T,14M,14D,16T,16T,16T,18M,18T,18T,19T,19T,21T,21T,22T,23T,23T,23T,23M,23M,24T,24D&quot;,
+    &quot;Meteor Mite&quot;:&quot;0D,1M,1M,2M,3T,3T,4M,6D,7T,8M,10M,15D,17M,24M&quot;,
+    &quot;Nightwell&quot;:&quot;0T,0T,1T,2D,3D,3T,3M,4M,4D,4D,4T,5M,5T,6D,6T,6T,7T,7T,8T,8D,9T,9T,9T,10T,10T,10T,11M,11T,11T,12T,12T,14T,14T,14T,15T,15D,15T,15D,16D,16D,16T,16T,17T,17M,17T,17T,17M,18T,18D,19T,20D,20T,20M,20T,21T,21D,21D,22T,22T,22T,23D,23T,23T,23T,24T,24T,24T,25T,25T,25M&quot;,
+    &quot;Sgt. Bulwark&quot;:&quot;2M,2T,3T,3D,3M,4D,4T,5T,6T,6D,6T,7T,7T,8T,9T,9M,9T,13D,13T,15D,15M,15T,16T,17M,17T,18T,18T,18T,19M,19T,19D,20T,22T,22T,23M,23T,24T,24T,25T&quot;,
+    &quot;Sgt. Falkirk&quot;:&quot;0D,0T,1T,1M,1T,1M,2T,3T,5T,6T,6D,6T,6T,7T,7D,7T,9M,9T,11T,11T,11M,12D,12T,13M,14T,14T,14T,15T,17T,17T,17T,17D,18M,18T,18T,18T,19T,19T,19T,19T,20T,20D,20T,21T,21T,21M,22T,22D,23T,24T,25D,25M&quot;,
+    &quot;Stormwrack&quot;:&quot;0T,0T,0T,0M,0M,1M,2D,3T,3T,3D,5D,5T,6T,6D,6T,7T,7T,8T,8T,9T,9M,9M,9T,11T,11T,11T,12T,12T,12T,12D,12T,12M,13T,13M,13D,14T,15T,16T,16D,16T,17T,17T,17T,18T,19T,20T,21M,21T,22T,22T,23T,23T,23D,23T,24T,24T,24T,24T,24T,24T,25T,25D,25M&quot;,
+    &quot;The Drift&quot;:&quot;0M,0T,3D,3M,4T,5T,7T,7T,8M,8T,9T,10D,12T,12T,14T,15T,15T,17D,18M,18T,20T,20T,21M,22T,22T,22D,25D,25T&quot;,
+    &quot;The Gale&quot;:&quot;0M,1M,1T,2T,2T,2D,2T,3D,4T,4D,4T,5T,5T,5D,5T,5T,6T,6T,6D,7M,8D,9T,9T,10T,10T,10M,11T,11T,12T,12M,12M,13T,13T,13D,14T,14T,16T,16D,16T,16T,16T,17T,18T,18D,18D,18T,18T,18T,19D,19D,20T,20T,20T,20M,21T,22T,22T,22M,23T,23T,23T,23T,23T,24T,24T,24T,24T,24D,24T&quot;,
+    &quot;The Longcast&quot;:&quot;1T,1T,2D,2T,3D,3M,5T,7T,9T,9M,9T,10D,10T,11T,12M,12M,12D,13T,13T,17T,18D,18T,18T,19M,20T,22T,23T,23T,24T,24T,25D,25T&quot;,
+    &quot;The Undertow&quot;:&quot;0M,1M,1T,1T,1M,2M,2M,4D,5D,5T,6M,9M,15M,24M&quot;,
+    &quot;Vesper&quot;:&quot;1M,2T,2M,3T,3D,3T,4M,4M,4T,5T,7M,11M,11D,11M,12D,14M,20M&quot;
+  };
+  var EV = {}; Object.keys(SEQ).forEach(function (n) { EV[n] = SEQ[n].split(&quot;,&quot;).map(function (x) { return [parseInt(x, 10), x.slice(-1)]; }); });
+  var NAMES = Object.keys(SEQ).sort();
+  var FOUR = [&quot;Farlight&quot;, &quot;The Undertow&quot;, &quot;Meteor Mite&quot;, &quot;Vesper&quot;];
+  var MAXD = 25; // 6 Sep
+  var WEEKS = [&quot;29 Jun&quot;,&quot;6 Jul&quot;,&quot;13 Jul&quot;,&quot;20 Jul&quot;,&quot;27 Jul&quot;,&quot;3 Aug&quot;,&quot;10 Aug&quot;,&quot;17 Aug&quot;,&quot;24 Aug&quot;,&quot;31 Aug&quot;];
+  var W4 = [49,48,48,50,50,49,43,16,6,3], W12 = [123,122,126,126,120,123,134,142,156,162];
+  var NOBODY = [9,8,5,12,5,4,14,17,16,7], CALLS = [141,139,138,144,137,138,110,121,124,127];
+  var P90 = [38,41,45,45,43,32,82,77,69,70];
+  var GOOD = 0.70, LOW = 0.45; // level bands (proposal; design&#x27;s call). A new responder starts at 0.5, so the line stays hidden until there is something to explain.
+  var MONTHS = [&quot;Aug&quot;,&quot;Sep&quot;];
+  function dlabel(d) { var n = 12 + d; return n &lt;= 31 ? n + &quot; Aug&quot; : (n - 31) + &quot; Sep&quot;; }
+
+  /* ================= score engine ================= */
+  function clamp(x) { return Math.max(0, Math.min(1, x)); }
+  function todayScore(n, d) { var h = S0[n]; EV[n].forEach(function (e) { if (e[0] &lt;= d) h = e[1] === &quot;T&quot; ? Math.min(1, h + .08) : Math.max(0, h - .12); }); return h; }
+  function fadeParts(n, d, hl) {
+    var B = S0[n], D = 0, last = 0, i, e;
+    for (i = 0; i &lt; EV[n].length; i++) {
+      e = EV[n][i]; if (e[0] &gt; d) break;
+      D *= Math.pow(.5, (e[0] - last) / hl); last = e[0];
+      if (e[1] === &quot;M&quot;) D += .12;
+      else if (e[1] === &quot;D&quot;) B = Math.max(0, B - .12);
+      else { var pay = Math.min(D, .08); D -= pay; B = Math.min(1, B + (.08 - pay)); }
+    }
+    D *= Math.pow(.5, (d - last) / hl);
+    return { B: B, D: D, s: clamp(B - D) };
+  }
+  function fadeScore(n, d, hl) { return fadeParts(n, d, hl).s; }
+  function recoverDays(n, d, hl) {
+    var p = fadeParts(n, d, hl); if (p.s &gt;= GOOD) return 0; if (p.B &lt; GOOD) return null;
+    return Math.ceil(hl * Math.log(p.D / (p.B - GOOD)) / Math.LN2);
+  }
+  function level(x) { return x &gt;= GOOD ? &quot;Good&quot; : x &gt;= LOW ? &quot;Fair&quot; : &quot;Low&quot;; }
+  function lastN(n, d, k) { var a = EV[n].filter(function (e) { return e[0] &lt;= d; }); return a.slice(-k); }
+  function pings7(n, d) { return EV[n].filter(function (e) { return e[0] &lt;= d &amp;&amp; e[0] &gt; d - 7; }).length; }
+  function rule() { return state.view &gt;= 1 ? &quot;fade&quot; : &quot;today&quot;; }
+  function scoreFor(n, d) { return rule() === &quot;fade&quot; ? fadeScore(n, d, state.hl) : todayScore(n, d); }
+
+  /* ================= state ================= */
+  var state = { view: 2, hi: true, tab: &quot;journey&quot;, day: 25, hl: 2, simResp: &quot;Meteor Mite&quot;, simMode: &quot;replay&quot;, sim: { ppd: 1.5, miss: 59, ref: 18, days: 60 } };
+  function on(kind) { return kind === &quot;existing&quot; || (kind === &quot;hotfix&quot; &amp;&amp; state.view &gt;= 1) || (kind === &quot;backlog&quot; &amp;&amp; state.view &gt;= 2); }
+  function chg(kind, html, label) {
+    if (!on(kind)) return &quot;&quot;;
+    var cls = kind === &quot;hotfix&quot; ? &quot;chg-hot&quot; : kind === &quot;backlog&quot; ? &quot;chg-bk&quot; : &quot;&quot;;
+    var lab = kind === &quot;hotfix&quot; ? &quot;HOTFIX&quot; : &quot;BACKLOG&quot;;
+    return &#x27;&lt;div class=&quot;chg &#x27; + cls + (state.hi ? &quot; hi&quot; : &quot;&quot;) + &#x27;&quot; style=&quot;padding:&#x27; + (state.hi ? &quot;8px&quot; : &quot;0&quot;) + &#x27;&quot;&gt;&lt;span class=&quot;ct&quot;&gt;&#x27; + (label || lab) + &#x27;&lt;/span&gt;&#x27; + html + &#x27;&lt;/div&gt;&#x27;;
+  }
+  function rule() { return state.view &gt;= 1 ? &quot;fade&quot; : &quot;today&quot;; }
+
+  /* ================= tooltip ================= */
+  var tip = $(&quot;#tip&quot;);
+  document.addEventListener(&quot;pointermove&quot;, function (e) {
+    var t = e.target.closest ? e.target.closest(&quot;[data-tip]&quot;) : null;
+    if (!t) { tip.hidden = true; return; }
+    tip.textContent = t.getAttribute(&quot;data-tip&quot;); tip.hidden = false;
+    var x = Math.min(e.clientX + 12, window.innerWidth - tip.offsetWidth - 8), y = e.clientY + 14;
+    if (y + tip.offsetHeight &gt; window.innerHeight - 8) y = e.clientY - tip.offsetHeight - 10;
+    tip.style.left = Math.max(8, x) + &quot;px&quot;; tip.style.top = Math.max(8, y) + &quot;px&quot;;
+  });
+
+  var MON = { T: &quot;taken&quot;, D: &quot;turned down&quot;, M: &quot;missed&quot; };
+  function lineFor(n, d) {
+    var sc = fadeScore(n, d, state.hl), lv = level(sc), ls = lastN(n, d, 4), m = ls.filter(function (e) { return e[1] === &quot;M&quot;; }).length;
+    var recent = ls.some(function (e) { return e[1] === &quot;M&quot;; });
+    var rd = recoverDays(n, d, state.hl), head = &quot;Recent acceptance (ranking): &lt;b&gt;&quot; + lv + &quot;&lt;/b&gt;&quot;, next = &quot;&quot;;
+    if (!ls.length) head = &quot;Recent acceptance (ranking): &lt;b&gt;no pings yet&lt;/b&gt;&quot;;
+    else if (lv !== &quot;Good&quot;) {
+      head += (m ? &quot; &amp;middot; &quot; + m + &quot; of the last &quot; + ls.length + &quot; pings missed&quot; : &quot;&quot;) + &quot; &amp;middot; &quot; + (lv === &quot;Low&quot; ? &quot;Offers are reduced&quot; : &quot;Offers may be slightly reduced&quot;);
+      next = &quot;Next: ask the responder to check the app is up to date and notifications are on. &quot; + (rd === null ? &quot;Needs a taken ping to recover.&quot; : &quot;Good again about &quot; + dlabel(d + rd) + &quot; if there are no more misses.&quot;);
+    } else if (recent) head += &quot; &amp;middot; Recent misses are fading&quot;;
+    return { lv: lv, head: head, next: next, sc: sc, rd: rd, ls: ls };
+  }
+  var CAND = [[&quot;Sgt. Bulwark&quot;, &quot;Foundry Row&quot;, 6, 1.0], [&quot;The Gale&quot;, &quot;Eastgate&quot;, 8, 1.0], [&quot;Nightwell&quot;, &quot;Midtown&quot;, 13, .5], [&quot;Meteor Mite&quot;, &quot;Eastgate&quot;, 7, 1.0], [&quot;Cindermark&quot;, &quot;Mill District&quot;, 19, 1.0], [&quot;Sgt. Falkirk&quot;, &quot;Kingsbridge&quot;, 24, 1.0]];
+  var CAL_DAY = 22;
+  function ranking() {
+    var f = rule() === &quot;fade&quot; ? function (n) { return fadeScore(n, CAL_DAY, state.hl); } : function (n) { return todayScore(n, CAL_DAY); };
+    var base = CAND.map(function (c) { var P = Math.max(0, 1 - c[2] / 45), H = f(c[0]), t = .6 * P + .25 * H + .15 * c[3]; return { n: c[0], a: c[1], m: c[2], P: P, H: H, C: c[3], t: t }; });
+    var tod = CAND.map(function (c) { var P = Math.max(0, 1 - c[2] / 45); return { n: c[0], t: .6 * P + .25 * todayScore(c[0], CAL_DAY) + .15 * c[3] }; }).sort(function (a, b) { return b.t - a.t; });
+    var rt = {}; tod.forEach(function (r, i) { rt[r.n] = i + 1; });
+    base.sort(function (a, b) { return b.t - a.t; }); base.forEach(function (r, i) { r.rank = i + 1; r.was = rt[r.n]; });
+    return base;
+  }
+  var OWN = { &quot;Meteor Mite&quot;: 1, &quot;The Gale&quot;: 1 };
+  function ord(n) { return n + (n === 1 ? &quot;st&quot; : n === 2 ? &quot;nd&quot; : n === 3 ? &quot;rd&quot; : &quot;th&quot;); }
+  function rankTable() {
+    var rows = ranking();
+    return &#x27;&lt;div class=&quot;tw&quot;&gt;&lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th class=&quot;n&quot;&gt;#&lt;/th&gt;&lt;th&gt;Responder&lt;/th&gt;&lt;th&gt;Proximity &amp;middot; recent acceptance &amp;middot; skills&lt;/th&gt;&lt;th class=&quot;n&quot;&gt;Score&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;&#x27; + rows.map(function (r) {
+      var moved = state.view &gt;= 1 &amp;&amp; r.was !== r.rank, mv = moved ? &#x27; &lt;span class=&quot;chip hot&quot;&gt;was &#x27; + ord(r.was) + &#x27;&lt;/span&gt;&#x27; : &quot;&quot;, own = OWN[r.n];
+      var cells = own ? &#x27;&lt;td class=&quot;mono small&quot;&gt;&#x27; + (.6 * r.P).toFixed(2) + &#x27; &amp;middot; &#x27; + (.25 * r.H).toFixed(2) + &#x27; &amp;middot; &#x27; + (.15 * r.C).toFixed(2) + &#x27;&lt;div class=&quot;muted&quot;&gt;&#x27; + r.m + &#x27; min, recent acceptance &#x27; + r.H.toFixed(2) + &#x27;&lt;/div&gt;&lt;/td&gt;&lt;td class=&quot;n&quot;&gt;&lt;b&gt;&#x27; + r.t.toFixed(3) + &#x27;&lt;/b&gt;&lt;/td&gt;&#x27; : &#x27;&lt;td class=&quot;n muted&quot; colspan=&quot;2&quot;&gt;order only&lt;/td&gt;&#x27;;
+      return &#x27;&lt;tr class=&quot;&#x27; + (r.rank === 1 ? &quot;rk1&quot; : &quot;&quot;) + (moved ? &quot; moved&quot; : &quot;&quot;) + &#x27;&quot;&gt;&lt;td class=&quot;n&quot;&gt;&#x27; + r.rank + &#x27;&lt;/td&gt;&lt;td&gt;&#x27; + r.n + mv + &#x27;&lt;div class=&quot;small muted&quot;&gt;&#x27; + r.a + &#x27;&lt;/div&gt;&lt;/td&gt;&#x27; + cells + &#x27;&lt;/tr&gt;&#x27;;
+    }).join(&quot;&quot;) + &#x27;&lt;/tbody&gt;&lt;/table&gt;&lt;/div&gt;&lt;div class=&quot;small muted&quot; style=&quot;margin-top:6px&quot;&gt;Full scores for Kip\&#x27;s own responders, order only for the rest. Weighted parts (0.60, 0.25, 0.15). Minutes and skills are assumed; recent acceptance is replayed from real pings to the end of 3 Sep. Candidates beyond the two real pings are examples.&lt;/div&gt;&#x27;;
+  }
+  function rankTableFull() {
+    var rows = ranking();
+    return &#x27;&lt;div class=&quot;tw&quot;&gt;&lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th class=&quot;n&quot;&gt;#&lt;/th&gt;&lt;th&gt;Responder&lt;/th&gt;&lt;th class=&quot;n&quot;&gt;Min&lt;/th&gt;&lt;th class=&quot;n&quot;&gt;0.60 &amp;times; proximity&lt;/th&gt;&lt;th class=&quot;n&quot;&gt;0.25 &amp;times; recent acceptance&lt;/th&gt;&lt;th class=&quot;n&quot;&gt;0.15 &amp;times; skills&lt;/th&gt;&lt;th class=&quot;n&quot;&gt;Score&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;&#x27; + rows.map(function (r) {
+      var moved = state.view &gt;= 1 &amp;&amp; r.was !== r.rank, mv = moved ? &#x27; &lt;span class=&quot;chip hot&quot;&gt;hotfix: was &#x27; + ord(r.was) + &#x27;&lt;/span&gt;&#x27; : &quot;&quot;, own = OWN[r.n];
+      var cells = own ? &#x27;&lt;td class=&quot;n&quot;&gt;&#x27; + r.m + &#x27;&lt;/td&gt;&lt;td class=&quot;n&quot;&gt;&#x27; + (.6 * r.P).toFixed(2) + &#x27; &lt;span class=&quot;muted&quot;&gt;(&#x27; + r.P.toFixed(2) + &#x27;)&lt;/span&gt;&lt;/td&gt;&lt;td class=&quot;n&quot;&gt;&#x27; + (.25 * r.H).toFixed(2) + &#x27; &lt;span class=&quot;muted&quot;&gt;(&#x27; + r.H.toFixed(2) + &#x27;)&lt;/span&gt;&lt;/td&gt;&lt;td class=&quot;n&quot;&gt;&#x27; + (.15 * r.C).toFixed(2) + &#x27; &lt;span class=&quot;muted&quot;&gt;(&#x27; + r.C.toFixed(2) + &#x27;)&lt;/span&gt;&lt;/td&gt;&lt;td class=&quot;n&quot;&gt;&lt;b&gt;&#x27; + r.t.toFixed(3) + &#x27;&lt;/b&gt;&lt;/td&gt;&#x27; : &#x27;&lt;td class=&quot;n muted&quot; colspan=&quot;5&quot; title=&quot;Order only for other handlers\&#x27; responders&quot;&gt;order only&lt;/td&gt;&#x27;;
+      return &#x27;&lt;tr class=&quot;&#x27; + (r.rank === 1 ? &quot;rk1&quot; : &quot;&quot;) + (moved ? &quot; moved&quot; : &quot;&quot;) + &#x27;&quot;&gt;&lt;td class=&quot;n&quot;&gt;&#x27; + r.rank + &#x27;&lt;/td&gt;&lt;td&gt;&#x27; + r.n + mv + &#x27;&lt;div class=&quot;small muted&quot;&gt;&#x27; + r.a + &#x27;&lt;/div&gt;&lt;/td&gt;&#x27; + cells + &#x27;&lt;/tr&gt;&#x27;;
+    }).join(&quot;&quot;) + &#x27;&lt;/tbody&gt;&lt;/table&gt;&lt;/div&gt;&lt;div class=&quot;small muted&quot; style=&quot;margin-top:6px&quot;&gt;Kip sees full scores for his own responders and the order only for the rest. Weighted value first, raw value in brackets. Minutes and skills are assumed; recent acceptance is modelled from real pings to the end of 3 Sep under &#x27; + (rule() === &quot;fade&quot; ? &quot;the hotfix rule&quot; : &quot;today&#x27;s rule&quot;) + &#x27;. Candidates beyond the two real pings are examples: real lists are often short, and today the full list is not recorded.&lt;/div&gt;&#x27;;
+  }
+  /* ================= simulator ================= */
+  function rng(seed) { return function () { seed |= 0; seed = seed + 0x6D2B79F5 | 0; var t = Math.imul(seed ^ seed &gt;&gt;&gt; 15, 1 | seed); t = t + Math.imul(t ^ t &gt;&gt;&gt; 7, 61 | t) ^ t; return ((t ^ t &gt;&gt;&gt; 14) &gt;&gt;&gt; 0) / 4294967296; }; }
+  function poisson(l, r) { var L = Math.exp(-l), k = 0, p = 1; do { k++; p *= r(); } while (p &gt; L); return k - 1; }
+  function whatIf(p, hl) {
+    var N = 200, days = p.days, tod = new Array(days).fill(0), fd = new Array(days).fill(0), r = rng(7);
+    for (var run = 0; run &lt; N; run++) {
+      var H = .5, B = .5, D = 0;
+      for (var d = 0; d &lt; days; d++) {
+        D *= Math.pow(.5, 1 / hl);
+        var n = poisson(p.ppd, r);
+        for (var i = 0; i &lt; n; i++) {
+          var q = r() * 100;
+          if (q &lt; p.miss) { H = Math.max(0, H - .12); D += .12; }
+          else if (q &lt; p.miss + p.ref) { H = Math.max(0, H - .12); B = Math.max(0, B - .12); }
+          else { H = Math.min(1, H + .08); var pay = Math.min(D, .08); D -= pay; B = Math.min(1, B + (.08 - pay)); }
+        }
+        tod[d] += H / N; fd[d] += clamp(B - D) / N;
+      }
+    }
+    return { tod: tod, fd: fd };
+  }
+  function lineChart(series, n, xlab, extra) {
+    var h = 230, l = 34, r = 10, t = 12, b = 28, w = 640, iw = w - l - r, x = function (i) { return l + iw * i / (n - 1); }, y = function (v) { return h - b - (h - t - b) * v; };
+    var s = &#x27;&lt;svg viewBox=&quot;0 0 &#x27; + w + &#x27; &#x27; + h + &#x27;&quot; role=&quot;img&quot;&gt;&#x27;;
+    s += &#x27;&lt;rect x=&quot;&#x27; + l + &#x27;&quot; y=&quot;&#x27; + y(LOW) + &#x27;&quot; width=&quot;&#x27; + iw + &#x27;&quot; height=&quot;&#x27; + (y(0) - y(LOW)) + &#x27;&quot; fill=&quot;var(--bad-soft)&quot; opacity=&quot;.7&quot;/&gt;&lt;rect x=&quot;&#x27; + l + &#x27;&quot; y=&quot;&#x27; + y(GOOD) + &#x27;&quot; width=&quot;&#x27; + iw + &#x27;&quot; height=&quot;&#x27; + (y(LOW) - y(GOOD)) + &#x27;&quot; fill=&quot;var(--warn-soft)&quot; opacity=&quot;.7&quot;/&gt;&lt;rect x=&quot;&#x27; + l + &#x27;&quot; y=&quot;&#x27; + y(1) + &#x27;&quot; width=&quot;&#x27; + iw + &#x27;&quot; height=&quot;&#x27; + (y(GOOD) - y(1)) + &#x27;&quot; fill=&quot;var(--ok-soft)&quot; opacity=&quot;.7&quot;/&gt;&#x27;;
+    [0, .25, .5, .75, 1].forEach(function (g) { s += &#x27;&lt;text class=&quot;ax&quot; x=&quot;&#x27; + (l - 4) + &#x27;&quot; y=&quot;&#x27; + (y(g) + 3) + &#x27;&quot; text-anchor=&quot;end&quot;&gt;&#x27; + g.toFixed(2) + &#x27;&lt;/text&gt;&#x27;; });
+    s += &#x27;&lt;text class=&quot;ax&quot; x=&quot;&#x27; + (w - r - 2) + &#x27;&quot; y=&quot;&#x27; + (y(.2)) + &#x27;&quot; text-anchor=&quot;end&quot;&gt;Low&lt;/text&gt;&lt;text class=&quot;ax&quot; x=&quot;&#x27; + (w - r - 2) + &#x27;&quot; y=&quot;&#x27; + (y(.58)) + &#x27;&quot; text-anchor=&quot;end&quot;&gt;Fair&lt;/text&gt;&lt;text class=&quot;ax&quot; x=&quot;&#x27; + (w - r - 2) + &#x27;&quot; y=&quot;&#x27; + (y(.88)) + &#x27;&quot; text-anchor=&quot;end&quot;&gt;Good&lt;/text&gt;&#x27;;
+    series.forEach(function (sr) { s += &#x27;&lt;polyline fill=&quot;none&quot; stroke=&quot;&#x27; + sr.c + &#x27;&quot; stroke-width=&quot;2.6&quot; &#x27; + (sr.dash ? &#x27;stroke-dasharray=&quot;6 4&quot;&#x27; : &quot;&quot;) + &#x27; points=&quot;&#x27; + sr.v.map(function (v, i) { return x(i) + &quot;,&quot; + y(v); }).join(&quot; &quot;) + &#x27;&quot;/&gt;&#x27;; });
+    var step = Math.ceil(n / 8); for (var i = 0; i &lt; n; i += step) s += &#x27;&lt;text class=&quot;ax&quot; x=&quot;&#x27; + x(i) + &#x27;&quot; y=&quot;&#x27; + (h - 10) + &#x27;&quot; text-anchor=&quot;middle&quot;&gt;&#x27; + xlab(i) + &#x27;&lt;/text&gt;&#x27;;
+    if (extra) s += extra(x, y);
+    for (var j = 0; j &lt; n; j++) s += &#x27;&lt;rect class=&quot;hit&quot; x=&quot;&#x27; + (x(j) - iw / n / 2) + &#x27;&quot; y=&quot;&#x27; + t + &#x27;&quot; width=&quot;&#x27; + (iw / n) + &#x27;&quot; height=&quot;&#x27; + (h - t - b) + &#x27;&quot; data-tip=&quot;&#x27; + esc(xlab(j) + series.map(function (sr) { return &quot;\n&quot; + sr.n + &quot;: &quot; + sr.v[j].toFixed(2); }).join(&quot;&quot;)) + &#x27;&quot;/&gt;&#x27;;
+    return s + &#x27;&lt;/svg&gt;&lt;div class=&quot;row small&quot; style=&quot;margin-top:4px&quot;&gt;&#x27; + series.map(function (sr) { return &#x27;&lt;span&gt;&lt;span style=&quot;color:&#x27; + sr.c + &#x27;&quot;&gt;&amp;#9632;&lt;/span&gt; &#x27; + sr.n + &#x27;&lt;/span&gt;&#x27;; }).join(&quot;&quot;) + &#x27;&lt;/div&gt;&#x27;;
+  }
+  function renderSim() {
+    var s = state.sim, opts = NAMES.map(function (n) { return &#x27;&lt;option&#x27; + (n === state.simResp ? &quot; selected&quot; : &quot;&quot;) + &#x27;&gt;&#x27; + n + &#x27;&lt;/option&gt;&#x27;; }).join(&quot;&quot;);
+    $(&quot;#simCtl&quot;).innerHTML = &#x27;&lt;div class=&quot;seg&quot; role=&quot;group&quot; style=&quot;margin-bottom:12px&quot;&gt;&lt;button data-m=&quot;replay&quot; aria-pressed=&quot;&#x27; + (state.simMode === &quot;replay&quot;) + &#x27;&quot;&gt;Replay real pings&lt;/button&gt;&lt;button data-m=&quot;whatif&quot; aria-pressed=&quot;&#x27; + (state.simMode === &quot;whatif&quot;) + &#x27;&quot;&gt;What if&lt;/button&gt;&lt;/div&gt;&#x27; +
+      &#x27;&lt;div class=&quot;field&quot;&gt;&lt;label&gt;Half-life of a miss &lt;span class=&quot;mono&quot;&gt;&#x27; + state.hl + &#x27; days&lt;/span&gt;&lt;/label&gt;&lt;input type=&quot;range&quot; id=&quot;hlR&quot; min=&quot;1&quot; max=&quot;7&quot; step=&quot;1&quot; value=&quot;&#x27; + state.hl + &#x27;&quot;&gt;&lt;span class=&quot;small muted&quot;&gt;Proposal: 2 days.&lt;/span&gt;&lt;/div&gt;&#x27; +
+      (state.simMode === &quot;replay&quot; ? &#x27;&lt;div class=&quot;field&quot;&gt;&lt;label for=&quot;respS&quot;&gt;Responder&lt;/label&gt;&lt;select id=&quot;respS&quot;&gt;&#x27; + opts + &#x27;&lt;/select&gt;&lt;/div&gt;&lt;p class=&quot;small muted&quot;&gt;Day 0 is 12 Aug. Starting scores come from replaying the pings since 29 Jun (modelled). Assumes scores survive restarts; today they live in memory, so a restart resets everyone to 0.5.&lt;/p&gt;&#x27; :
+      &#x27;&lt;div class=&quot;field&quot;&gt;&lt;label&gt;Pings per day &lt;span class=&quot;mono&quot;&gt;&#x27; + s.ppd.toFixed(1) + &#x27;&lt;/span&gt;&lt;/label&gt;&lt;input type=&quot;range&quot; id=&quot;ppdR&quot; min=&quot;0.3&quot; max=&quot;3&quot; step=&quot;0.1&quot; value=&quot;&#x27; + s.ppd + &#x27;&quot;&gt;&lt;/div&gt;&lt;div class=&quot;field&quot;&gt;&lt;label&gt;Missed &lt;span class=&quot;mono&quot;&gt;&#x27; + s.miss + &#x27;%&lt;/span&gt;&lt;/label&gt;&lt;input type=&quot;range&quot; id=&quot;missR&quot; min=&quot;0&quot; max=&quot;80&quot; step=&quot;1&quot; value=&quot;&#x27; + s.miss + &#x27;&quot;&gt;&lt;/div&gt;&lt;div class=&quot;field&quot;&gt;&lt;label&gt;Turned down &lt;span class=&quot;mono&quot;&gt;&#x27; + s.ref + &#x27;%&lt;/span&gt;&lt;/label&gt;&lt;input type=&quot;range&quot; id=&quot;refR&quot; min=&quot;0&quot; max=&quot;40&quot; step=&quot;1&quot; value=&quot;&#x27; + s.ref + &#x27;&quot;&gt;&lt;/div&gt;&lt;p class=&quot;small muted&quot;&gt;Defaults are the four\u2019s real rates after 12 Aug (59% missed, 18% turned down). Pings per day is held constant here; in reality a low score gets fewer. 200 seeded runs.&lt;/p&gt;&#x27;);
+    var out = &quot;&quot;;
+    if (state.simMode === &quot;replay&quot;) {
+      var n = state.simResp, td = [], fd = [], i; for (i = 0; i &lt;= MAXD; i++) { td.push(todayScore(n, i)); fd.push(fadeScore(n, i, state.hl)); }
+      var evs = EV[n];
+      var ex = function (x, y) { var q = &quot;&quot;; evs.forEach(function (e, k) { var c = e[1] === &quot;T&quot; ? &quot;var(--ok)&quot; : e[1] === &quot;D&quot; ? &quot;var(--warn)&quot; : &quot;var(--bad)&quot;; q += &#x27;&lt;circle cx=&quot;&#x27; + (x(e[0]) + ((k % 3) - 1) * 3) + &#x27;&quot; cy=&quot;&#x27; + (y(0) - 6 - ((k % 3) * 5)) + &#x27;&quot; r=&quot;3&quot; fill=&quot;&#x27; + c + &#x27;&quot;&gt;&lt;title&gt;&#x27; + dlabel(e[0]) + &#x27;: &#x27; + ({ T: &quot;taken&quot;, D: &quot;turned down&quot;, M: &quot;missed&quot; })[e[1]] + &#x27;&lt;/title&gt;&lt;/circle&gt;&#x27;; }); return q; };
+      var below = td.filter(function (v) { return v &lt; LOW; }).length, below2 = fd.filter(function (v) { return v &lt; LOW; }).length;
+      out = &#x27;&lt;div class=&quot;card&quot;&gt;&lt;h3&gt;&#x27; + n + &#x27;: recent acceptance, 12 Aug to 6 Sep&lt;/h3&gt;&#x27; + lineChart([{ n: &quot;Today&#x27;s rule&quot;, v: td, c: &quot;var(--ink)&quot;, dash: true }, { n: &quot;Hotfix (&quot; + state.hl + &quot;-day fade)&quot;, v: fd, c: &quot;var(--hot)&quot; }], MAXD + 1, dlabel, ex) + &#x27;&lt;div class=&quot;small muted&quot;&gt;Dots: pings (green taken, amber turned down, red missed). Bands are a proposal: Good &#x27; + GOOD.toFixed(2) + &#x27; and up (a new responder starts at 0.50, which reads as Fair, so the line stays hidden until there is something to explain), Fair &#x27; + LOW.toFixed(2) + &#x27; to &#x27; + GOOD.toFixed(2) + &#x27;, Low under &#x27; + LOW.toFixed(2) + &#x27;. Modelled replay with no restarts, not a forecast: under the hotfix they would be asked more.&lt;/div&gt;&lt;/div&gt;&#x27; +
+        &#x27;&lt;div class=&quot;grid2&quot;&gt;&lt;div class=&quot;card&quot;&gt;&lt;div class=&quot;small muted&quot;&gt;On 6 Sep&lt;/div&gt;&lt;div class=&quot;mono&quot; style=&quot;font-size:1.4rem&quot;&gt;&lt;span&gt;&#x27; + td[MAXD].toFixed(2) + &#x27;&lt;/span&gt; &amp;rarr; &lt;span style=&quot;color:var(--hot)&quot;&gt;&#x27; + fd[MAXD].toFixed(2) + &#x27;&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;small muted&quot;&gt;today &amp;rarr; hotfix &amp;middot; days in Low: &#x27; + below + &#x27; &amp;rarr; &#x27; + below2 + &#x27;&lt;/div&gt;&lt;/div&gt;&lt;div class=&quot;card&quot;&gt;&lt;div class=&quot;small muted&quot;&gt;Rank cost against a neighbour at 0.85&lt;/div&gt;&lt;div class=&quot;mono&quot; style=&quot;font-size:1.4rem&quot;&gt;&lt;span&gt;&#x27; + (.25 * Math.max(0, .85 - td[MAXD]) / .6 * 45).toFixed(1) + &#x27;&lt;/span&gt; &amp;rarr; &lt;span style=&quot;color:var(--hot)&quot;&gt;&#x27; + (.25 * Math.max(0, .85 - fd[MAXD]) / .6 * 45).toFixed(1) + &#x27;&lt;/span&gt; &lt;span class=&quot;small&quot;&gt;min of travel&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;small muted&quot;&gt;0.25 weight on recent acceptance, 0.60 on proximity&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&#x27;;
+    } else {
+      var r = whatIf(s, state.hl), n2 = s.days, avg = function (a) { var z = a.slice(30), t = 0; z.forEach(function (v) { t += v; }); return t / z.length; };
+      out = &#x27;&lt;div class=&quot;card&quot;&gt;&lt;h3&gt;What if a responder keeps missing?&lt;/h3&gt;&#x27; + lineChart([{ n: &quot;Today&#x27;s rule&quot;, v: r.tod, c: &quot;var(--ink)&quot;, dash: true }, { n: &quot;Hotfix (&quot; + state.hl + &quot;-day fade)&quot;, v: r.fd, c: &quot;var(--hot)&quot; }], n2, function (i) { return &quot;day &quot; + i; }) + &#x27;&lt;div class=&quot;small muted&quot;&gt;Average of 200 runs. Misses fade; refusals and takes work as today.&lt;/div&gt;&lt;/div&gt;&#x27; +
+        &#x27;&lt;div class=&quot;grid2&quot;&gt;&lt;div class=&quot;card&quot;&gt;&lt;div class=&quot;small muted&quot;&gt;Average, days 30 to 60&lt;/div&gt;&lt;div class=&quot;mono&quot; style=&quot;font-size:1.4rem&quot;&gt;&lt;span&gt;&#x27; + avg(r.tod).toFixed(2) + &#x27;&lt;/span&gt; &amp;rarr; &lt;span style=&quot;color:var(--hot)&quot;&gt;&#x27; + avg(r.fd).toFixed(2) + &#x27;&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;small muted&quot;&gt;today &amp;rarr; hotfix&lt;/div&gt;&lt;/div&gt;&lt;div class=&quot;card&quot;&gt;&lt;div class=&quot;small muted&quot;&gt;What this says&lt;/div&gt;&lt;p class=&quot;small&quot;&gt;&#x27; + (avg(r.fd) &lt; 0.1 ? &#x27;At these rates the fade does not help: a responder who really does miss most pings still ends near zero. The fade helps responders who stop being asked, because their penalty clears and they are asked again; it does not change why they miss.&#x27; : &#x27;At these rates the fade lifts the average, but a responder who keeps missing stays well below a healthy one. It does not change why they miss.&#x27;) + &#x27;&lt;/p&gt;&lt;/div&gt;&lt;/div&gt;&#x27;;
+    }
+    $(&quot;#simOut&quot;).innerHTML = out;
+    $$(&quot;#simCtl [data-m]&quot;).forEach(function (b) { b.onclick = function () { state.simMode = b.getAttribute(&quot;data-m&quot;); renderSim(); }; });
+    var bind = function (id, fn) { var e = $(&quot;#&quot; + id); if (e) e.oninput = function () { fn(+e.value); renderSim(); }; };
+    bind(&quot;hlR&quot;, function (v) { state.hl = v; }); bind(&quot;ppdR&quot;, function (v) { state.sim.ppd = v; }); bind(&quot;missR&quot;, function (v) { state.sim.miss = v; }); bind(&quot;refR&quot;, function (v) { state.sim.ref = v; });
+    var rs = $(&quot;#respS&quot;); if (rs) rs.onchange = function () { state.simResp = rs.value; renderSim(); };
+  }
+
+  /* ================= journey: events with application mockups ================= */
+  function consoleFrame(title, inner) { return &#x27;&lt;div class=&quot;frame console mini&quot;&gt;&lt;div class=&quot;fbar&quot;&gt;&lt;span&gt;Rook Dispatch &amp;middot; Console &amp;middot; &#x27; + title + &#x27;&lt;/span&gt;&lt;span class=&quot;ill&quot;&gt;illustrative&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;cmain&quot;&gt;&#x27; + inner + &#x27;&lt;/div&gt;&lt;/div&gt;&#x27;; }
+  function phoneFrame(title, inner) { return &#x27;&lt;div class=&quot;frame phone mini&quot;&gt;&lt;div class=&quot;fbar&quot;&gt;&lt;span&gt;Rook &amp;middot; Meteor Mite&lt;/span&gt;&lt;span class=&quot;ill&quot;&gt;illustrative&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;pbody&quot; style=&quot;padding:12px&quot;&gt;&lt;b&gt;&#x27; + title + &#x27;&lt;/b&gt;&#x27; + inner + &#x27;&lt;/div&gt;&lt;/div&gt;&#x27;; }
+  function cardsHTML(d) {
+    return &#x27;&lt;div class=&quot;grid2&quot; style=&quot;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))&quot;&gt;&#x27; + [&quot;Meteor Mite&quot;, &quot;The Gale&quot;].map(function (n) {
+      var ls = lastN(n, d, 1)[0], line = lineFor(n, d), last = ls ? dlabel(ls[0]) + &quot;, &quot; + MON[ls[1]] : &quot;none yet&quot;;
+      return &#x27;&lt;div class=&quot;rcard&quot;&gt;&lt;div class=&quot;nm&quot;&gt;&lt;span&gt;&#x27; + n + &#x27;&lt;/span&gt;&lt;span class=&quot;badge&quot; title=&quot;Set by the responder in the app&quot;&gt;Available&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;small muted&quot;&gt;Eastgate &amp;middot; Pings in the last 7 days: &lt;b class=&quot;mono&quot; style=&quot;color:var(--ink)&quot;&gt;&#x27; + pings7(n, d) + &#x27;&lt;/b&gt; &amp;middot; Last ping: &#x27; + last + &#x27;&lt;/div&gt;&#x27; +
+        chg(&quot;hotfix&quot;, &#x27;&lt;div class=&quot;small&quot;&gt;&#x27; + line.head + &#x27;&lt;/div&gt;&#x27; + (line.next ? &#x27;&lt;div class=&quot;small muted&quot;&gt;&#x27; + line.next + &#x27;&lt;/div&gt;&#x27; : &quot;&quot;), &quot;HOTFIX: new line&quot;) + &#x27;&lt;/div&gt;&#x27;;
+    }).join(&quot;&quot;) + &#x27;&lt;/div&gt;&#x27;;
+  }
+  function mkCallout() { return consoleFrame(&quot;Incident feed&quot;, &#x27;&lt;div class=&quot;rcard&quot;&gt;&lt;div class=&quot;nm&quot;&gt;&lt;span&gt;Callout 41380 &amp;middot; Eastgate&lt;/span&gt;&lt;span class=&quot;chip ex&quot;&gt;new&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;small muted&quot;&gt;4 Sep, 21:47&lt;/div&gt;&lt;div&gt;&quot;A woman in a beekeeping suit is emptying a bank.&quot;&lt;/div&gt;&lt;div class=&quot;small muted&quot;&gt;Entered by Kip, or pushed from an intake system. Dispatching&amp;hellip;&lt;/div&gt;&lt;/div&gt;&#x27;); }
+  function mkRanking() {
+    var inner = &#x27;&lt;div class=&quot;small muted&quot;&gt;Callout 41380 &amp;middot; Eastgate&lt;/div&gt;&#x27; + (on(&quot;backlog&quot;) ? chg(&quot;backlog&quot;, &#x27;&lt;div class=&quot;small&quot; style=&quot;font-weight:700;margin-bottom:6px&quot;&gt;How this was ranked&lt;/div&gt;&#x27; + rankTable(), &quot;BACKLOG 1: how this was ranked&quot;) : &#x27;&lt;div class=&quot;card&quot; style=&quot;background:var(--surface2)&quot;&gt;&lt;div class=&quot;small&quot;&gt;Who else was on the list, and why in this order, is not shown or recorded today. Kip sees only who was pinged.&lt;/div&gt;&lt;/div&gt;&#x27;);
+    return consoleFrame(&quot;Callout&quot;, inner);
+  }
+  function mkPing() {
+    var circ = 2 * Math.PI * 46, pct = 44 / 60;
+    return phoneFrame(&quot;New callout &amp;middot; Eastgate&quot;, &#x27;&lt;div class=&quot;small muted&quot;&gt;A woman in a beekeeping suit is emptying a bank.&lt;/div&gt;&lt;div class=&quot;ring&quot;&gt;&lt;svg viewBox=&quot;0 0 110 110&quot;&gt;&lt;circle cx=&quot;55&quot; cy=&quot;55&quot; r=&quot;46&quot; fill=&quot;none&quot; stroke=&quot;var(--line)&quot; stroke-width=&quot;9&quot;/&gt;&lt;circle cx=&quot;55&quot; cy=&quot;55&quot; r=&quot;46&quot; fill=&quot;none&quot; stroke=&quot;var(--ink)&quot; stroke-width=&quot;9&quot; stroke-dasharray=&quot;&#x27; + (circ * pct) + &#x27; &#x27; + circ + &#x27;&quot; transform=&quot;rotate(-90 55 55)&quot;/&gt;&lt;text x=&quot;55&quot; y=&quot;62&quot; text-anchor=&quot;middle&quot; style=&quot;font:700 26px var(--f-mono);fill:var(--ink)&quot;&gt;44&lt;/text&gt;&lt;/svg&gt;&lt;/div&gt;&lt;div class=&quot;small muted&quot; style=&quot;text-align:center&quot;&gt;Unanswered after 60 seconds (it was 90 until 12 Aug), it moves to the next responder and counts as a missed ping.&lt;/div&gt;&lt;button class=&quot;btnbig go&quot; disabled&gt;Take it&lt;/button&gt;&lt;button class=&quot;btnbig no&quot; disabled&gt;Turn down&lt;/button&gt;&#x27;);
+  }
+  function mkMissed() { return phoneFrame(&quot;This callout has moved on&quot;, &#x27;&lt;p class=&quot;small&quot;&gt;The 60 seconds ran out and it went to the next responder. It counts as a missed ping.&lt;/p&gt;&#x27; + chg(&quot;hotfix&quot;, &#x27;&lt;p class=&quot;small&quot;&gt;A missed ping lowers your recent acceptance for a few days, whatever the reason, and then fades. See Availability.&lt;/p&gt;&#x27;, &quot;HOTFIX&quot;)); }
+  function mkNext() { return consoleFrame(&quot;Callout 41380 &amp;middot; Activity&quot;, &#x27;&lt;div class=&quot;small mono&quot;&gt;21:47:56 &amp;nbsp;Ping &amp;rarr; Sgt. Bulwark: &lt;span style=&quot;color:var(--bad)&quot;&gt;missed&lt;/span&gt;&lt;br&gt;21:48:59 &amp;nbsp;Ping &amp;rarr; The Gale: &lt;span style=&quot;color:var(--ok)&quot;&gt;taken&lt;/span&gt; (78 s after the callout)&lt;/div&gt;&lt;div class=&quot;small muted&quot;&gt;The callout moves on after each refusal or miss. Each miss costs up to 60 seconds.&lt;/div&gt;&#x27;); }
+  function mkQuiet() { return consoleFrame(&quot;Coverage&quot;, &#x27;&lt;div class=&quot;row&quot; style=&quot;justify-content:space-between&quot;&gt;&lt;b&gt;Coverage&lt;/b&gt;&lt;span class=&quot;small muted&quot;&gt;Handler: Kip &amp;middot; end of &#x27; + dlabel(state.day) + &#x27;&lt;/span&gt;&lt;/div&gt;&#x27; + cardsHTML(state.day)); }
+  function mkAvail() {
+    var n = &quot;Meteor Mite&quot;, d = state.day, line = lineFor(n, d), lv = line.lv, ls = line.ls;
+    var head = !ls.length ? &quot;You have not been asked yet.&quot; : lv === &quot;Good&quot; ? &quot;You are in the rotation.&quot; : lv === &quot;Fair&quot; ? &quot;You may be asked a bit less often.&quot; : &quot;You will be asked less often.&quot;;
+    var more = &quot;Missed pings count against this for a few days, whatever the reason, then fade. It clears by itself, even if no pings come.&quot; + (lv === &quot;Good&quot; ? &quot;&quot; : &quot; &quot; + (line.rd === null ? &quot;Taking a ping raises it straight away.&quot; : &quot;Back to Good about &quot; + dlabel(d + line.rd) + &quot; if there are no more misses; taking a ping raises it straight away.&quot;) + &quot; If pings are not ringing, check the app is up to date and notifications are on, and tell your handler.&quot;);
+    return phoneFrame(&quot;Availability&quot;, &#x27;&lt;div class=&quot;rcard&quot;&gt;&lt;div class=&quot;nm&quot;&gt;&lt;span&gt;Available now&lt;/span&gt;&lt;span class=&quot;badge&quot;&gt;On&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;small muted&quot;&gt;Windows: Mon to Sun, 06:00 to 23:00&lt;/div&gt;&lt;/div&gt;&#x27; + chg(&quot;hotfix&quot;, &#x27;&lt;div style=&quot;display:flex;justify-content:space-between;gap:8px&quot;&gt;&lt;b&gt;Recent acceptance&lt;/b&gt;&lt;span class=&quot;lvl &#x27; + lv + &#x27;&quot;&gt;&#x27; + lv + &#x27;&lt;/span&gt;&lt;/div&gt;&lt;p style=&quot;margin-top:6px&quot;&gt;&lt;b&gt;&#x27; + head + &#x27;&lt;/b&gt;&lt;/p&gt;&lt;p class=&quot;small&quot; style=&quot;margin-top:4px&quot;&gt;&#x27; + more + &#x27;&lt;/p&gt;&lt;div class=&quot;small muted mono&quot; style=&quot;margin-top:6px&quot;&gt;Recorded: &#x27; + (ls.map(function (e) { return dlabel(e[0]) + &quot; &quot; + MON[e[1]]; }).join(&quot; &amp;middot; &quot;) || &quot;none&quot;) + &#x27;&lt;/div&gt;&#x27;, &quot;HOTFIX: new&quot;));
+  }
+  function mkDelivery() { return consoleFrame(&quot;Callout 41380 &amp;middot; Activity&quot;, chg(&quot;backlog&quot;, &#x27;&lt;div class=&quot;small mono&quot;&gt;21:47:56 &amp;nbsp;Ping &amp;rarr; Sgt. Bulwark&lt;br&gt;21:47:57 &amp;nbsp;&lt;span style=&quot;color:var(--ok)&quot;&gt;delivered to phone&lt;/span&gt; &amp;middot; 60 s clock starts&lt;br&gt;&amp;hellip;&lt;br&gt;21:49:10 &amp;nbsp;Ping &amp;rarr; Nightwell: &lt;span style=&quot;color:var(--bad)&quot;&gt;not delivered&lt;/span&gt; &amp;middot; moved on after 5 s&lt;/div&gt;&lt;div class=&quot;small muted&quot;&gt;A responder can also report a ping that never rang.&lt;/div&gt;&#x27;, &quot;BACKLOG 2: delivery&quot;)); }
+  function mkFair() { return consoleFrame(&quot;Callout &amp;middot; Activity&quot;, chg(&quot;backlog&quot;, &#x27;&lt;div class=&quot;small mono&quot;&gt;Fair-share offer &amp;rarr; Meteor Mite&lt;br&gt;&lt;span class=&quot;muted&quot;&gt;no offers in 7 days &amp;middot; offered first on a real callout in Eastgate&lt;/span&gt;&lt;/div&gt;&#x27;, &quot;BACKLOG 3: fair share&quot;)); }
+  var EVENTS = [
+    { l: &quot;Callout raised&quot;, who: &quot;console&quot;, k: &quot;existing&quot;, mk: mkCallout },
+    { l: &quot;Responders ranked&quot;, who: &quot;console&quot;, k: &quot;existing&quot;, mk: mkRanking, note: &quot;Backlog 1 adds the saved, reviewable ranking&quot; },
+    { l: &quot;Ping sent to the top responder&quot;, who: &quot;phone&quot;, k: &quot;existing&quot;, mk: mkPing },
+    { l: &quot;Ping missed&quot;, who: &quot;phone&quot;, k: &quot;existing&quot;, hot: true, mk: mkMissed, note: &quot;2.3% of pings before 12 Aug, 18.0% since&quot; },
+    { l: &quot;Next responder pinged&quot;, who: &quot;console&quot;, k: &quot;existing&quot;, mk: mkNext },
+    { l: &quot;Responder goes quiet&quot;, who: &quot;console&quot;, k: &quot;existing&quot;, hot: true, mk: mkQuiet, note: &quot;A miss costs 0.12 and never fades. Hotfix: it halves every 2 days&quot; },
+    { l: &quot;Responder sees recent acceptance&quot;, who: &quot;phone&quot;, k: &quot;hotfix&quot;, mk: mkAvail },
+    { l: &quot;Delivery confirmed before the clock&quot;, who: &quot;console&quot;, k: &quot;backlog&quot;, cond: &quot;only if the push logs show undelivered pings&quot;, mk: mkDelivery },
+    { l: &quot;Fair-share offer&quot;, who: &quot;console&quot;, k: &quot;backlog&quot;, cond: &quot;only if the hotfix misses its measure&quot;, mk: mkFair }
+  ];
+  function renderJourney() {
+    $(&quot;#seq&quot;).innerHTML = EVENTS.map(function (e, i) {
+      var shown = on(e.k), mock = shown ? e.mk() : &#x27;&lt;div class=&quot;ph&quot;&gt;Not in this version&lt;/div&gt;&#x27;;
+      var kchip = e.k === &quot;hotfix&quot; ? &#x27;&lt;span class=&quot;chip hot&quot;&gt;hotfix&lt;/span&gt;&#x27; : e.k === &quot;backlog&quot; ? &#x27;&lt;span class=&quot;chip bk&quot;&gt;backlog&lt;/span&gt;&#x27; : &#x27;&lt;span class=&quot;chip ex&quot;&gt;existing&lt;/span&gt;&#x27;;
+      var nodeCls = &quot;node&quot; + (state.hi &amp;&amp; e.k === &quot;hotfix&quot; ? &quot; hot&quot; : &quot;&quot;) + (state.hi &amp;&amp; e.k === &quot;backlog&quot; ? &quot; bk&quot; : &quot;&quot;) + (e.hot ? &quot; prob&quot; : &quot;&quot;);
+      var spine = &#x27;&lt;div class=&quot;spine&quot;&gt;&lt;span class=&quot;&#x27; + nodeCls + &#x27;&quot;&gt;&#x27; + (i + 1) + &#x27;&lt;/span&gt;&lt;span class=&quot;evl&quot;&gt;&#x27; + e.l + &#x27;&lt;/span&gt;&#x27; + kchip + (e.cond ? &#x27;&lt;span class=&quot;evn&quot; style=&quot;color:var(--bk)&quot;&gt;&#x27; + e.cond + &#x27;&lt;/span&gt;&#x27; : &quot;&quot;) + (e.note ? &#x27;&lt;span class=&quot;evn&quot;&gt;&#x27; + e.note + &#x27;&lt;/span&gt;&#x27; : &quot;&quot;) + &#x27;&lt;/div&gt;&#x27;;
+      var left = &#x27;&lt;div class=&quot;side left&quot;&gt;&#x27; + (e.who === &quot;console&quot; ? &#x27;&lt;div class=&quot;&#x27; + (shown ? &quot;&quot; : &quot;off&quot;) + &#x27;&quot;&gt;&#x27; + mock + &#x27;&lt;/div&gt;&#x27; : &quot;&quot;) + &#x27;&lt;/div&gt;&#x27;, right = &#x27;&lt;div class=&quot;side right&quot;&gt;&#x27; + (e.who === &quot;phone&quot; ? &#x27;&lt;div class=&quot;&#x27; + (shown ? &quot;&quot; : &quot;off&quot;) + &#x27;&quot;&gt;&#x27; + mock + &#x27;&lt;/div&gt;&#x27; : &quot;&quot;) + &#x27;&lt;/div&gt;&#x27;;
+      return &#x27;&lt;div class=&quot;seqrow&#x27; + (shown ? &quot;&quot; : &quot; dim&quot;) + &#x27;&quot;&gt;&#x27; + left + spine + right + &#x27;&lt;/div&gt;&#x27;;
+    }).join(&quot;&quot;);
+  }
+
+  /* ================= wiring ================= */
+  function setTab(t) {
+    state.tab = t;
+    [&quot;journey&quot;, &quot;sim&quot;].forEach(function (k) { $(&quot;#p-&quot; + k).hidden = k !== t; });
+    $$(&quot;#tabSeg button&quot;).forEach(function (b) { b.setAttribute(&quot;aria-selected&quot;, b.getAttribute(&quot;data-t&quot;) === t ? &quot;true&quot; : &quot;false&quot;); });
+    try { history.replaceState(null, &quot;&quot;, &quot;#&quot; + t); } catch (e) {}
+    renderAll();
+  }
+  function renderAll() {
+    $$(&quot;#viewSeg button&quot;).forEach(function (b) { b.setAttribute(&quot;aria-pressed&quot;, String(+b.getAttribute(&quot;data-v&quot;) === state.view)); });
+    if (state.tab === &quot;journey&quot;) renderJourney(); else renderSim();
+  }
+  $$(&quot;#viewSeg button&quot;).forEach(function (b) { b.addEventListener(&quot;click&quot;, function () { state.view = +b.getAttribute(&quot;data-v&quot;); renderAll(); }); });
+  $(&quot;#hiChk&quot;).addEventListener(&quot;change&quot;, function () { state.hi = this.checked; renderAll(); });
+  $$(&quot;#tabSeg button&quot;).forEach(function (b) { b.addEventListener(&quot;click&quot;, function () { setTab(b.getAttribute(&quot;data-t&quot;)); window.scrollTo(0, 0); }); });
+  var h0 = (location.hash || &quot;&quot;).replace(&quot;#&quot;, &quot;&quot;); if ([&quot;journey&quot;, &quot;sim&quot;].indexOf(h0) &gt;= 0) state.tab = h0;
+  setTab(state.tab);
+})();
+&lt;/script&gt;
+"></iframe>
+  </div>
+  <div class="small muted" style="margin-top:8px">Same file as <span class="mono">05-super-speed/demonstrator.html</span>. Screens and the map are illustrative; scores are replayed from the real pings.</div>
+
+  <div class="hb">
+    <div class="box today"><h4>Today</h4><div class="small">One bad run is permanent. The four score <b class="mono">0.00</b> and are not asked.</div><div class="small muted">Handler and responder see nothing.</div></div>
+    <div class="arrow">&rarr;</div>
+    <div class="box hotfix"><h4><span class="chip hot">hotfix</span> One release</h4><div class="small">A miss penalty that halves every 2 days. Replayed on real pings, the four recover to <b class="mono">0.55 to 0.67</b> and the other twelve are unchanged.</div><div class="small">One plain line for handler and responder. A restart-proof store, because scores sit in memory today.</div>
+      <div class="bklist"><div class="bkitem"><span class="chip bk">backlog 1</span> Handler can review how a callout was ranked</div><div class="bkitem"><span class="chip bk">backlog 2</span> Delivery confirmation, only if push logs show undelivered pings</div><div class="bkitem"><span class="chip bk">backlog 3</span> A real fair-share offer, only if the measure is missed</div></div></div>
+  </div>
+
+  <div class="grid2" style="margin-top:22px">
+    <div class="card"><div class="lab">Replayed on real pings, 6 Sep</div><div id="fixChart" style="margin-top:8px"></div><div class="small muted" style="margin-top:6px">Recent acceptance, today's rule against the hotfix, for the four. <span class="chip m">modelled</span> A replay, not a forecast: they would be asked more.</div></div>
+    <div class="card"><div class="lab">How we will know it worked</div>
+      <div class="small" style="margin-top:8px"><b>Measure:</b> the four get at least <b>14%</b> of weekly pings in the second full week after launch (from 1.8%).<br><br><b>Pull back</b> if, on a rolling 7 days, acceptance is under 66.7%, callouts nobody took are over 12.9%, or the slowest 10% take over 82 seconds to reach a responder.<br><br><b>Rollback:</b> turn the fade off.</div></div>
+  </div>
+
+  <div class="decide">
+    <div class="card"><b class="nn">1</b><b>Approve the hotfix</b><div class="small muted">A missed ping stops counting against a responder after about a week.</div></div>
+    <div class="card"><b class="nn">2</b><b>Allow it off the monthly release train</b><div class="small muted">With Wen Li's written review before launch.</div></div>
+    <div class="card"><b class="nn">3</b><b>Accept the backlog in order</b><div class="small muted">Three items; two start only if the data says so.</div></div>
+  </div>
+  <blockquote class="hotq" style="margin-top:18px"><p>"I'd rather see something real than a tidy slide."</p><cite>Helen Achebe, Director of Product, <span class="mono">05-super-speed/director-request.txt</span></cite></blockquote>
+  <div class="note" style="margin-top:14px"><b>What the fix will not do:</b> explain why the four miss 70% of their first pings (28 of 40, against 16.5% for everyone else). That is push delivery or slow answers, and backlog item 2 covers it. A responder who keeps missing about 60% of pings still falls again.</div>
+</div></section>
+
+<section class="ch" id="never"><div class="wrap">
+  <div class="num">4 &middot; Never again</div>
+  <h2>Your skill checks the brief before anyone ships.</h2>
+  <p class="plain">Release 4.2 went out with roadmap one-liners and no measure. <span class="mono">review-checklist</span>, the skill you built, reads a brief the way the person who must decide would, and says plainly whether they can decide today. Point it at any brief and it checks five things.</p>
+
+  <div class="pipe">
+    <div class="pstep"><b>1 &middot; Write the brief first</b><span class="small">Problem, plan, one decision, one owner, one measure.</span></div>
+    <div class="pstep skillstep"><span class="chip bk">your skill</span><b>2 &middot; review-checklist</b><span class="small">Owner. One clear decision. A measure. Same scope throughout. Problem before fix, in plain words.</span></div>
+    <div class="pstep"><b>3 &middot; Verdict</b><span class="small">Ready, ready with small fixes, or not ready. "Can the decider decide today?"</span></div>
+    <div class="pstep"><b>4 &middot; Fix first</b><span class="small">At most three edits, each tagged <span class="chip bad">blocks the decision</span> or <span class="chip ex">polish</span>.</span></div>
+    <div class="pstep skillstep"><span class="chip bk">your skill</span><b>5 &middot; pm-demonstrator</b><span class="small">Only then build the demonstrator: grounded numbers, one event diagram, a reviewer round.</span></div>
+  </div>
+
+  <div class="grid2" style="margin-top:26px">
+    <div class="card"><div class="lab">It already works on real Rook briefs</div>
+      <div class="tw" style="margin-top:8px"><table><thead><tr><th>Brief</th><th>Flag from the scheduled run</th></tr></thead><tbody>
+        <tr><td>Bulk callout</td><td class="f">No owner. "Ends on "nobody's picked it up yet"."</td></tr>
+        <tr><td>Routing override audit log</td><td class="f">No success measure.</td></tr>
+        <tr><td>Requisition approval chains</td><td class="f">Scope grows mid-document, from one approval step to a dashboard and a spreadsheet replacement.</td></tr>
+        <tr><td>Handler phone app</td><td class="f">Solution before problem.</td></tr>
+      </tbody></table></div>
+      <div class="small muted" style="margin-top:6px">Source: <span class="mono">06-sidekicks/scheduled-run-output.txt</span>. I checked each flag against the wiki briefs and they match.</div></div>
+    <div class="card"><div class="lab">And on your own brief</div>
+      <div class="small" style="margin-top:8px">Run on brief v8, it found four of five checks only partly met. The fix list, in order:</div>
+      <ol class="small" style="padding-left:18px;margin:8px 0 0;display:grid;gap:6px">
+        <li><span class="chip bad">blocks the decision</span> The ask bundled three decisions with no decide-by date or cost of waiting.</li>
+        <li><span class="chip bad">blocks the decision</span> The restart-proof store and Wen's pre-launch check were only in Risks.</li>
+        <li><span class="chip ex">polish</span> The 70% first-ping misses came after the plan, and "4.2", "ping" and "monthly train" were never explained.</li>
+      </ol>
+      <div class="small muted" style="margin-top:8px">Brief v9, <span class="mono">quiet-responders-decision-brief.md</span>, fixes all three. It has not been re-run through the checklist yet.</div></div>
+  </div>
+
+  <div class="card" style="margin-top:14px"><div class="lab">What it would have said about 4.2 <span class="chip p">illustrative</span></div>
+    <div class="small muted" style="margin:4px 0 8px">The checklist run by hand on the 4.2 paper trail: three roadmap entries, all committed on 30 June.</div>
+    <div class="tw"><table><thead><tr><th>Roadmap entry (4.2)</th><th>Owner</th><th>Measure</th><th>Problem stated</th><th>Scope held</th></tr></thead><tbody>
+      <tr><td><b>Change to who gets pinged</b><br><span class="small muted">"Weight proximity more heavily when ranking who gets pinged for a callout."</span></td><td class="p">Priya</td><td class="f">none</td><td class="f">none</td><td class="p">shipped as written</td></tr>
+      <tr><td><b>Ping timeout tuning</b><br><span class="small muted">"Tune how long a ping waits for an answer before it moves on."</span></td><td class="p">Priya</td><td class="f">none</td><td class="f">none</td><td class="h">"tuning" shipped as a cut, 90 s to 60 s</td></tr>
+      <tr><td><b>Availability Confidence</b><br><span class="small muted">"Show a confidence score alongside a responder's stated availability."</span></td><td class="p">Priya</td><td class="f">none</td><td class="f">none</td><td class="f">committed for 4.2, never shipped, still "Committed"</td></tr>
+    </tbody></table></div>
+    <div class="small" style="margin-top:8px"><b>Verdict: not ready.</b> Three owned items, no measure, no problem statement. That is the gap between "went clean" on 13 August and 83 open tickets.</div>
+    <div class="small muted" style="margin-top:4px">Source: <span class="mono">00-rook/wiki/company/q3-roadmap.md</span> and the 4.2 release page.</div></div>
+
+  <div class="grid2" style="margin-top:14px">
+    <div class="card"><div class="lab">You typed, to build it</div><pre class="prompt">Make a skill called review-checklist. When I point it at a brief, it checks that the brief: names who owns it, says how we'll know it worked, keeps the same scope start to finish, and explains the problem before the fix.</pre><div class="pfile" style="margin-top:4px">05-super-speed/prompts.md, prompt 20</div></div>
+    <div class="card"><div class="lab">You typed, to sharpen it</div><pre class="prompt">review this response and the brief from a executive point of view, what would you change on the skill to improve clear communication in the company on this decision. apply that change and run it again</pre><div class="pfile" style="margin-top:4px">05-super-speed/prompts.md, prompt 22</div></div>
+  </div>
+  <div class="note" style="margin-top:14px"><b>Limits:</b> the checklist judges structure and clarity, not whether the numbers are right, and it only helps if briefs go through it. Setting it to run on a schedule, as in the Module 6 report, is what makes that automatic.</div>
+</div></section>
+
+<section class="ch" id="open"><div class="wrap">
+  <div class="num">5 &middot; Still open</div>
+  <h2>Five things nobody has answered yet.</h2>
+  <div class="grid2" style="margin-top:16px">
+    <div class="card"><b>Wen Li's written check</b><div class="small muted">Reproduce the ranking for callouts 40985 and 41416 and confirm recent acceptance is what puts the four below their neighbours. If not, the fade does not ship.</div></div>
+    <div class="card"><b>Where scores live</b><div class="small muted">In memory today. A restart resets everyone to 0.5, so the fade needs a restart-proof store.</div></div>
+    <div class="card"><b>The ship date</b><div class="small muted">The engineering manager confirms within 2 working days of approval.</div></div>
+    <div class="card"><b>Who owns the 60-second decision</b><div class="small muted">The hotfix leaves the wait at 60 seconds. It is a separate decision.</div></div>
+    <div class="card"><b>Why the four miss so many first pings</b><div class="small muted">Push delivery or slow answers. The push logs for 12 and 13 Aug decide it.</div></div>
+  </div>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <b>Where every number comes from</b>
+  <ul>
+    <li><span class="mono">CLAUDE.md</span>, working context for sessions 1 to 6</li>
+    <li><span class="mono">01-origin-story</span> to <span class="mono">06-sidekicks</span> <span class="mono">/prompts.md</span></li>
+    <li><span class="mono">00-rook/data/callout-history.csv</span></li>
+    <li><span class="mono">00-rook/feedback/problem-statements-prioritized.md</span></li>
+    <li><span class="mono">00-rook/feedback/score-replay-real-pings.py</span></li>
+    <li><span class="mono">00-rook/code/dispatch-routing/history.py</span></li>
+    <li><span class="mono">05-super-speed/quiet-responders-decision-brief.md</span></li>
+    <li><span class="mono">05-super-speed/demonstrator.html</span></li>
+    <li><span class="mono">06-sidekicks/scheduled-run-output.txt</span></li>
+    <li><span class="mono">.claude/skills/review-checklist</span> and <span class="mono">pm-demonstrator</span></li>
+  </ul>
+  <p style="margin-top:10px">Rook Industries is a fictional company in a teaching scenario. <span class="chip v">verified</span> from data or code. <span class="chip m">modelled</span> a replay of real pings. <span class="chip p">proposal</span> or analysis added in this report.</p>
+</div></footer>
+<div id="tip" hidden></div>
+
+<script>
+(function () {
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+  var WEEKS = ["29 Jun","6 Jul","13 Jul","20 Jul","27 Jul","3 Aug","10 Aug","17 Aug","24 Aug","31 Aug"];
+  var W4 = [49,48,48,50,50,49,43,16,6,3], W12 = [123,122,126,126,120,123,134,142,156,162];
+  var M4 = [0,1,3,2,2,1,17,9,4,3], M12 = [3,3,3,3,2,1,21,19,20,18];
+  var DAYS = [[5,38,1],[6,28,0],[7,30,0],[8,23,1],[9,16,0],[10,32,0],[11,19,1],[12,25,7],[13,25,12],[14,30,8],[15,24,6],[16,22,4],[17,24,1],[18,25,2],[19,24,6],[20,19,4],[21,25,7],[22,16,2],[23,25,6],[24,25,6],[25,18,3],[26,23,2],[27,20,2],[28,22,2],[29,22,5],[30,32,4],[31,19,2],[32,25,4],[33,17,3],[34,25,2],[35,30,3],[36,30,2],[37,19,5]];
+  var TICKETS = [["P1 Callouts gone before the answer", 15], ["P2 Responders gone quiet", 30], ["P3 Alerts and legibility", 13], ["P4 Filters reset", 16], ["P5 Supply requests", 26]];
+  var SCORES = [["Ashgrove",1.00],["Halfmoon",1.00],["Bulwark",.99],["Cindermark",.96],["The Gale",.96],["The Longcast",.96],["Vantage",.92],["Nightwell",.88],["The Drift",.84],["Falkirk",.76],["Stormwrack",.76],["Ironvale",.72],["Farlight",0],["Meteor Mite",0],["The Undertow",0],["Vesper",0]];
+  var FIX = [["Farlight",0,.67],["Vesper",0,.65],["Meteor Mite",0,.57],["The Undertow",0,.55]];
+  var tip = $("#tip");
+  document.addEventListener("pointermove", function (e) {
+    var t = e.target.closest ? e.target.closest("[data-tip]") : null;
+    if (!t) { tip.hidden = true; return; }
+    tip.textContent = t.getAttribute("data-tip"); tip.hidden = false;
+    var x = Math.min(e.clientX + 12, innerWidth - tip.offsetWidth - 8), y = e.clientY + 14;
+    if (y + tip.offsetHeight > innerHeight - 8) y = e.clientY - tip.offsetHeight - 10;
+    tip.style.left = Math.max(8, x) + "px"; tip.style.top = Math.max(8, y) + "px";
+  });
+  function lines(host, opts) {
+    var w = 420, h = opts.h || 200, l = 34, r = 10, t = 12, b = 26, iw = w - l - r, n = WEEKS.length, ymax = opts.ymax;
+    var x = function (i) { return l + iw * (i + .5) / n; }, y = function (v) { return h - b - (h - t - b) * v / ymax; };
+    var s = '<svg class="ch-svg" viewBox="0 0 ' + w + ' ' + h + '" role="img" aria-label="' + opts.label + '">';
+    opts.ticks.forEach(function (g) { s += '<line x1="' + l + '" x2="' + (w - r) + '" y1="' + y(g) + '" y2="' + y(g) + '" stroke="' + opts.grid + '"/><text x="' + (l - 5) + '" y="' + (y(g) + 3) + '" text-anchor="end" style="fill:' + opts.muted + ';font:10px var(--f-mono)">' + g + (opts.unit || "") + '</text>'; });
+    opts.series.forEach(function (sr) { s += '<polyline fill="none" stroke="' + sr.c + '" stroke-width="3" points="' + sr.v.map(function (v, i) { return x(i) + "," + y(v); }).join(" ") + '"/>' + sr.v.map(function (v, i) { return '<circle cx="' + x(i) + '" cy="' + y(v) + '" r="3.5" fill="' + sr.c + '"/>'; }).join(""); if (sr.label) s += '<text x="' + (x(n - 1) - 4) + '" y="' + (y(sr.v[n - 1]) - 9) + '" text-anchor="end" style="fill:' + sr.c + ';font:700 11px var(--f-body)">' + sr.label + '</text>'; });
+    var mx = l + iw * (6 + 2 / 7) / n;
+    s += '<line x1="' + mx + '" x2="' + mx + '" y1="' + t + '" y2="' + (h - b) + '" stroke="' + opts.mark + '" stroke-dasharray="4 3"/><text x="' + (mx - 5) + '" y="' + (t + 9) + '" text-anchor="end" style="fill:' + opts.mark + ';font:700 10px var(--f-body)">4.2 ships</text>';
+    WEEKS.forEach(function (wk, i) { if (i % 2 === 0) s += '<text x="' + x(i) + '" y="' + (h - 9) + '" text-anchor="middle" style="fill:' + opts.muted + ';font:10px var(--f-mono)">' + wk + '</text>'; s += '<rect class="hit" x="' + (x(i) - iw / n / 2) + '" y="' + t + '" width="' + (iw / n) + '" height="' + (h - t - b) + '" data-tip="' + opts.tip(i) + '"/>'; });
+    host.innerHTML = s + '</svg>';
+  }
+  function hero() {
+    lines($("#heroChart"), { h: 190, ymax: 180, ticks: [0, 60, 120, 180], grid: "#2a3b4a", muted: "#9db0bf", mark: "#ff9f5c", label: "Pings a week", series: [{ v: W12, c: "#9db0bf", label: "other twelve" }, { v: W4, c: "#ff8d85", label: "the four" }], tip: function (i) { return "Week of " + WEEKS[i] + "\nThe four: " + W4[i] + "\nOther twelve: " + W12[i]; } });
+  }
+  function weekly() {
+    lines($("#weeklyChart"), { h: 220, ymax: 180, ticks: [0, 60, 120, 180], grid: "var(--line)", muted: "var(--muted)", mark: "var(--hot)", label: "Pings a week, the four against the other twelve", series: [{ v: W12, c: "var(--ink)", label: "other twelve" }, { v: W4, c: "var(--bad)", label: "the four" }], tip: function (i) { return "Week of " + WEEKS[i] + "\nThe four: " + W4[i] + "\nOther twelve: " + W12[i]; } });
+  }
+  function daily() {
+    var w = 420, h = 220, l = 30, r = 8, t = 12, b = 28, iw = w - l - r, n = DAYS.length, bw = iw / n, ymax = 40;
+    var x = function (i) { return l + bw * i; }, y = function (v) { return h - b - (h - t - b) * v / ymax; };
+    var lab = function (d) { return d <= 31 ? d + " Aug" : (d - 31) + " Sep"; };
+    var s = '<svg class="ch-svg" viewBox="0 0 ' + w + ' ' + h + '" role="img" aria-label="Pings and missed pings by day">';
+    [0, 10, 20, 30, 40].forEach(function (g) { s += '<line x1="' + l + '" x2="' + (w - r) + '" y1="' + y(g) + '" y2="' + y(g) + '" stroke="var(--line)"/><text x="' + (l - 4) + '" y="' + (y(g) + 3) + '" text-anchor="end" style="fill:var(--muted);font:10px var(--f-mono)">' + g + '</text>'; });
+    DAYS.forEach(function (d, i) {
+      s += '<rect x="' + (x(i) + 1) + '" y="' + y(d[1]) + '" width="' + Math.max(1, bw - 2) + '" height="' + (y(0) - y(d[1])) + '" fill="var(--surface2)" stroke="var(--line)"/><rect x="' + (x(i) + 1) + '" y="' + y(d[2]) + '" width="' + Math.max(1, bw - 2) + '" height="' + (y(0) - y(d[2])) + '" fill="var(--bad)"/>';
+      if (i % 8 === 0) s += '<text x="' + (x(i) + bw / 2) + '" y="' + (h - 10) + '" text-anchor="middle" style="fill:var(--muted);font:10px var(--f-mono)">' + lab(d[0]) + '</text>';
+      s += '<rect class="hit" x="' + x(i) + '" y="' + t + '" width="' + bw + '" height="' + (h - t - b) + '" data-tip="' + lab(d[0]) + '\n' + d[1] + ' pings, ' + d[2] + ' missed"/>';
+    });
+    var mx = x(7); s += '<line x1="' + mx + '" x2="' + mx + '" y1="' + t + '" y2="' + (h - b) + '" stroke="var(--hot)" stroke-dasharray="4 3"/><text x="' + (mx + 5) + '" y="' + (t + 9) + '" style="fill:var(--hot);font:700 10px var(--f-body)">4.2 ships 12 Aug</text>';
+    $("#dailyChart").innerHTML = s + '</svg><div class="small" style="margin-top:4px"><span style="color:var(--bad)">&#9632;</span> missed &nbsp; <span class="muted">&#9632;</span> all pings</div>';
+  }
+  function hbars(host, rows, max, fmt, colorFn, labW) {
+    var h = rows.length * 26 + 8, lw = labW || 150, w = 420, iw = w - lw - 44;
+    var s = '<svg class="ch-svg" viewBox="0 0 ' + w + ' ' + h + '" role="img">';
+    rows.forEach(function (r, i) { var y0 = 4 + i * 26, bw = Math.max(1, iw * r[1] / max); s += '<text x="' + (lw - 6) + '" y="' + (y0 + 15) + '" text-anchor="end" style="fill:var(--ink);font:600 11px var(--f-body)">' + r[0] + '</text><rect x="' + lw + '" y="' + y0 + '" width="' + bw + '" height="19" rx="3" fill="' + colorFn(r, i) + '" data-tip="' + r[0] + ": " + fmt(r[1]) + '"/><text x="' + (lw + bw + 5) + '" y="' + (y0 + 14) + '" style="fill:var(--muted);font:10px var(--f-mono)">' + fmt(r[1]) + '</text>'; });
+    host.innerHTML = s + '</svg>';
+  }
+  function misswk() {
+    var tot4 = [49,48,48,50,50,49,43,16,6,3], tot12 = W12, rate = tot4.map(function (_, i) { return 100 * (M4[i] + M12[i]) / (tot4[i] + tot12[i]); });
+    var w = 420, h = 150, l = 30, r = 8, t = 12, b = 24, iw = w - l - r, n = rate.length, bw = iw / n, ymax = 20;
+    var y = function (v) { return h - b - (h - t - b) * v / ymax; };
+    var s = '<svg class="ch-svg" viewBox="0 0 ' + w + ' ' + h + '" role="img" aria-label="Share of pings missed by week">';
+    [0, 5, 10, 15, 20].forEach(function (g) { s += '<line x1="' + l + '" x2="' + (w - r) + '" y1="' + y(g) + '" y2="' + y(g) + '" stroke="var(--line)"/><text x="' + (l - 4) + '" y="' + (y(g) + 3) + '" text-anchor="end" style="fill:var(--muted);font:10px var(--f-mono)">' + g + '%</text>'; });
+    rate.forEach(function (v, i) { var x0 = l + bw * i; s += '<rect x="' + (x0 + 4) + '" y="' + y(v) + '" width="' + (bw - 8) + '" height="' + (y(0) - y(v)) + '" rx="2" fill="' + (i >= 6 ? "var(--bad)" : "var(--muted)") + '" data-tip="Week of ' + WEEKS[i] + '\n' + v.toFixed(1) + '% missed"/>'; if (i % 2 === 0) s += '<text x="' + (x0 + bw / 2) + '" y="' + (h - 8) + '" text-anchor="middle" style="fill:var(--muted);font:10px var(--f-mono)">' + WEEKS[i] + '</text>'; });
+    $("#missWeekChart").innerHTML = s + '</svg>';
+  }
+  function draw() {
+    hero(); weekly(); daily(); misswk();
+    hbars($("#ticketChart"), TICKETS, 32, function (v) { return v + " tickets"; }, function (r, i) { return i === 1 ? "var(--bad)" : "var(--muted)"; }, 170);
+    hbars($("#scoreChart"), SCORES, 1.05, function (v) { return v.toFixed(2); }, function (r) { return r[1] === 0 ? "var(--bad)" : "var(--ok)"; }, 96);
+    hbars($("#fixChart"), FIX.map(function (r) { return [r[0] + ", hotfix", r[2]]; }).concat(FIX.map(function (r) { return [r[0] + ", today", r[1]]; })), 1, function (v) { return v.toFixed(2); }, function (r) { return r[0].indexOf("hotfix") > 0 ? "var(--hot)" : "var(--bad)"; }, 150);
+  }
+  draw();
+  /* progress bar and active chapter */
+  var bar = $("#bar");
+  function prog() { var h = document.documentElement.scrollHeight - innerHeight; bar.style.width = (h > 0 ? 100 * scrollY / h : 0) + "%"; }
+  addEventListener("scroll", prog, { passive: true }); prog();
+  var links = $$("nav.top a");
+  if (window.IntersectionObserver) {
+    var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) links.forEach(function (a) { a.classList.toggle("on", a.getAttribute("href") === "#" + e.target.id); }); }); }, { rootMargin: "-40% 0px -55% 0px" });
+    $$("section.ch").forEach(function (s) { io.observe(s); });
+  }
+  /* copy buttons on prompts */
+  $$("pre.prompt").forEach(function (p) {
+    var b = document.createElement("button"); b.className = "copy"; b.textContent = "Copy prompt"; b.style.marginTop = "6px";
+    b.onclick = function () { var done = function () { b.textContent = "Copied"; setTimeout(function () { b.textContent = "Copy prompt"; }, 1400); }; try { navigator.clipboard.writeText(p.textContent).then(done, function () { b.textContent = "Select and copy"; }); } catch (e) { b.textContent = "Select and copy"; } };
+    p.insertAdjacentElement("afterend", b);
+  });
+})();
+</script>
