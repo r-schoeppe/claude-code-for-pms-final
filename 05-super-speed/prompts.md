@@ -113,3 +113,19 @@ Now I like the demostrator. give me a quick summary what would be the approach t
 ### 19.
 
 okay, then write me a skill that is independent from rook or this personas, this is about getting to clear demonstrators for whatever problem/features faster.
+
+### 20.
+
+Make a skill called review-checklist. When I point it at a brief, it checks that the brief: names who owns it, says how we'll know it worked, keeps the same scope start to finish, and explains the problem before the fix.
+
+### 21.
+
+do a review-checklist on  05-super-speed/brief.md
+
+### 22.
+
+review this response and the brief from a executive point of view, what would you change on the skill to improve clear communication in the company on this decision. apply that change and run it again
+
+### 23.
+
+provide me a renamed updated version of the brief
