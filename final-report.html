@@ -1,12 +1,12 @@
 <title>Release 4.2 Final Report</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Public+Sans:wght@400;500;600;700;800&display=swap">
 <style>
-/* Layout: a sticky chapter bar over five full-width chapters; each chapter pairs a plain statement with a diagram, a chart or a quote. */
+/* Layout: a full-screen deck. One idea per slide, a big plain headline, one visual, speaker notes on demand. Dark and light slides alternate for rhythm. */
 :root {
   --bg: #eef2f5; --surface: #ffffff; --surface2: #f4f7f9; --ink: #14202b; --muted: #56646f; --line: #d3dce3;
   --hot: #c2410c; --hot-soft: #fff1e6; --bk: #5b3fd1; --bk-soft: #eeeaff;
   --bad: #b42323; --bad-soft: #fcebea; --ok: #217a3c; --ok-soft: #e4f3e8; --warn: #946200; --warn-soft: #fbf0d4;
-  --night: #0f1b26; --night-ink: #e8eef3; --night-muted: #9db0bf;
+  --night: #0f1b26;
   --f-body: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   --f-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
 }
@@ -25,284 +25,408 @@
   --night: #070d12; color-scheme: dark;
 }
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
-body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.55 var(--f-body); padding-inline: 0; }
-h1, h2, h3, h4 { margin: 0; text-wrap: balance; }
-p { margin: 0; }
-a { color: inherit; }
+html, body { margin: 0; height: 100%; }
+body { background: var(--bg); color: var(--ink); font: 17px/1.5 var(--f-body); overflow: hidden; }
+h1, h2, h3, h4, p { margin: 0; }
+h2, h1 { text-wrap: balance; }
 .mono { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
 .muted { color: var(--muted); }
-.small { font-size: .85rem; }
-.wrap { max-width: 1180px; margin-inline: auto; padding-inline: 16px; }
-#bar { position: fixed; top: 0; left: 0; height: 3px; width: 0; background: var(--hot); z-index: 60; }
-nav.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 50; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(6px); border-bottom: 1px solid var(--line); }
-nav.top .wrap { display: flex; gap: 6px; align-items: center; overflow-x: auto; padding-block: 8px; }
-nav.top b { font: 700 .8rem var(--f-mono); letter-spacing: .04em; margin-right: 10px; white-space: nowrap; }
-nav.top a { text-decoration: none; font-size: .86rem; padding: 6px 11px; border-radius: 99px; border: 1px solid transparent; white-space: nowrap; color: var(--muted); }
-nav.top a.on { background: var(--ink); color: var(--bg); }
-nav.top a:hover { border-color: var(--line); }
-.hero { background: var(--night); color: var(--night-ink); padding-block: 56px 48px; }
-.hero h1 { font-size: clamp(2rem, 5.2vw, 3.6rem); line-height: 1.04; font-weight: 800; letter-spacing: -.02em; max-width: 18ch; }
-.hero h1 em { font-style: normal; color: #ff9f5c; }
-.hero .lede { max-width: 62ch; margin-top: 16px; color: var(--night-muted); font-size: 1.08rem; }
-.kick { font: 600 .74rem var(--f-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--night-muted); margin-bottom: 14px; }
-.hero-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: 32px; align-items: end; }
-@media (max-width: 860px) { .hero-grid { grid-template-columns: 1fr; } }
-.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 26px; }
-.stat { border: 1px solid #2a3b4a; border-radius: 10px; padding: 12px 14px; background: #132130; }
-.stat .n { font: 800 1.55rem/1.1 var(--f-body); letter-spacing: -.02em; }
-.stat .n small { display: block; font: 500 .74rem var(--f-mono); color: var(--night-muted); white-space: normal; margin-top: 2px; }
-.stat .l { font-size: .8rem; color: var(--night-muted); margin-top: 4px; }
-.stat .s { font: .66rem/1.3 var(--f-mono); color: #7f93a3; margin-top: 6px; }
-@media (max-width: 560px) { .stats { grid-template-columns: 1fr; } }
-section.ch { padding-block: 56px 8px; scroll-margin-top: 54px; }
-.ch .num { font: 700 .78rem var(--f-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--hot); }
-.ch h2 { font-size: clamp(1.6rem, 3.4vw, 2.4rem); line-height: 1.1; letter-spacing: -.015em; margin-top: 6px; max-width: 24ch; font-weight: 800; }
-.ch .plain { font-size: 1.12rem; max-width: 66ch; margin-top: 14px; }
-.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; min-width: 0; }
-.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+.small { font-size: .88rem; }
+#deck { height: 100vh; height: 100dvh; overflow-y: auto; scroll-snap-type: y proximity; scroll-behavior: smooth; }
+.slide { min-height: 100vh; min-height: 100dvh; scroll-snap-align: start; display: grid; align-items: center; padding: 56px 0 96px; background: var(--bg); color: var(--ink); }
+.slide.dark { --bg: #0f1b26; --surface: #162636; --surface2: #1b2e40; --ink: #e8eef3; --muted: #9db0bf; --line: #2d4152; --hot: #ff9f5c; --hot-soft: #3a2314; --bk: #b6a2ff; --bk-soft: #2a2250; --bad: #ff8d85; --bad-soft: #3b1f1d; --ok: #74d39b; --ok-soft: #14301f; --warn: #f0b64f; --warn-soft: #382b10; }
+.slide-in { max-width: 1180px; width: 100%; margin-inline: auto; padding-inline: clamp(16px, 4vw, 48px); min-width: 0; }
+.kick { font: 700 .78rem var(--f-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--hot); margin-bottom: 12px; }
+.title { font-size: clamp(2rem, 4.6vw, 3.5rem); line-height: 1.06; letter-spacing: -.02em; font-weight: 800; max-width: 22ch; }
+.mega { font-size: clamp(2.3rem, 6vw, 4.6rem); line-height: 1.02; letter-spacing: -.025em; font-weight: 800; max-width: 16ch; }
+.mega em { font-style: normal; color: var(--hot); }
+.lede { font-size: 1.25rem; color: var(--muted); max-width: 40ch; margin-top: 18px; }
+.lede2 { font-size: 1.3rem; margin-top: 22px; max-width: 46ch; }
+.hint { margin-top: 26px; font: 500 .8rem var(--f-mono); color: var(--muted); }
+.grid-hero { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: 36px; align-items: center; }
+@media (max-width: 880px) { .grid-hero { grid-template-columns: 1fr; } }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; min-width: 0; }
+.lab { font: 700 .7rem var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; margin-top: 22px; align-items: start; }
 .chip { font: 600 .66rem/1 var(--f-mono); letter-spacing: .05em; text-transform: uppercase; padding: 4px 7px; border-radius: 4px; display: inline-block; white-space: nowrap; }
-.chip.v { background: var(--ok-soft); color: var(--ok); }
-.chip.m { background: var(--bk-soft); color: var(--bk); }
-.chip.p { background: var(--warn-soft); color: var(--warn); }
-.chip.hot { background: var(--hot); color: var(--surface); }
-.chip.bk { background: var(--bk); color: var(--surface); }
+.chip.hot { background: var(--hot); color: #fff; } .chip.bk { background: var(--bk); color: #fff; }
 .chip.ex { background: var(--surface2); color: var(--muted); border: 1px solid var(--line); }
 .chip.bad { background: var(--bad-soft); color: var(--bad); }
-/* flow */
-.flow { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 26px; margin-top: 28px; position: relative; }
-.node { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; position: relative; display: grid; gap: 6px; align-content: start; }
-.node .no { width: 26px; height: 26px; border-radius: 50%; background: var(--ink); color: var(--bg); display: grid; place-items: center; font: 700 .8rem var(--f-mono); }
-.node b { font-size: .98rem; line-height: 1.25; }
-.node .big { font: 800 1.5rem/1.1 var(--f-body); color: var(--bad); }
-.node.hotn { border: 2px solid var(--bad); background: var(--bad-soft); }
-.node:not(:last-child)::after { content: ""; position: absolute; right: -22px; top: 36px; width: 18px; height: 18px; border-top: 3px solid var(--ink); border-right: 3px solid var(--ink); transform: rotate(45deg) translate(-3px, 3px); }
-.loopbar { margin-top: 14px; border: 2px dashed var(--bad); border-radius: 12px; padding: 10px 14px; color: var(--bad); font-weight: 600; display: flex; gap: 10px; align-items: center; background: var(--bad-soft); }
-@media (max-width: 960px) { .flow { grid-template-columns: 1fr; gap: 26px; } .node:not(:last-child)::after { right: auto; left: 28px; top: auto; bottom: -22px; transform: rotate(135deg); } }
 svg.ch-svg { display: block; width: 100%; height: auto; overflow: visible; }
-svg .ax { fill: var(--muted); font: 10px var(--f-mono); }
-svg .lb { fill: var(--ink); font: 600 11px var(--f-body); }
-svg .gr { stroke: var(--line); }
-svg .hit { fill: transparent; }
-#tip { position: fixed; z-index: 80; pointer-events: none; background: var(--ink); color: var(--bg); font: .76rem/1.35 var(--f-mono); padding: 6px 8px; border-radius: 4px; max-width: 240px; white-space: pre-line; }
-/* quotes */
-.quotes { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 14px; margin-top: 22px; }
-blockquote { margin: 0; background: var(--surface); border: 1px solid var(--line); border-left: 6px solid var(--ink); border-radius: 0 12px 12px 0; padding: 14px 16px; }
-blockquote p { font-size: 1.04rem; font-weight: 600; line-height: 1.4; }
-blockquote cite { display: block; margin-top: 8px; font: 500 .74rem var(--f-mono); color: var(--muted); font-style: normal; }
-blockquote.bad { border-left-color: var(--bad); }
-blockquote.ok { border-left-color: var(--ok); }
-blockquote.hotq { border-left-color: var(--hot); }
-/* journey */
-.metro { position: relative; margin-top: 30px; display: grid; gap: 22px; }
-.metro::before { content: ""; position: absolute; left: 21px; top: 18px; bottom: 18px; width: 4px; background: linear-gradient(var(--ink), var(--hot)); border-radius: 4px; }
-.station { display: grid; grid-template-columns: 46px minmax(0, 1fr); gap: 16px; }
-.dot { width: 46px; height: 46px; border-radius: 50%; background: var(--ink); color: var(--bg); display: grid; place-items: center; font: 800 1.1rem var(--f-mono); position: relative; z-index: 1; box-shadow: 0 0 0 6px var(--bg); }
-.station.s6 .dot { background: var(--bk); color: var(--surface); }
-.st-card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
-.st-head { padding: 14px 18px; display: grid; gap: 4px; border-bottom: 1px solid var(--line); background: var(--surface2); }
-.st-head .mod { font: 600 .72rem var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
-.st-head h3 { font-size: 1.3rem; font-weight: 800; letter-spacing: -.01em; }
-.st-head p { color: var(--muted); font-size: .95rem; max-width: 70ch; }
-.st-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0; }
-@media (max-width: 900px) { .st-body { grid-template-columns: 1fr; } }
-.st-col { padding: 16px 18px; display: grid; gap: 10px; align-content: start; min-width: 0; }
-.st-col + .st-col { border-left: 1px solid var(--line); }
-@media (max-width: 900px) { .st-col + .st-col { border-left: 0; border-top: 1px solid var(--line); } }
-.lab { font: 700 .68rem var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
-.skills { display: flex; flex-wrap: wrap; gap: 6px; }
-.skill { font-size: .8rem; font-weight: 600; padding: 4px 10px; border-radius: 99px; background: var(--hot-soft); color: var(--hot); border: 1px solid color-mix(in srgb, var(--hot) 40%, transparent); }
-.skill.built { background: var(--bk-soft); color: var(--bk); border-color: color-mix(in srgb, var(--bk) 40%, transparent); }
-.finding { font-size: 1.02rem; font-weight: 600; line-height: 1.4; }
-pre.prompt { margin: 0; padding: 12px 14px; background: var(--night); color: var(--night-ink); border-radius: 10px; font: .8rem/1.5 var(--f-mono); white-space: pre-wrap; overflow-wrap: anywhere; border-left: 5px solid var(--hot); }
-.pfile { font: .68rem var(--f-mono); color: var(--muted); }
-.copy { font: 600 .7rem var(--f-mono); border: 1px solid var(--line); background: var(--surface); border-radius: 6px; padding: 3px 8px; cursor: pointer; color: var(--ink); }
-.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-.minichart { background: var(--surface2); border: 1px solid var(--line); border-radius: 10px; padding: 10px; }
-.minichart .t { font-size: .8rem; font-weight: 700; margin-bottom: 4px; }
-.minichart .src { font: .66rem/1.3 var(--f-mono); color: var(--muted); margin-top: 4px; }
-.checks { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 14px; font-size: .86rem; }
-.checks span::before { font-weight: 800; margin-right: 6px; }
-.checks .y::before { content: "\2713"; color: var(--ok); }
-.checks .n::before { content: "\2717"; color: var(--bad); }
-.checks .n { color: var(--bad); }
+#tip { position: fixed; z-index: 90; pointer-events: none; background: #14202b; color: #fff; font: .76rem/1.35 var(--f-mono); padding: 6px 8px; border-radius: 4px; max-width: 240px; white-space: pre-line; }
+/* slide 2 */
+.four { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 30px; }
+@media (max-width: 760px) { .four { grid-template-columns: 1fr; } }
+.q { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 20px 22px; display: grid; gap: 6px; position: relative; padding-left: 70px; }
+.q .n { position: absolute; left: 20px; top: 20px; width: 36px; height: 36px; border-radius: 50%; background: var(--ink); color: var(--bg); display: grid; place-items: center; font: 800 1.05rem var(--f-mono); }
+.q > b { font-size: .8rem; font-family: var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.q p b { font: inherit; font-weight: 800; text-transform: none; letter-spacing: 0; color: inherit; }
+.q p { font-size: 1.28rem; line-height: 1.3; }
+.q.hotq2 { border: 2px solid var(--hot); background: var(--hot-soft); } .q.hotq2 .n { background: var(--hot); color: #fff; }
+.q.bkq2 { border: 2px dashed var(--bk); background: var(--bk-soft); } .q.bkq2 .n { background: var(--bk); color: #fff; }
+/* slide 3 timeline */
+.tl { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; margin-top: 40px; position: relative; }
+.tl::before { content: ""; position: absolute; left: 4%; right: 4%; top: 38px; height: 4px; background: var(--line); border-radius: 4px; }
+.ev { position: relative; display: grid; gap: 6px; align-content: start; padding-top: 0; }
+.ev .d { font: 700 .85rem var(--f-mono); color: var(--muted); }
+.ev .pt { width: 22px; height: 22px; border-radius: 50%; background: var(--ink); border: 4px solid var(--bg); box-shadow: 0 0 0 2px var(--ink); margin: 4px 0 8px; position: relative; z-index: 1; }
+.ev b { font-size: 1.15rem; } .ev p { font-size: .95rem; color: var(--muted); } .ev em { font: 500 .72rem var(--f-mono); color: var(--muted); font-style: normal; }
+.ev.ok .pt { background: var(--ok); box-shadow: 0 0 0 2px var(--ok); } .ev.ok b { color: var(--ok); }
+.ev.bad .pt { background: var(--bad); box-shadow: 0 0 0 2px var(--bad); } .ev.bad b { color: var(--bad); }
+.ev.hot .pt { background: var(--hot); box-shadow: 0 0 0 2px var(--hot); } .ev.hot b { color: var(--hot); }
+@media (max-width: 900px) { .tl { grid-template-columns: 1fr; gap: 18px; } .tl::before { display: none; } .ev { grid-template-columns: 70px 28px 1fr; column-gap: 8px; } .ev .d, .ev .pt, .ev b, .ev p, .ev em { margin: 0; } .ev b, .ev p, .ev em { grid-column: 3; } .ev .d { grid-column: 1; grid-row: 1; } .ev .pt { grid-column: 2; grid-row: 1; } }
+/* slide 4 */
+.words { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; margin-top: 22px; }
+.words span { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font-size: .95rem; color: var(--muted); }
+.words b { display: block; color: var(--ink); font-size: 1.1rem; }
+.pingflow { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 22px; margin-top: 26px; }
+.pf { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: grid; gap: 6px; align-content: start; position: relative; }
+.pf:not(:last-child)::after { content: ""; position: absolute; right: -17px; top: 34px; width: 13px; height: 13px; border-top: 3px solid var(--ink); border-right: 3px solid var(--ink); transform: rotate(45deg); }
+.pf b { font-size: 1rem; } .pf > span { font-size: .92rem; color: var(--muted); }
+.pf.ring { justify-items: start; }
+.cd { animation: cd 6s linear infinite; }
+@keyframes cd { from { stroke-dashoffset: 0; } to { stroke-dashoffset: 289; } }
+.o { display: inline-block; padding: 4px 10px; border-radius: 99px; font-weight: 700; font-size: .85rem; margin: 2px 6px 2px 0; }
+.o.t { background: var(--ok-soft); color: var(--ok); } .o.d { background: var(--warn-soft); color: var(--warn); } .o.m { background: var(--bad-soft); color: var(--bad); }
+@media (max-width: 980px) { .pingflow { grid-template-columns: 1fr 1fr; } .pf:not(:last-child)::after { display: none; } }
+@media (max-width: 560px) { .pingflow { grid-template-columns: 1fr; } }
+/* slide 5 toy */
+.toy { display: grid; gap: 16px; margin-top: 26px; background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 22px; }
+.meter .mbar { height: 22px; background: var(--surface2); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.meter .mbar i { display: block; height: 100%; background: var(--ok); transition: width .3s, background .3s; }
+.meter .big { font-size: 3.6rem; font-weight: 800; line-height: 1.05; margin-top: 8px; }
+.tbtns { display: flex; flex-wrap: wrap; gap: 10px; }
+.tbtns button { font: 600 1rem var(--f-body); padding: 12px 18px; border-radius: 12px; border: 2px solid var(--line); background: var(--surface2); color: var(--ink); cursor: pointer; }
+.tbtns button b { font-family: var(--f-mono); margin-left: 6px; }
+.tbtns .b-ok { border-color: var(--ok); } .tbtns .b-warn { border-color: var(--warn); } .tbtns .b-bad { border-color: var(--bad); }
+.tbtns button:hover { filter: brightness(1.15); }
+.chipsrow { display: flex; flex-wrap: wrap; gap: 4px; min-height: 26px; }
+.lg { width: 24px; height: 24px; border-radius: 6px; display: grid; place-items: center; font: 700 .72rem var(--f-mono); }
+.lg.T { background: var(--ok-soft); color: var(--ok); } .lg.D { background: var(--warn-soft); color: var(--warn); } .lg.M { background: var(--bad-soft); color: var(--bad); }
+.tmsg { font-size: 1.1rem; min-height: 1.6em; }
+.facts { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
+.facts span { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; color: var(--muted); }
+.facts b { font: 800 1.5rem var(--f-body); color: var(--ink); margin-right: 8px; }
+/* slide 6 */
+.bignums { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-top: 18px; }
+.bignums div { display: grid; } .bignums b { font-size: 2.1rem; font-weight: 800; color: var(--bad); line-height: 1.1; } .bignums span { color: var(--muted); }
+/* slide 7 */
+.voices { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; margin-top: 28px; }
+blockquote { margin: 0; background: var(--surface); border: 1px solid var(--line); border-left: 7px solid var(--ink); border-radius: 0 16px 16px 0; padding: 20px 22px; }
+blockquote p { font-size: 1.4rem; font-weight: 600; line-height: 1.35; }
+blockquote cite { display: block; margin-top: 10px; font: 500 .8rem var(--f-mono); color: var(--muted); font-style: normal; }
+blockquote.bad { border-left-color: var(--bad); } blockquote.hotq { border-left-color: var(--hot); }
+/* slide 8 journey */
+.line6 { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; margin-top: 44px; position: relative; }
+.line6::before { content: ""; position: absolute; left: 8%; right: 8%; top: 27px; height: 5px; background: linear-gradient(90deg, var(--ink), var(--hot)); border-radius: 4px; }
+.stop { display: grid; justify-items: center; text-align: center; gap: 6px; position: relative; }
+.stop b { font-size: 1.05rem; } .stop .sm { color: var(--muted); font-size: .9rem; }
+.dot { width: 56px; height: 56px; border-radius: 50%; background: var(--ink); color: var(--bg); display: grid; place-items: center; font: 800 1.4rem var(--f-mono); box-shadow: 0 0 0 7px var(--bg); position: relative; z-index: 1; flex: none; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 34px; }
+@media (max-width: 760px) { .line6 { grid-template-columns: repeat(2, 1fr); gap: 20px; } .line6::before { display: none; } }
+/* module slides */
+.modhead { display: flex; gap: 18px; align-items: center; margin-bottom: 6px; }
+.modhead .kick { margin-bottom: 6px; } .modhead .title { font-size: clamp(1.7rem, 3.6vw, 2.8rem); }
+.edu { font-size: 1.05rem; color: var(--muted); margin-bottom: 14px; max-width: 46ch; }
+.finding2 { font-size: 1.3rem; font-weight: 700; line-height: 1.3; margin-bottom: 14px; max-width: 30ch; }
+.skills { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+.skill { font-size: .82rem; font-weight: 600; padding: 4px 11px; border-radius: 99px; background: var(--hot-soft); color: var(--hot); border: 1px solid color-mix(in srgb, var(--hot) 45%, transparent); }
+.skill.built { background: var(--bk-soft); color: var(--bk); border-color: color-mix(in srgb, var(--bk) 45%, transparent); }
+pre.prompt { margin: 0; padding: 16px 18px; background: #0a131b; color: #e8eef3; border-radius: 12px; font: .86rem/1.55 var(--f-mono); white-space: pre-wrap; overflow-wrap: anywhere; border-left: 6px solid var(--hot); }
+.slide.dark pre.prompt { background: #060c11; }
+.pfile { font: .7rem var(--f-mono); color: var(--muted); margin-top: 6px; }
+.checks { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 14px; font-size: .95rem; }
+.checks span::before { font-weight: 800; margin-right: 6px; } .checks .y::before { content: "\2713"; color: var(--ok); } .checks .n::before { content: "\2717"; color: var(--bad); } .checks .n { color: var(--bad); }
+.note { border-left: 4px solid var(--warn); background: var(--warn-soft); padding: 10px 12px; border-radius: 0 8px 8px 0; font-size: .9rem; margin-top: 12px; color: var(--ink); }
 /* fix */
-.proto-wrap { margin-top: 24px; border: 2px solid var(--ink); border-radius: 14px; overflow: hidden; background: var(--surface); }
-.proto-bar { background: var(--ink); color: var(--bg); padding: 8px 14px; display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: .85rem; }
-iframe.proto { width: 100%; height: 780px; border: 0; display: block; background: var(--bg); }
-.hb { display: grid; grid-template-columns: minmax(0, 1fr) 40px minmax(0, 1.2fr); gap: 8px; align-items: stretch; margin-top: 22px; }
-.hb .arrow { display: grid; place-items: center; font-size: 1.6rem; color: var(--muted); }
+.hb { display: grid; grid-template-columns: minmax(0, 1fr) 40px minmax(0, 1.25fr); gap: 8px; align-items: stretch; margin-top: 24px; }
+.hb .arrow { display: grid; place-items: center; font-size: 1.8rem; color: var(--muted); }
 @media (max-width: 860px) { .hb { grid-template-columns: 1fr; } .hb .arrow { transform: rotate(90deg); height: 30px; } }
-.box { border-radius: 12px; padding: 14px 16px; border: 2px solid var(--line); background: var(--surface); display: grid; gap: 6px; align-content: start; }
-.box.today { border-color: var(--bad); background: var(--bad-soft); }
-.box.hotfix { border-color: var(--hot); background: var(--hot-soft); }
-.box h4 { font-size: 1rem; }
-.bklist { display: grid; gap: 6px; margin-top: 4px; }
-.bkitem { border: 2px dashed var(--bk); background: var(--bk-soft); border-radius: 10px; padding: 8px 10px; font-size: .88rem; }
-.decide { margin-top: 22px; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
-.decide .card b.nn { font: 800 1.6rem var(--f-mono); color: var(--hot); display: block; }
-/* prevention */
-.pipe { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 24px; margin-top: 26px; }
-.pstep { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px; position: relative; display: grid; gap: 4px; align-content: start; }
+.box { border-radius: 14px; padding: 16px 18px; border: 2px solid var(--line); background: var(--surface); display: grid; gap: 8px; align-content: start; }
+.box.today { border-color: var(--bad); background: var(--bad-soft); } .box.hotfix { border-color: var(--hot); background: var(--hot-soft); } .box h4 { font-size: 1.15rem; }
+.bklist { display: grid; gap: 6px; margin-top: 4px; } .bkitem { border: 2px dashed var(--bk); background: var(--bk-soft); border-radius: 10px; padding: 8px 10px; font-size: .92rem; }
+.proto-wrap { margin-top: 18px; border: 2px solid var(--ink); border-radius: 14px; overflow: hidden; background: var(--surface); }
+iframe.proto { width: 100%; height: min(640px, calc(100dvh - 250px)); min-height: 440px; border: 0; display: block; background: var(--bg); }
+/* decision */
+.decide { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 14px; margin-top: 26px; }
+.dcard { background: var(--surface); border: 2px solid var(--hot); border-radius: 16px; padding: 18px 20px; display: grid; gap: 6px; }
+.dcard .nn { font: 800 2.4rem var(--f-mono); color: var(--hot); line-height: 1; } .dcard b:not(.nn) { font-size: 1.2rem; } .dcard span { color: var(--muted); }
+.p2 { font-size: 1.12rem; }
+/* pipe */
+.pipe { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 22px; margin-top: 26px; }
+.pstep { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: grid; gap: 5px; align-content: start; position: relative; }
 .pstep.skillstep { border: 2px solid var(--bk); background: var(--bk-soft); }
-.pstep:not(:last-child)::after { content: ""; position: absolute; right: -19px; top: 30px; width: 14px; height: 14px; border-top: 3px solid var(--ink); border-right: 3px solid var(--ink); transform: rotate(45deg); }
-.pstep b { font-size: .92rem; line-height: 1.25; }
-.pstep .small { color: var(--muted); }
-@media (max-width: 960px) { .pipe { grid-template-columns: 1fr; } .pstep:not(:last-child)::after { right: auto; left: 24px; top: auto; bottom: -19px; transform: rotate(135deg); } }
-table { border-collapse: collapse; width: 100%; font-size: .88rem; }
-th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+.pstep:not(:last-child)::after { content: ""; position: absolute; right: -17px; top: 30px; width: 13px; height: 13px; border-top: 3px solid var(--ink); border-right: 3px solid var(--ink); transform: rotate(45deg); }
+.pstep b { font-size: .98rem; line-height: 1.25; } .pstep > span { font-size: .88rem; color: var(--muted); }
+@media (max-width: 980px) { .pipe { grid-template-columns: 1fr 1fr; } .pstep:not(:last-child)::after { display: none; } }
+@media (max-width: 560px) { .pipe { grid-template-columns: 1fr; } }
+table { border-collapse: collapse; width: 100%; font-size: .95rem; }
+th, td { text-align: left; vertical-align: top; padding: 9px 10px; border-bottom: 1px solid var(--line); }
 th { font: 600 .68rem var(--f-mono); letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
-.tw { overflow-x: auto; }
-td.f { color: var(--bad); font-weight: 700; }
-td.p { color: var(--ok); font-weight: 700; }
-td.h { color: var(--warn); font-weight: 700; }
-.note { border-left: 4px solid var(--warn); background: var(--warn-soft); padding: 10px 12px; border-radius: 0 8px 8px 0; font-size: .88rem; }
-footer { margin-top: 64px; padding-block: 30px 60px; border-top: 1px solid var(--line); color: var(--muted); font-size: .85rem; }
-footer ul { columns: 2; padding-left: 18px; }
-@media (max-width: 700px) { footer ul { columns: 1; } }
+table.big { font-size: 1rem; margin-top: 22px; } .tw { overflow-x: auto; }
+td.f { color: var(--bad); font-weight: 700; } td.p { color: var(--ok); font-weight: 700; } td.h { color: var(--warn); font-weight: 700; }
+.open5 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin-top: 26px; }
+.open5 div { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 4px; }
+.open5 span { color: var(--muted); font-size: .92rem; }
+.closer { margin-top: 30px; font-size: clamp(1.4rem, 3vw, 2.1rem); font-weight: 800; letter-spacing: -.01em; padding: 18px 22px; border-radius: 16px; background: var(--ink); color: var(--bg); }
+/* HUD and notes */
+#hud { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(14px + env(safe-area-inset-bottom, 0px)); z-index: 60; display: flex; gap: 14px; align-items: center; background: rgba(15, 27, 38, .92); color: #e8eef3; border: 1px solid #2d4152; border-radius: 99px; padding: 8px 10px 8px 18px; backdrop-filter: blur(6px); max-width: calc(100vw - 20px); }
+#hud .ct { font: 600 .78rem var(--f-mono); white-space: nowrap; }
+#hud .dots { display: flex; gap: 5px; }
+#hud .dots button { width: 9px; height: 9px; border-radius: 50%; border: 0; padding: 0; background: #4a6074; cursor: pointer; }
+#hud .dots button[aria-current="true"] { background: #ff9f5c; transform: scale(1.35); }
+#hud .btn { white-space: nowrap; border: 1px solid #3a5167; background: transparent; color: #e8eef3; border-radius: 99px; padding: 6px 12px; font: 600 .8rem var(--f-body); cursor: pointer; }
+#hud .btn[aria-pressed="true"] { background: #ff9f5c; color: #1a1005; border-color: #ff9f5c; }
+@media (max-width: 700px) { #hud .dots { display: none; } }
+#notesbar { position: fixed; left: 12px; right: 12px; bottom: calc(70px + env(safe-area-inset-bottom, 0px)); max-width: 880px; margin-inline: auto; z-index: 59; background: #0b141c; color: #e8eef3; border: 1px solid #2d4152; border-left: 6px solid #ff9f5c; border-radius: 12px; padding: 14px 18px; font-size: 1.02rem; box-shadow: 0 10px 40px rgba(0,0,0,.4); }
+#notesbar[hidden] { display: none; }
+#notesbar .lab { color: #9db0bf; }
 :focus-visible { outline: 3px solid var(--bk); outline-offset: 2px; }
-@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { transition: none !important; animation: none !important; } }
+@media (prefers-reduced-motion: reduce) { #deck { scroll-behavior: auto; } * { animation: none !important; transition: none !important; } }
+@media print { #hud, #notesbar { display: none; } body { overflow: visible; } #deck { height: auto; overflow: visible; } .slide { break-after: page; } }
+
+#fixChart, #scoreChart, #ticketChart, #missWeekChart { max-width: 560px; }
+.dots16 { display: grid; grid-template-columns: repeat(8, 1fr); gap: 12px; margin-top: 8px; }
+.dots16 i { aspect-ratio: 1; border-radius: 50%; background: var(--muted); opacity: .8; }
+.dots16 i.q4 { background: transparent; border: 3px dashed var(--bad); opacity: 1; }
+.sw12, .sw4 { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
+.sw12 { background: var(--muted); } .sw4 { border: 2px dashed var(--bad); }
+.bignums b.g { color: var(--muted); }
+.ba { display: grid; gap: 12px; margin-top: 26px; }
+.bar { display: grid; grid-template-columns: minmax(0, .8fr) 40px minmax(0, 1.6fr); gap: 10px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 18px; }
+.bar .from { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--bad); font-size: 1.05rem; }
+.bar i { font-style: normal; font-size: 1.6rem; color: var(--hot); text-align: center; }
+.bar .to { font-size: 1.15rem; font-weight: 600; }
+@media (max-width: 760px) { .bar { grid-template-columns: 1fr; } .bar i { transform: rotate(90deg); } }
+.steps3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin: 16px 0 10px; }
+.steps3 > div { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px 10px 52px; position: relative; font-size: .95rem; color: var(--muted); }
+.steps3 .n { position: absolute; left: 12px; top: 10px; width: 28px; height: 28px; border-radius: 50%; background: var(--hot); color: #fff; display: grid; place-items: center; font: 800 .9rem var(--f-mono); }
+.steps3 b { display: block; color: var(--ink); font-size: 1.02rem; }
+.three3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; margin-top: 18px; }
+.three3 > div { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; font-size: 1.05rem; }
+.three3 b { display: block; font: 700 .7rem var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.trip { display: grid; gap: 8px; margin-top: 6px; }
+.trip > div { border: 2px solid var(--bad); background: var(--bad-soft); border-radius: 10px; padding: 8px 12px; font-size: 1.02rem; }
+.closer { display: grid; gap: 6px; }
+.closer span:first-child { font-size: clamp(1.3rem, 2.8vw, 2rem); font-weight: 800; }
+.closer span:last-child { color: var(--muted); opacity: .9; }
+.dots16 { display: grid; grid-template-columns: repeat(8, 1fr); gap: 12px; margin-top: 8px; }
+.dots16 i { aspect-ratio: 1; border-radius: 50%; background: var(--muted); opacity: .8; }
+.dots16 i.q4 { background: transparent; border: 3px dashed var(--bad); opacity: 1; }
+.sw12, .sw4 { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
+.sw12 { background: var(--muted); } .sw4 { border: 2px dashed var(--bad); }
+.bignums b.g { color: var(--muted); }
+.ba { display: grid; gap: 12px; margin-top: 26px; }
+.bar { display: grid; grid-template-columns: minmax(0, .8fr) 40px minmax(0, 1.6fr); gap: 10px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 18px; }
+.bar .from { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--bad); font-size: 1.05rem; }
+.bar i { font-style: normal; font-size: 1.6rem; color: var(--hot); text-align: center; }
+.bar .to { font-size: 1.15rem; font-weight: 600; }
+@media (max-width: 760px) { .bar { grid-template-columns: 1fr; } .bar i { transform: rotate(90deg); } }
+.steps3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin: 16px 0 10px; }
+.steps3 > div { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px 10px 52px; position: relative; font-size: .95rem; color: var(--muted); }
+.steps3 .n { position: absolute; left: 12px; top: 10px; width: 28px; height: 28px; border-radius: 50%; background: var(--hot); color: #fff; display: grid; place-items: center; font: 800 .9rem var(--f-mono); }
+.steps3 b { display: block; color: var(--ink); font-size: 1.02rem; }
+.three3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; margin-top: 18px; }
+.three3 > div { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; font-size: 1.05rem; }
+.three3 b { display: block; font: 700 .7rem var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.trip { display: grid; gap: 8px; margin-top: 6px; }
+.trip > div { border: 2px solid var(--bad); background: var(--bad-soft); border-radius: 10px; padding: 8px 12px; font-size: 1.02rem; }
+.closer { display: grid; gap: 6px; margin-top: 26px; padding: 18px 22px; border-radius: 16px; background: var(--ink); color: var(--bg); }
+.closer span:first-child { font-size: clamp(1.3rem, 2.8vw, 2rem); font-weight: 800; }
+.closer span:last-child { opacity: .8; font-size: 1.05rem; }
+.sowhat { margin-top: 10px; font-size: 1.05rem; padding: 10px 14px; border-left: 5px solid var(--hot); background: var(--hot-soft); border-radius: 0 10px 10px 0; max-width: 46ch; }
+.dots16 { display: grid; grid-template-columns: repeat(8, 1fr); gap: 12px; margin-top: 8px; }
+.dots16 i { aspect-ratio: 1; border-radius: 50%; background: var(--muted); opacity: .8; }
+.dots16 i.q4 { background: transparent; border: 3px dashed var(--bad); opacity: 1; }
+.sw12, .sw4 { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
+.sw12 { background: var(--muted); } .sw4 { border: 2px dashed var(--bad); }
+.bignums b.g { color: var(--muted); }
+.ba { display: grid; gap: 12px; margin-top: 26px; }
+.bar { display: grid; grid-template-columns: minmax(0, .8fr) 40px minmax(0, 1.6fr); gap: 10px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 18px; }
+.bar .from { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--bad); font-size: 1.05rem; }
+.bar i { font-style: normal; font-size: 1.6rem; color: var(--hot); text-align: center; }
+.bar .to { font-size: 1.15rem; font-weight: 600; }
+@media (max-width: 760px) { .bar { grid-template-columns: 1fr; } .bar i { transform: rotate(90deg); } }
+.steps3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin: 16px 0 10px; }
+.steps3 > div { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px 10px 52px; position: relative; font-size: .95rem; color: var(--muted); }
+.steps3 .n { position: absolute; left: 12px; top: 10px; width: 28px; height: 28px; border-radius: 50%; background: var(--hot); color: #fff; display: grid; place-items: center; font: 800 .9rem var(--f-mono); }
+.steps3 b { display: block; color: var(--ink); font-size: 1.02rem; }
+.three3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; margin-top: 18px; }
+.three3 > div { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; font-size: 1.05rem; }
+.three3 b { display: block; font: 700 .7rem var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.trip { display: grid; gap: 8px; margin-top: 6px; }
+.trip > div { border: 2px solid var(--bad); background: var(--bad-soft); border-radius: 10px; padding: 8px 12px; font-size: 1.02rem; }
+.closer { display: grid; gap: 6px; margin-top: 26px; padding: 18px 22px; border-radius: 16px; background: var(--ink); color: var(--bg); }
+.closer span:first-child { font-size: clamp(1.3rem, 2.8vw, 2rem); font-weight: 800; }
+.closer span:last-child { opacity: .8; font-size: 1.05rem; }
+.closer span:last-child { color: var(--bg); opacity: .85; }
+
+body.short .slide[data-tour] { display: none; }
+
 </style>
+<div id="deck">
+<section class="slide dark" id="s1" data-title="Title" aria-label="Slide 1 of 23: Title">
+<div class="slide-in">
+<div class="grid-hero"><div>
+<div class="kick">Rook Dispatch &middot; final report</div>
+<h1 class="mega">Release 4.2 shipped without a measure.<br><em>Four responders went quiet.</em></h1>
+<p class="lede">A release with no measure silenced four people. What I found, how we fix it, and how we stop it happening again.</p>
+<div class="hint">Right arrow or swipe to move. N shows speaker notes. S skips the course tour for a short version.</div></div>
+<div class="panel"><div class="lab">16 responders, the people who go to incidents</div><div class="dots16"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="q4"></i><i class="q4"></i><i class="q4"></i><i class="q4"></i></div>
+<div class="small" style="margin-top:12px"><span class="sw12"></span> 12 still asked as before<br><span class="sw4"></span> 4 almost never asked since 12 Aug: Farlight, The Undertow, Meteor Mite, Vesper</div></div></div></div>
+<aside class="notes" hidden>Welcome. This is the story of one release, 4.2, and what I found in my first six modules as the new product manager for Rook Dispatch. It shipped with no measure of success, and nobody could tell it was going wrong. Four of our sixteen responders almost stopped being asked to take jobs. In about fifteen minutes: what happened, how I found it, the fix, and how we make sure it does not happen again.</aside>
+</section>
+<section class="slide light" id="s2" data-title="The short version" aria-label="Slide 2 of 23: The short version">
+<div class="slide-in">
+<div class="kick">The short version</div><h2 class="title">Four answers, before the details.</h2>
+<div class="four">
+<div class="q"><span class="n">1</span><b>What happened</b><p>After release 4.2, four responders went from <b>49 job offers a week to 3</b>.</p></div>
+<div class="q"><span class="n">2</span><b>Most likely why</b><p>A missed offer costs as much as a refusal, and a score <b>never recovers on its own</b>. The engineer who built it still has to confirm.</p></div>
+<div class="q hotq2"><span class="n">3</span><b>The fix</b><p>Let a missed offer <b>fade after a week</b>, and show people where they stand.</p></div>
+<div class="q bkq2"><span class="n">4</span><b>Never again</b><p>A skill checks every brief for an <b>owner, a decision, a measure, one scope, and the problem first</b>.</p></div></div></div>
+<aside class="notes" hidden>Here is the whole talk in four sentences. A job offer is called a ping, and I will explain that in a minute. Notice the second one says most likely: we have strong evidence for the cause, but the engineer who built the ranking has not yet confirmed it in writing, and I will come back to that. If you remember only these four lines, you have the story.</aside>
+</section>
+<section class="slide dark" id="s3" data-title="Release day and after" aria-label="Slide 3 of 23: Release day and after">
+<div class="slide-in">
+<div class="kick">Release day and after</div><h2 class="title">For five days, nobody saw it.</h2>
+<div class="tl">
+<div class="ev"><span class="d">12 Aug</span><i class="pt"></i><b>4.2 ships</b><p>Wait for an answer cut from 90 to 60 seconds.</p></div>
+<div class="ev ok"><span class="d">13 Aug</span><i class="pt"></i><b>"Went clean"</b><p>"4.2 is out. Went clean, no rollback."</p><em>Engineering manager</em></div>
+<div class="ev bad"><span class="d">18 Aug</span><i class="pt"></i><b>"3x normal"</b><p>"Callout tickets are running about 3x normal."</p><em>Support lead</em></div>
+<div class="ev"><span class="d">21 Aug</span><i class="pt"></i><b>Priya leaves</b><p>"I made calls faster than I checked them."</p><em>Previous PM</em></div>
+<div class="ev hot"><span class="d">24 Aug</span><i class="pt"></i><b>You start</b><p>No overlap. Nothing written down about 4.2.</p></div></div></div>
+<aside class="notes" hidden>On release day the team was happy: went clean, no rollback. Five days later support saw three times the usual tickets. The previous PM left with a note that says it plainly: calls made faster than they were checked. I started on the twenty-fourth, with nothing written down about why 4.2 looked the way it did. Everything after this is how I found out.</aside>
+</section>
+<section class="slide light" id="s4" data-title="Five words you need" aria-label="Slide 4 of 23: Five words you need">
+<div class="slide-in">
+<div class="kick">Five words you need</div><h2 class="title">A job offer is called a ping.</h2>
+<div class="words"><span><b>Callout</b> an incident that needs someone</span><span><b>Ping</b> an offer on one responder's phone</span><span><b>Responder</b> the person who goes</span><span><b>Handler</b> looks after a responder, uses the web console</span><span><b>Score</b> how often someone has said yes lately. Higher means asked sooner</span></div>
+<div class="pingflow">
+<div class="pf"><b>1 &middot; Callout comes in</b><span>"A woman in a beekeeping suit is emptying a bank."</span></div>
+<div class="pf"><b>2 &middot; Rank</b><span>Best match first, by distance, skills and the <u>score</u>.</span></div>
+<div class="pf ring"><svg viewBox="0 0 110 110" width="84" height="84"><circle cx="55" cy="55" r="46" fill="none" stroke="var(--line)" stroke-width="9"/><circle class="cd" cx="55" cy="55" r="46" fill="none" stroke="var(--hot)" stroke-width="9" stroke-dasharray="289" stroke-dashoffset="0" transform="rotate(-90 55 55)"/><text x="55" y="63" text-anchor="middle" style="font:800 26px var(--f-mono);fill:var(--ink)">60 s</text></svg><b>3 &middot; Ping the top one</b><span>They have 60 seconds to answer.</span></div>
+<div class="pf"><b>4 &middot; Three outcomes</b><span class="o t">taken</span><span class="o d">turned down</span><span class="o m">missed</span></div>
+<div class="pf"><b>5 &middot; Next in line</b><span>After a refusal or a miss, the next responder is pinged.</span></div></div></div>
+<aside class="notes" hidden>Quick vocabulary so everyone can follow. A callout is an incident. A ping is the offer of that incident to one responder&#x27;s phone, one person at a time. They have sixty seconds. They take it, turn it down, or miss it. Who gets asked first depends on distance, skills, and a score for how often they have said yes lately. Keep the score in mind: it is the whole story.</aside>
+</section>
+<section class="slide light" id="s5" data-title="The numbers" aria-label="Slide 5 of 23: The numbers">
+<div class="slide-in">
+<div class="kick">What 4.2 did</div><h2 class="title">Four responders fell off a cliff.</h2>
+<div class="panel" style="margin-top:22px"><div class="lab">Job offers a week, the four against the other twelve</div><div id="weeklyChart" style="max-width:760px"></div></div>
+<div class="bignums"><div><b>49 &rarr; 3</b><span>offers a week to the four</span></div><div><b class="g">123 &rarr; 162</b><span>offers a week to the other twelve</span></div></div></div>
+<aside class="notes" hidden>The red line is four responders: Farlight, The Undertow, Meteor Mite and Vesper. Before the release they got about fifty offers a week together. By the end of August, three. The twelve others, the grey line, actually got more. So this is not the whole system getting quieter. It is four people being frozen out.</aside>
+</section>
+<section class="slide dark" id="s6" data-title="Voices" aria-label="Slide 6 of 23: Voices">
+<div class="slide-in">
+<div class="kick">The people behind the numbers</div><h2 class="title">83 of 108 tickets are still open.</h2>
+<div class="voices">
+<blockquote class="bad"><p>"starting to wonder if im still even in the system"</p><cite>The Undertow, passed on by his handler, ticket 3121</cite></blockquote>
+<blockquote class="hotq"><p>"I just want it to look less like a coincidence when I'm staring at it at midnight and one card's dead quiet and the other's on fire."</p><cite>Kip, handler, interview 4 Sep</cite></blockquote></div>
+<p class="lede2">Tickets since 12 August: <b>108</b>. Still open: <b>83</b>. Before 12 August every ticket was closed.</p></div>
+<aside class="notes" hidden>These are the people the numbers are about. A responder wondering whether he is still in the system. A handler with two responders on one screen, one never called and one worn out, and no way to see why. And the support queue: 108 tickets since the release, 83 still open. That is what happened. Next: the rule in the code that most likely explains it, and then how I found it.</aside>
+</section>
+<section class="slide dark" id="srule" data-title="The rule" aria-label="Slide 7 of 23: The rule">
+<div class="slide-in">
+<div class="kick">Why it happened: the rule inside the code</div><h2 class="title">A miss costs more than a yes earns.</h2>
+<div class="toy"><div class="meter"><div class="mbar"><i id="tBar" style="width:50%"></i></div><div class="big mono" id="tScore">0.50</div><div class="small muted">a responder's score, starts at 0.50, lowest possible 0.00</div></div>
+<div class="tbtns"><button data-o="T" class="b-ok">Takes it <b>+0.08</b></button><button data-o="D" class="b-warn">Turns it down <b>&minus;0.12</b></button><button data-o="M" class="b-bad">Misses it <b>&minus;0.12</b></button><button data-o="R" class="b-ghost">Reset</button></div>
+<div class="chipsrow" id="tLog"></div><p class="tmsg" id="tMsg">Try it: miss three pings in a row, then try to climb back.</p></div>
+<div class="facts"><span><b>0.12</b> a miss or a refusal</span><span><b>0.08</b> a yes</span><span><b>never</b> fades on its own</span></div></div>
+<aside class="notes" hidden>This is the actual rule from the code. Take a ping and the score goes up by eight hundredths. Miss one or turn one down and it goes down by twelve. Try it: miss three in a row and see how many yeses it takes to get back. The score never fades with time. The only way up is to be asked again and say yes. Hold on to this rule. In module four I test it against the real pings.</aside>
+</section>
+<section class="slide light" id="s7" data-tour="1" data-title="The journey" aria-label="Slide 8 of 23: The journey">
+<div class="slide-in">
+<div class="kick">How I found it: six modules</div><h2 class="title">Each stop found what the last could not.</h2>
+<div class="line6">
+<div class="stop"><span class="dot">1</span><b>Origin story</b><span class="sm">What was written down?</span></div><div class="stop"><span class="dot">2</span><b>Super hearing</b><span class="sm">What do people say?</span></div><div class="stop"><span class="dot">3</span><b>Rewind</b><span class="sm">When did it break?</span></div><div class="stop"><span class="dot">4</span><b>X-ray vision</b><span class="sm">Which rule did it?</span></div><div class="stop"><span class="dot">5</span><b>Super speed</b><span class="sm">What do we decide?</span></div><div class="stop"><span class="dot">6</span><b>Sidekicks</b><span class="sm">How do we stop a repeat?</span></div></div>
+<div class="legend"><span class="skill">skill applied</span><span class="skill built">skill I built</span><span class="muted">The module names are the course's own. Each stop: one finding, the exact prompt I typed, and what it means for the decision.</span></div></div>
+<aside class="notes" hidden>Here is how I got to the cause. Six modules, each one a different way of finding the truth, and each answering one question. For every stop you will see one real finding, the exact prompt I typed to get it, typos included, and a line on why it matters for today&#x27;s decision.</aside>
+</section>
+<section class="slide dark" id="s8" data-tour="1" data-title="Module 1" aria-label="Slide 9 of 23: Module 1">
+<div class="slide-in"><div class="modhead"><span class="dot">1</span><div><div class="kick">Module 1 &middot; Origin Story &middot; 01-origin-story</div><h2 class="title">What was written down?</h2></div></div>
+<div class="two"><div>
+<p class="edu">Connect Claude to the company wiki and database, then ask what evidence stood behind the last release.</p>
+<div class="lab">Skills applied</div><div class="skills"><span class="skill">Context file (CLAUDE.md)</span><span class="skill">Wiki and database access</span><span class="skill">Questioning the evidence</span></div>
+<div class="lab">Finding</div><p class="finding2">4.2 had no brief, no spec, no design and no tests.</p><div class="panel"><div class="lab">What exists for release 4.2</div><div class="checks"><span class="n">Brief</span><span class="n">Spec</span><span class="n">Design</span><span class="n">Tests</span><span class="y">Roadmap one-liner</span><span class="y">Release page and thread</span><span class="y">Priya's handover</span></div></div><p class="sowhat"><b>So what:</b> Nobody could say why 4.2 was built the way it was.</p></div>
+<div><div class="lab">You typed</div><pre class="prompt">Which problems where tried to be solved in the last release, based on which evidence and how?</pre><div class="pfile">01-origin-story/prompts.md, prompt 5</div></div></div></div>
+<aside class="notes" hidden>Module one. The first question I asked: which problems was the last release trying to solve, and on what evidence? The answer was uncomfortable. There was no brief, no spec, no design, no tests. Just three one-line roadmap entries and a handover note.</aside>
+</section>
+<section class="slide light" id="s9" data-tour="1" data-title="Module 2" aria-label="Slide 10 of 23: Module 2">
+<div class="slide-in"><div class="modhead"><span class="dot">2</span><div><div class="kick">Module 2 &middot; Super Hearing &middot; 02-super-hearing</div><h2 class="title">What do people say?</h2></div></div>
+<div class="two"><div>
+<p class="edu">Four handler interviews and all 147 tickets since June (108 of them since the release), grouped and ranked.</p>
+<div class="lab">Skills applied</div><div class="skills"><span class="skill">Clustering feedback</span><span class="skill">Quoting evidence</span><span class="skill">Prioritising against success criteria</span></div>
+<div class="lab">Finding</div><p class="finding2">Five problems, ranked. Responders gone quiet has the most tickets of the five.</p><div class="panel"><div class="lab">Tickets behind each ranked problem</div><div id="ticketChart"></div></div><p class="sowhat"><b>So what:</b> Responders going quiet was the biggest group of complaints.</p></div>
+<div><div class="lab">You typed</div><pre class="prompt">Save me this in a priotized table and add to which success criteria of the product success you would connect this problem to</pre><div class="pfile">02-super-hearing/prompts.md, prompt 12</div></div></div></div>
+<aside class="notes" hidden>Module two was listening. Four interviews and every ticket since the release, clustered into five problems and ranked. Thirty tickets are about responders who have gone quiet, the largest group of the five.</aside>
+</section>
+<section class="slide dark" id="s10" data-tour="1" data-title="Module 3" aria-label="Slide 11 of 23: Module 3">
+<div class="slide-in"><div class="modhead"><span class="dot">3</span><div><div class="kick">Module 3 &middot; Rewind &middot; 03-rewind</div><h2 class="title">When did it break?</h2></div></div>
+<div class="two"><div>
+<p class="edu">Pull the weekly ping history and compare before and after the release.</p>
+<div class="lab">Skills applied</div><div class="skills"><span class="skill">Retrieving data</span><span class="skill">Before and after comparison</span><span class="skill">Reconciling two sources</span></div>
+<div class="lab">Finding</div><p class="finding2">Missed pings were 2.3% before 12 Aug and 15.1% after. The step shows on release day itself.</p><div class="panel"><div class="lab">Pings missed each day</div><div id="dailyChart"></div></div><p class="sowhat"><b>So what:</b> The damage began on release day. It was not a slow August.</p></div>
+<div><div class="lab">You typed</div><pre class="prompt">Open retrieve the callout-history and save it  under 00-rook/data/callout-history.csv . Every row is one responder in one week: how many times we pinged them, and how many of those they took. Release 4.2 shipped on 12 August. Tell me what changed after that date. Show me the weekly numbers before and after, and show me the rows you used to get them.</pre><div class="pfile">03-rewind/prompts.md, prompt 1</div></div></div></div>
+<aside class="notes" hidden>Module three was data. One prompt: get the weekly ping history and tell me what changed after the twelfth. Missed pings a day were zero or one until the eleventh, seven on the twelfth, twelve on the thirteenth. A step, not a slope. Callouts a week did dip about twelve percent, so August was a little slow, but that cannot produce a jump on release day.</aside>
+</section>
+<section class="slide dark" id="s11" data-tour="1" data-title="Module 4" aria-label="Slide 12 of 23: Module 4">
+<div class="slide-in"><div class="modhead"><span class="dot">4</span><div><div class="kick">Module 4 &middot; X-Ray Vision &middot; 04-x-ray-vision</div><h2 class="title">Which rule did it?</h2></div></div>
+<div class="two"><div>
+<p class="edu">Read the routing code without writing any, then test a theory against the real pings.</p>
+<div class="lab">Skills applied</div><div class="skills"><span class="skill">Reading code in plain English</span><span class="skill">Hypothesis, then validate</span><span class="skill">Asking what the code does not do</span></div>
+<div class="lab">Finding</div><p class="finding2">Replaying the real pings through the real rule leaves exactly the four quiet responders at 0.00, the lowest score possible. Everyone else ends at 0.72 or higher.</p><div class="panel"><div class="lab">Score on 6 Sep, replayed from real pings</div><div id="scoreChart"></div></div><p class="sowhat"><b>So what:</b> The most likely cause is a rule in the code, not luck or the calendar.</p></div>
+<div><div class="lab">You typed</div><pre class="prompt">Based on what I found, the reason some responders are getting no pings at all is ___, because ___.
 
-<div id="bar"></div>
-<nav class="top"><div class="wrap">
-  <b>RELEASE 4.2</b>
-  <a href="#happened">What happened</a><a href="#journey">The journey</a><a href="#fix">The fix</a><a href="#never">Never again</a><a href="#open">Still open</a>
-</div></nav>
 
-<header class="hero"><div class="wrap hero-grid">
-  <div>
-    <div class="kick">Rook Dispatch &middot; final report for a new PM</div>
-    <h1>Release 4.2 shipped clean, and <em>four responders went quiet.</em></h1>
-    <p class="lede">What happened, how you found out across six modules, the fix as a working prototype, and the skill that stops an unchecked release from happening again.</p>
-    <div class="stats">
-      <div class="stat"><div class="n">49&nbsp;&rarr; 3 <small>a week</small></div><div class="l">pings to the four who went quiet</div><div class="s">callout-history.csv, weeks of 6 Jul to 31 Aug</div></div>
-      <div class="stat"><div class="n">2.3%&nbsp;&rarr; 18.0%</div><div class="l">of pings missed after 12 Aug</div><div class="s">pings table, before and after release</div></div>
-      <div class="stat"><div class="n">83 <small>of 108</small></div><div class="l">tickets since 12 Aug still open</div><div class="s">support_tickets, to 7 Sep</div></div>
-    </div>
-  </div>
-  <div class="card" style="background:#132130;border-color:#2a3b4a;color:var(--night-ink)">
-    <div class="small" style="color:var(--night-muted);font-weight:600;margin-bottom:6px">Pings a week: the four, against the other twelve</div>
-    <div id="heroChart"></div>
-  </div>
-</div></header>
-
-<main>
-<section class="ch" id="happened"><div class="wrap">
-  <div class="num">1 &middot; What happened</div>
-  <h2>A small change made a bad week permanent.</h2>
-  <p class="plain">On 12 August 2026 Rook shipped release 4.2. It cut the time a ping waits for an answer from 90 to 60 seconds, shifted the ranking toward proximity, and made console filters persist. A missed ping lowers a responder's score by the same amount as a refusal, and a score only rises when they say yes. So when misses jumped, four responders sank to the bottom of the list, stopped being asked, and had no way to earn their way back. Nobody had written a brief, a spec or tests for any of it.</p>
-
-  <div class="flow">
-    <div class="node"><span class="no">1</span><b>4.2 ships on 12 Aug</b><span class="small muted">Ping wait 90 s &rarr; 60 s. Ranking leans on proximity. Filters persist.</span></div>
-    <div class="node"><span class="no">2</span><b>More pings go unanswered</b><span class="big">2.3% &rarr; 18.0%</span><span class="small muted">A step on release day, not a drift.</span></div>
-    <div class="node"><span class="no">3</span><b>A miss costs &minus;0.12</b><span class="small muted">The same as a refusal. A take adds only +0.08. Nothing lets the score recover on its own.</span></div>
-    <div class="node hotn"><span class="no">4</span><b>Four responders sink and go quiet</b><span class="big">49 &rarr; 3 pings a week</span><span class="small muted">Farlight, The Undertow, Meteor Mite, Vesper.</span></div>
-    <div class="node"><span class="no">5</span><b>Handlers write in</b><span class="big">83 of 108</span><span class="small muted">tickets since 12 Aug are still open.</span></div>
-  </div>
-  <div class="loopbar"><span style="font-size:1.4rem">&#8635;</span><span>No way back: fewer pings means fewer chances to earn the score back, so the silence feeds itself.</span></div>
-
-  <div class="grid2" style="margin-top:22px">
-    <div class="card"><div class="lab">The four against the other twelve</div><div id="weeklyChart" style="margin-top:8px"></div><div class="small muted" style="margin-top:6px">Pings a week. Source: <span class="mono">00-rook/data/callout-history.csv</span>. <span class="chip v">verified</span></div></div>
-    <div class="card"><div class="lab">Missed pings a day</div><div id="dailyChart" style="margin-top:8px"></div><div class="small muted" style="margin-top:6px">0 or 1 a day until 11 Aug, 7 on release day, 12 the day after. Source: pings table. <span class="chip v">verified</span></div></div>
-  </div>
-
-  <div class="quotes">
-    <blockquote class="ok"><p>"4.2 is out. Went clean, no rollback, no overnight pages. Nice work everyone."</p><cite>Engineering manager, 13 Aug, release page</cite></blockquote>
-    <blockquote class="bad"><p>"Heads up &mdash; callout tickets are running about 3x normal since Wednesday."</p><cite>Support lead, 18 Aug, release page</cite></blockquote>
-    <blockquote class="bad"><p>"starting to wonder if im still even in the system"</p><cite>The Undertow, passed on by his handler, ticket 3121</cite></blockquote>
-    <blockquote class="hotq"><p>"I made calls faster than I checked them."</p><cite>Priya, previous PM, handover note, 21 Aug</cite></blockquote>
-  </div>
-</div></section>
-
-<section class="ch" id="journey"><div class="wrap">
-  <div class="num">2 &middot; The onboarding journey</div>
-  <h2>Six modules, six findings, one prompt each.</h2>
-  <p class="plain">You joined as the new PM with no overlap. Each module taught one way of getting to the truth faster. For every stop: what it teaches, the skills you applied, one real finding or artifact, and the exact prompt you typed to get it.</p>
-  <div class="row small" style="margin-top:12px"><span class="skill">skill applied</span><span class="skill built">skill you built</span><span class="muted">Prompts are copied exactly as typed, typos included.</span></div>
-
-  <div class="metro">
-
-    <div class="station"><div class="dot">1</div><div class="st-card">
-      <div class="st-head"><span class="mod">Module 1 &middot; Origin Story &middot; 01-origin-story</span><h3>Get your bearings</h3><p>Connect Claude to the company's wiki and database, write down what you know, and ask what evidence stood behind the last release.</p></div>
-      <div class="st-body"><div class="st-col">
-        <div class="lab">Skills applied</div><div class="skills"><span class="skill">Context file (CLAUDE.md)</span><span class="skill">Wiki and database access</span><span class="skill">Questioning the evidence</span></div>
-        <div class="lab">Finding</div><div class="finding">4.2 has no brief, spec, design or test docs. The evidence behind it is thin.</div>
-        <div class="minichart"><div class="t">What exists for release 4.2</div><div class="checks"><span class="n">Brief</span><span class="n">Spec</span><span class="n">Design</span><span class="n">Tests</span><span class="y">Roadmap one-liner</span><span class="y">Release page and thread</span><span class="y">Priya's handover</span></div><div class="src">CLAUDE.md, "Session 1 found"</div></div>
-      </div><div class="st-col">
-        <div class="lab">You typed</div><pre class="prompt">Which problems where tried to be solved in the last release, based on which evidence and how?</pre><div class="pfile">01-origin-story/prompts.md, prompt 5</div>
-      </div></div></div></div>
-
-    <div class="station"><div class="dot">2</div><div class="st-card">
-      <div class="st-head"><span class="mod">Module 2 &middot; Super Hearing &middot; 02-super-hearing</span><h3>Listen before you fix</h3><p>Four handler interviews and 147 tickets, grouped and ranked. Customers rarely agree across the two piles.</p></div>
-      <div class="st-body"><div class="st-col">
-        <div class="lab">Skills applied</div><div class="skills"><span class="skill">Clustering feedback</span><span class="skill">Quoting evidence</span><span class="skill">Prioritising against success criteria</span></div>
-        <div class="lab">Artifact</div><div class="finding">A ranked table of five problems, each tied to a success criterion. Problem 2, responders gone quiet, has the most tickets of the five.</div>
-        <div class="minichart"><div class="t">Tickets behind each ranked problem</div><div id="ticketChart"></div><div class="src">00-rook/feedback/problem-statements-prioritized.md</div></div>
-      </div><div class="st-col">
-        <div class="lab">You typed</div><pre class="prompt">Save me this in a priotized table and add to which success criteria of the product success you would connect this problem to</pre><div class="pfile">02-super-hearing/prompts.md, prompt 12</div>
-        <blockquote class="hotq"><p>"I just want it to look less like a coincidence when I'm staring at it at midnight and one card's dead quiet and the other's on fire."</p><cite>Kip, handler, interview 4 Sep</cite></blockquote>
-      </div></div></div></div>
-
-    <div class="station"><div class="dot">3</div><div class="st-card">
-      <div class="st-head"><span class="mod">Module 3 &middot; Rewind &middot; 03-rewind</span><h3>Put a date on the damage</h3><p>Pull the weekly ping history, compare before and after the release, and find the day things changed.</p></div>
-      <div class="st-body"><div class="st-col">
-        <div class="lab">Skills applied</div><div class="skills"><span class="skill">Retrieving data</span><span class="skill">Before and after comparison</span><span class="skill">Reconciling two sources</span></div>
-        <div class="lab">Finding</div><div class="finding">Missed pings were 2.3% in the six weeks before 12 Aug and 15.1% in the three full weeks after. The step shows on release day itself.</div>
-        <div class="minichart"><div class="t">Share of pings missed, weekly</div><div id="missWeekChart"></div><div class="src">00-rook/data/callout-history.csv</div></div>
-      </div><div class="st-col">
-        <div class="lab">You typed</div><pre class="prompt">Open retrieve the callout-history and save it  under 00-rook/data/callout-history.csv . Every row is one responder in one week: how many times we pinged them, and how many of those they took. Release 4.2 shipped on 12 August. Tell me what changed after that date. Show me the weekly numbers before and after, and show me the rows you used to get them.</pre><div class="pfile">03-rewind/prompts.md, prompt 1</div>
-      </div></div></div></div>
-
-    <div class="station"><div class="dot">4</div><div class="st-card">
-      <div class="st-head"><span class="mod">Module 4 &middot; X-Ray Vision &middot; 04-x-ray-vision</span><h3>See the rule behind the behaviour</h3><p>Read the routing code without writing any, then test a theory against the real pings.</p></div>
-      <div class="st-body"><div class="st-col">
-        <div class="lab">Skills applied</div><div class="skills"><span class="skill">Reading code in plain English</span><span class="skill">Hypothesis, then validate</span><span class="skill">Asking what the code does not do</span></div>
-        <div class="lab">Finding</div><div class="finding">Replaying the real pings through the real scoring rule leaves exactly the four quiet responders at 0.00. Everyone else ends at 0.72 or higher.</div>
-        <div class="minichart"><div class="t">Recent acceptance on 6 Sep, replayed from real pings</div><div id="scoreChart"></div><div class="src">00-rook/feedback/score-replay-real-pings.py &middot; modelled</div></div>
-      </div><div class="st-col">
-        <div class="lab">You typed</div><pre class="prompt">Based on what I found, the reason some responders are getting no pings at all is ___, because ___.
-
-
-Fill the blanks, provide code evidence and validate it</pre><div class="pfile">04-x-ray-vision/prompts.md, prompt 3</div>
-        <div class="minichart"><div class="t">The rule in code</div><div class="small mono">taken &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+0.08<br>turned down &minus;0.12<br>missed &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&minus;0.12 &middot; never fades<br>start 0.5 &middot; range 0 to 1</div><div class="src">00-rook/code/dispatch-routing/history.py</div></div>
-      </div></div></div></div>
-
-    <div class="station"><div class="dot">5</div><div class="st-card">
-      <div class="st-head"><span class="mod">Module 5 &middot; Super Speed &middot; 05-super-speed</span><h3>From diagnosis to a decision</h3><p>The Director asked for something real and clickable. You turned the findings into a one-release hotfix, a backlog, and a person who can say yes.</p></div>
-      <div class="st-body"><div class="st-col">
-        <div class="lab">Skills applied</div><div class="skills"><span class="skill">Briefing a decider</span><span class="skill">Persona reviews with subagents</span><span class="skill">Clickable demonstrator</span><span class="skill built">pm-demonstrator</span></div>
-        <div class="lab">Artifact</div><div class="finding">A decision brief with one hotfix and a backlog, and a working demonstrator of both.</div>
-        <div class="minichart"><div class="t">The split you asked for</div><div class="small"><span class="chip hot">hotfix</span> a missed ping fades, one plain line for handler and responder<br><span class="chip bk" style="margin-top:6px">backlog</span> ranking review, delivery confirmation, fair-share offer</div><div class="src">05-super-speed/quiet-responders-decision-brief.md</div></div>
-      </div><div class="st-col">
-        <div class="lab">You typed</div><pre class="prompt">so problem definitions where clear, so you propose a 2 leveled approach:
+Fill the blanks, provide code evidence and validate it</pre><div class="pfile">04-x-ray-vision/prompts.md, prompt 3</div></div></div></div>
+<aside class="notes" hidden>Module four: the code. I never wrote a line. I asked Claude to fill in a sentence, the reason some responders get no pings is blank because blank, and to prove it. Running the real pings through the real rule gives a clean split: exactly those four responders end at zero, and nobody else does. This is a replay, so it is strong evidence, not proof. That is why the engineer who built it needs to confirm.</aside>
+</section>
+<section class="slide light" id="s12" data-tour="1" data-title="Module 5" aria-label="Slide 13 of 23: Module 5">
+<div class="slide-in"><div class="modhead"><span class="dot">5</span><div><div class="kick">Module 5 &middot; Super Speed &middot; 05-super-speed</div><h2 class="title">What do we decide?</h2></div></div>
+<div class="two"><div>
+<p class="edu">The Director asked for something real and clickable. I turned the findings into one hotfix, a backlog, and a decision.</p>
+<div class="lab">Skills applied</div><div class="skills"><span class="skill">Briefing a decider</span><span class="skill">Persona reviews with subagents</span><span class="skill built">pm-demonstrator</span></div>
+<div class="lab">Finding</div><p class="finding2">A decision brief with one hotfix and a backlog, and a working demonstrator of both.</p><div class="panel"><div class="lab">The split I asked for</div><div class="small"><span class="chip hot">hotfix</span> a missed ping fades; one plain line for handler and responder<br><br><span class="chip bk">backlog</span> ranking review, delivery confirmation, fair-share offer</div></div><p class="sowhat"><b>So what:</b> Now a director has something real she can say yes to.</p></div>
+<div><div class="lab">You typed</div><pre class="prompt">so problem definitions where clear, so you propose a 2 leveled approach:
 hotfix: availability score penalties (when missing a ping) need to be time-based -&gt; handler an responder should see a small info somwhere of a drained availability score (using domain langauge)
-midterm backlog: post ranking review for handlers for dispatchers inlcluding scores)</pre><div class="pfile">05-super-speed/prompts.md, prompt 10</div>
-        <div class="lab">And for the prototype</div><pre class="prompt">on the journey I just want to see a diagram with application mockups for each event, reduce all the rest of it .</pre><div class="pfile">05-super-speed/prompts.md, prompt 17</div>
-      </div></div></div></div>
-
-    <div class="station s6"><div class="dot">6</div><div class="st-card">
-      <div class="st-head"><span class="mod">Module 6 &middot; Sidekicks &middot; 06-sidekicks</span><h3>Hand the routine to a sidekick</h3><p>A skill reviews every brief the same way, every time, without you in the room.</p></div>
-      <div class="st-body"><div class="st-col">
-        <div class="lab">Skills applied</div><div class="skills"><span class="skill built">review-checklist</span><span class="skill">Scheduled review</span><span class="skill">Subagents as reviewers</span></div>
-        <div class="lab">Artifact</div><div class="finding">A scheduled run of the same four checks over four real Rook briefs flagged all four, one flag each.</div>
-        <div class="minichart"><div class="t">06-sidekicks/scheduled-run-output.txt</div><div class="small">Bulk callout: <b>no owner</b><br>Routing override audit log: <b>no success measure</b><br>Requisition approval chains: <b>scope grows mid-document</b><br>Handler phone app: <b>solution before problem</b></div><div class="src">Run of 13 Oct 03:00 UTC. Not produced by a prompt recorded in this repo.</div></div>
-      </div><div class="st-col">
-        <div class="lab">You typed</div><pre class="prompt">Make a skill called review-checklist. When I point it at a brief, it checks that the brief: names who owns it, says how we'll know it worked, keeps the same scope start to finish, and explains the problem before the fix.</pre><div class="pfile">05-super-speed/prompts.md, prompt 20</div>
-        <div class="note"><b>Honest gap:</b> <span class="mono">06-sidekicks/prompts.md</span> is still empty, so Module 6 has no prompt of its own. The skill was built in the Module 5 session, so its prompt is quoted from that file. The scheduled-run report comes with the course folder; its origin is not recorded.</div>
-      </div></div></div></div>
-
-  </div>
-</div></section>
-
-<section class="ch" id="fix"><div class="wrap">
-  <div class="num">3 &middot; The fix</div>
-  <h2>Let a missed ping fade, and tell people it has.</h2>
-  <p class="plain">The hotfix is one release. A missed ping still adds a 0.12 penalty, but the penalty halves every two days, so it is mostly gone after about a week. A responder and their handler each see one plain line about it. The rest waits in a backlog. Try it below: switch between Today, plus the hotfix, and plus the backlog, and watch what changes on each screen.</p>
-
-  <div class="proto-wrap">
-    <div class="proto-bar"><b>Your prototype</b><span>Journey: one mockup per event. Simulator: today's rule against the fade. Orange is the hotfix, violet is the backlog.</span></div>
-    <iframe class="proto" title="Quiet Responders demonstrator" sandbox="allow-scripts" srcdoc="&lt;title&gt;Quiet Responders Demonstrator&lt;/title&gt;
+midterm backlog: post ranking review for handlers for dispatchers inlcluding scores)</pre><div class="pfile">05-super-speed/prompts.md, prompt 10</div></div></div></div>
+<aside class="notes" hidden>Module five: from a diagnosis to a decision. The Director wanted something real she could click. I wrote a brief with one hotfix and a backlog, got it reviewed by models playing her and the users, and built a demonstrator. You will see it in a minute.</aside>
+</section>
+<section class="slide dark" id="s13" data-tour="1" data-title="Module 6" aria-label="Slide 14 of 23: Module 6">
+<div class="slide-in"><div class="modhead"><span class="dot">6</span><div><div class="kick">Module 6 &middot; Sidekicks &middot; 06-sidekicks</div><h2 class="title">How do we stop a repeat?</h2></div></div>
+<div class="two"><div>
+<p class="edu">A skill reviews every brief the same way, every time, without me in the room.</p>
+<div class="lab">Skills applied</div><div class="skills"><span class="skill built">review-checklist</span><span class="skill">Scheduled review</span><span class="skill">Subagents as reviewers</span></div>
+<div class="lab">Finding</div><p class="finding2">The scheduled run in the course folder applied four checks to four real Rook briefs and flagged all four. My skill started from those four and now has a fifth: one clear decision.</p><div class="panel"><div class="lab">06-sidekicks/scheduled-run-output.txt</div><div class="small">Bulk callout: <b>no owner</b><br>Routing override audit log: <b>no success measure</b><br>Requisition approval chains: <b>scope grows mid-document</b><br>Handler phone app: <b>solution before problem</b></div></div><p class="sowhat"><b>So what:</b> The same check runs every time, without me in the room.</p></div>
+<div><div class="lab">You typed</div><pre class="prompt">Make a skill called review-checklist. When I point it at a brief, it checks that the brief: names who owns it, says how we'll know it worked, keeps the same scope start to finish, and explains the problem before the fix.</pre><div class="pfile">05-super-speed/prompts.md, prompt 20</div><div class="note"><b>Note:</b> the Module 6 prompts file is empty. I built the skill in the Module 5 session, so this prompt comes from that file.</div></div></div></div>
+<aside class="notes" hidden>Module six: sidekicks. I built a skill called review-checklist. Pointed at a brief, it checks owner, measure, scope, problem before fix, and since I sharpened it, one clear decision. The course folder includes a scheduled run of the first four checks over four real briefs, and it flagged every one. One note: the sixth prompts file is empty, so this prompt comes from my module five file.</aside>
+</section>
+<section class="slide light" id="s15" data-tour="1" data-title="What changed in how I work" aria-label="Slide 15 of 23: What changed in how I work">
+<div class="slide-in">
+<div class="kick">What I learned</div><h2 class="title">What changed in how I work.</h2>
+<div class="ba">
+<div class="bar"><span class="from">Took the handover at its word</span><i>&rarr;</i><span class="to">Tested it. "Mostly seasonal" was half right: callouts dipped 12%, but misses and the four were not seasonal.</span></div>
+<div class="bar"><span class="from">Trusted the average</span><i>&rarr;</i><span class="to">Looked inside it. One acceptance rate hid four people.</span></div>
+<div class="bar"><span class="from">Asked what the code does</span><i>&rarr;</i><span class="to">Asked what it does not do: no recovery, no delivery check.</span></div>
+<div class="bar"><span class="from">Built the prototype first</span><i>&rarr;</i><span class="to">Brief first, then prototype, then a review by the people who would use it.</span></div></div></div>
+<aside class="notes" hidden>These are the four habits that changed. I stopped taking the handover at its word and tested it. I stopped trusting the average, because it hid four people. I started asking what the code does not do, which is where the real gap was. And I now write the brief before the prototype. Those habits are what the two skills I built try to make automatic.</aside>
+</section>
+<section class="slide dark" id="s16" data-title="The fix" aria-label="Slide 16 of 23: The fix">
+<div class="slide-in">
+<div class="kick">The fix</div><h2 class="title">Let a miss fade, and tell people it has.</h2>
+<div class="hb">
+<div class="box today"><h4>Today</h4><div class="small">One bad run is permanent. The four score <b class="mono">0.00</b>, the lowest possible, and are not asked.</div><div class="small muted">Handler and responder see nothing.</div></div>
+<div class="arrow">&rarr;</div>
+<div class="box hotfix"><h4><span class="chip hot">hotfix</span> One release</h4><div class="small">A miss still costs 0.12, but the penalty <b>halves every 2 days</b>. A responder and their handler see one plain line, like "Recent acceptance: Fair. Misses fade in about a week." Levels are Good, Fair and Low.</div>
+<div class="bklist"><div class="bkitem"><span class="chip bk">backlog 1</span> Handler can review how a callout was ranked</div><div class="bkitem"><span class="chip bk">backlog 2</span> Delivery confirmation, only if phone logs show undelivered offers</div><div class="bkitem"><span class="chip bk">backlog 3</span> A real fair-share offer, only if the measure is missed</div></div></div></div>
+<div class="panel" style="margin-top:18px"><div class="lab">Score on 6 Sep, replayed on the real pings: today's rule against the hotfix (Good starts at 0.70, Fair is 0.45 to 0.70)</div><div id="fixChart"></div></div></div>
+<aside class="notes" hidden>The fix is deliberately small. A miss still costs the same, but the penalty halves every two days, so after about a week it is gone. And a handler and a responder see one plain line that says where they stand. The bars show a replay on the real pings: the four go from zero to between 0.55 and 0.67. It is a replay, not a forecast, because once they are asked again, their behaviour will matter.</aside>
+</section>
+<section class="slide light" id="s17" data-title="The prototype" aria-label="Slide 17 of 23: The prototype">
+<div class="slide-in">
+<div class="kick">Try it</div><h2 class="title">Three clicks tell the story.</h2>
+<div class="steps3"><div><span class="n">1</span><b>Today</b>Nothing explains the silence.</div><div><span class="n">2</span><b>+ Hotfix</b>An orange line appears for the handler and the responder.</div><div><span class="n">3</span><b>+ Hotfix and backlog</b>The handler can see how each callout was ranked.</div></div>
+<div class="proto-wrap"><iframe class="proto" title="Quiet Responders demonstrator" sandbox="allow-scripts" srcdoc="&lt;title&gt;Quiet Responders Demonstrator&lt;/title&gt;
 &lt;link rel=&quot;stylesheet&quot; href=&quot;https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&amp;family=Public+Sans:wght@400;500;600;700&amp;display=swap&quot;&gt;
 &lt;style&gt;
 /* Layout: sticky control bar (view switch, highlight toggle, tabs) over four working areas: journey canvas, screens, map, simulator. */
@@ -786,110 +910,71 @@ select { font: inherit; background: var(--surface); color: var(--ink); border: 1
   setTab(state.tab);
 })();
 &lt;/script&gt;
-"></iframe>
-  </div>
-  <div class="small muted" style="margin-top:8px">Same file as <span class="mono">05-super-speed/demonstrator.html</span>. Screens and the map are illustrative; scores are replayed from the real pings.</div>
-
-  <div class="hb">
-    <div class="box today"><h4>Today</h4><div class="small">One bad run is permanent. The four score <b class="mono">0.00</b> and are not asked.</div><div class="small muted">Handler and responder see nothing.</div></div>
-    <div class="arrow">&rarr;</div>
-    <div class="box hotfix"><h4><span class="chip hot">hotfix</span> One release</h4><div class="small">A miss penalty that halves every 2 days. Replayed on real pings, the four recover to <b class="mono">0.55 to 0.67</b> and the other twelve are unchanged.</div><div class="small">One plain line for handler and responder. A restart-proof store, because scores sit in memory today.</div>
-      <div class="bklist"><div class="bkitem"><span class="chip bk">backlog 1</span> Handler can review how a callout was ranked</div><div class="bkitem"><span class="chip bk">backlog 2</span> Delivery confirmation, only if push logs show undelivered pings</div><div class="bkitem"><span class="chip bk">backlog 3</span> A real fair-share offer, only if the measure is missed</div></div></div>
-  </div>
-
-  <div class="grid2" style="margin-top:22px">
-    <div class="card"><div class="lab">Replayed on real pings, 6 Sep</div><div id="fixChart" style="margin-top:8px"></div><div class="small muted" style="margin-top:6px">Recent acceptance, today's rule against the hotfix, for the four. <span class="chip m">modelled</span> A replay, not a forecast: they would be asked more.</div></div>
-    <div class="card"><div class="lab">How we will know it worked</div>
-      <div class="small" style="margin-top:8px"><b>Measure:</b> the four get at least <b>14%</b> of weekly pings in the second full week after launch (from 1.8%).<br><br><b>Pull back</b> if, on a rolling 7 days, acceptance is under 66.7%, callouts nobody took are over 12.9%, or the slowest 10% take over 82 seconds to reach a responder.<br><br><b>Rollback:</b> turn the fade off.</div></div>
-  </div>
-
-  <div class="decide">
-    <div class="card"><b class="nn">1</b><b>Approve the hotfix</b><div class="small muted">A missed ping stops counting against a responder after about a week.</div></div>
-    <div class="card"><b class="nn">2</b><b>Allow it off the monthly release train</b><div class="small muted">With Wen Li's written review before launch.</div></div>
-    <div class="card"><b class="nn">3</b><b>Accept the backlog in order</b><div class="small muted">Three items; two start only if the data says so.</div></div>
-  </div>
-  <blockquote class="hotq" style="margin-top:18px"><p>"I'd rather see something real than a tidy slide."</p><cite>Helen Achebe, Director of Product, <span class="mono">05-super-speed/director-request.txt</span></cite></blockquote>
-  <div class="note" style="margin-top:14px"><b>What the fix will not do:</b> explain why the four miss 70% of their first pings (28 of 40, against 16.5% for everyone else). That is push delivery or slow answers, and backlog item 2 covers it. A responder who keeps missing about 60% of pings still falls again.</div>
-</div></section>
-
-<section class="ch" id="never"><div class="wrap">
-  <div class="num">4 &middot; Never again</div>
-  <h2>Your skill checks the brief before anyone ships.</h2>
-  <p class="plain">Release 4.2 went out with roadmap one-liners and no measure. <span class="mono">review-checklist</span>, the skill you built, reads a brief the way the person who must decide would, and says plainly whether they can decide today. Point it at any brief and it checks five things.</p>
-
-  <div class="pipe">
-    <div class="pstep"><b>1 &middot; Write the brief first</b><span class="small">Problem, plan, one decision, one owner, one measure.</span></div>
-    <div class="pstep skillstep"><span class="chip bk">your skill</span><b>2 &middot; review-checklist</b><span class="small">Owner. One clear decision. A measure. Same scope throughout. Problem before fix, in plain words.</span></div>
-    <div class="pstep"><b>3 &middot; Verdict</b><span class="small">Ready, ready with small fixes, or not ready. "Can the decider decide today?"</span></div>
-    <div class="pstep"><b>4 &middot; Fix first</b><span class="small">At most three edits, each tagged <span class="chip bad">blocks the decision</span> or <span class="chip ex">polish</span>.</span></div>
-    <div class="pstep skillstep"><span class="chip bk">your skill</span><b>5 &middot; pm-demonstrator</b><span class="small">Only then build the demonstrator: grounded numbers, one event diagram, a reviewer round.</span></div>
-  </div>
-
-  <div class="grid2" style="margin-top:26px">
-    <div class="card"><div class="lab">It already works on real Rook briefs</div>
-      <div class="tw" style="margin-top:8px"><table><thead><tr><th>Brief</th><th>Flag from the scheduled run</th></tr></thead><tbody>
-        <tr><td>Bulk callout</td><td class="f">No owner. "Ends on "nobody's picked it up yet"."</td></tr>
-        <tr><td>Routing override audit log</td><td class="f">No success measure.</td></tr>
-        <tr><td>Requisition approval chains</td><td class="f">Scope grows mid-document, from one approval step to a dashboard and a spreadsheet replacement.</td></tr>
-        <tr><td>Handler phone app</td><td class="f">Solution before problem.</td></tr>
-      </tbody></table></div>
-      <div class="small muted" style="margin-top:6px">Source: <span class="mono">06-sidekicks/scheduled-run-output.txt</span>. I checked each flag against the wiki briefs and they match.</div></div>
-    <div class="card"><div class="lab">And on your own brief</div>
-      <div class="small" style="margin-top:8px">Run on brief v8, it found four of five checks only partly met. The fix list, in order:</div>
-      <ol class="small" style="padding-left:18px;margin:8px 0 0;display:grid;gap:6px">
-        <li><span class="chip bad">blocks the decision</span> The ask bundled three decisions with no decide-by date or cost of waiting.</li>
-        <li><span class="chip bad">blocks the decision</span> The restart-proof store and Wen's pre-launch check were only in Risks.</li>
-        <li><span class="chip ex">polish</span> The 70% first-ping misses came after the plan, and "4.2", "ping" and "monthly train" were never explained.</li>
-      </ol>
-      <div class="small muted" style="margin-top:8px">Brief v9, <span class="mono">quiet-responders-decision-brief.md</span>, fixes all three. It has not been re-run through the checklist yet.</div></div>
-  </div>
-
-  <div class="card" style="margin-top:14px"><div class="lab">What it would have said about 4.2 <span class="chip p">illustrative</span></div>
-    <div class="small muted" style="margin:4px 0 8px">The checklist run by hand on the 4.2 paper trail: three roadmap entries, all committed on 30 June.</div>
-    <div class="tw"><table><thead><tr><th>Roadmap entry (4.2)</th><th>Owner</th><th>Measure</th><th>Problem stated</th><th>Scope held</th></tr></thead><tbody>
-      <tr><td><b>Change to who gets pinged</b><br><span class="small muted">"Weight proximity more heavily when ranking who gets pinged for a callout."</span></td><td class="p">Priya</td><td class="f">none</td><td class="f">none</td><td class="p">shipped as written</td></tr>
-      <tr><td><b>Ping timeout tuning</b><br><span class="small muted">"Tune how long a ping waits for an answer before it moves on."</span></td><td class="p">Priya</td><td class="f">none</td><td class="f">none</td><td class="h">"tuning" shipped as a cut, 90 s to 60 s</td></tr>
-      <tr><td><b>Availability Confidence</b><br><span class="small muted">"Show a confidence score alongside a responder's stated availability."</span></td><td class="p">Priya</td><td class="f">none</td><td class="f">none</td><td class="f">committed for 4.2, never shipped, still "Committed"</td></tr>
-    </tbody></table></div>
-    <div class="small" style="margin-top:8px"><b>Verdict: not ready.</b> Three owned items, no measure, no problem statement. That is the gap between "went clean" on 13 August and 83 open tickets.</div>
-    <div class="small muted" style="margin-top:4px">Source: <span class="mono">00-rook/wiki/company/q3-roadmap.md</span> and the 4.2 release page.</div></div>
-
-  <div class="grid2" style="margin-top:14px">
-    <div class="card"><div class="lab">You typed, to build it</div><pre class="prompt">Make a skill called review-checklist. When I point it at a brief, it checks that the brief: names who owns it, says how we'll know it worked, keeps the same scope start to finish, and explains the problem before the fix.</pre><div class="pfile" style="margin-top:4px">05-super-speed/prompts.md, prompt 20</div></div>
-    <div class="card"><div class="lab">You typed, to sharpen it</div><pre class="prompt">review this response and the brief from a executive point of view, what would you change on the skill to improve clear communication in the company on this decision. apply that change and run it again</pre><div class="pfile" style="margin-top:4px">05-super-speed/prompts.md, prompt 22</div></div>
-  </div>
-  <div class="note" style="margin-top:14px"><b>Limits:</b> the checklist judges structure and clarity, not whether the numbers are right, and it only helps if briefs go through it. Setting it to run on a schedule, as in the Module 6 report, is what makes that automatic.</div>
-</div></section>
-
-<section class="ch" id="open"><div class="wrap">
-  <div class="num">5 &middot; Still open</div>
-  <h2>Five things nobody has answered yet.</h2>
-  <div class="grid2" style="margin-top:16px">
-    <div class="card"><b>Wen Li's written check</b><div class="small muted">Reproduce the ranking for callouts 40985 and 41416 and confirm recent acceptance is what puts the four below their neighbours. If not, the fade does not ship.</div></div>
-    <div class="card"><b>Where scores live</b><div class="small muted">In memory today. A restart resets everyone to 0.5, so the fade needs a restart-proof store.</div></div>
-    <div class="card"><b>The ship date</b><div class="small muted">The engineering manager confirms within 2 working days of approval.</div></div>
-    <div class="card"><b>Who owns the 60-second decision</b><div class="small muted">The hotfix leaves the wait at 60 seconds. It is a separate decision.</div></div>
-    <div class="card"><b>Why the four miss so many first pings</b><div class="small muted">Push delivery or slow answers. The push logs for 12 and 13 Aug decide it.</div></div>
-  </div>
-</div></section>
-</main>
-
-<footer><div class="wrap">
-  <b>Where every number comes from</b>
-  <ul>
-    <li><span class="mono">CLAUDE.md</span>, working context for sessions 1 to 6</li>
-    <li><span class="mono">01-origin-story</span> to <span class="mono">06-sidekicks</span> <span class="mono">/prompts.md</span></li>
-    <li><span class="mono">00-rook/data/callout-history.csv</span></li>
-    <li><span class="mono">00-rook/feedback/problem-statements-prioritized.md</span></li>
-    <li><span class="mono">00-rook/feedback/score-replay-real-pings.py</span></li>
-    <li><span class="mono">00-rook/code/dispatch-routing/history.py</span></li>
-    <li><span class="mono">05-super-speed/quiet-responders-decision-brief.md</span></li>
-    <li><span class="mono">05-super-speed/demonstrator.html</span></li>
-    <li><span class="mono">06-sidekicks/scheduled-run-output.txt</span></li>
-    <li><span class="mono">.claude/skills/review-checklist</span> and <span class="mono">pm-demonstrator</span></li>
-  </ul>
-  <p style="margin-top:10px">Rook Industries is a fictional company in a teaching scenario. <span class="chip v">verified</span> from data or code. <span class="chip m">modelled</span> a replay of real pings. <span class="chip p">proposal</span> or analysis added in this report.</p>
-</div></footer>
+"></iframe></div>
+<div class="pfile" style="margin-top:8px">You typed, to get this view (05-super-speed/prompts.md, prompt 17): "on the journey I just want to see a diagram with application mockups for each event, reduce all the rest of it ."</div></div>
+<aside class="notes" hidden>This is the prototype. Down the left are the handler&#x27;s screens, on the right the responder&#x27;s phone, one per event. Three clicks: Today shows nothing explaining the silence. Add the hotfix and the new line appears in orange on both screens. Add the backlog and the handler can see how every callout was ranked. There is a simulator tab too, if there are questions about how the score moves.</aside>
+</section>
+<section class="slide dark" id="s18" data-title="The decision" aria-label="Slide 18 of 23: The decision">
+<div class="slide-in">
+<div class="kick">What we ask</div><h2 class="title">Three decisions. We recommend yes to all three.</h2>
+<div class="decide"><div class="dcard"><b class="nn">1</b><b>Approve the hotfix, to ship once the check passes</b><span>A missed ping stops counting against a responder after about a week.</span></div>
+<div class="dcard"><b class="nn">2</b><b>Allow it outside the normal monthly release cycle</b><span>The engineer who built the ranking signs off in writing before launch.</span></div>
+<div class="dcard"><b class="nn">3</b><b>Accept the backlog in order</b><span>Three items. Two only start if the data says so.</span></div></div>
+<div class="three3"><div><b>Who decides</b>The Director of Product</div><div><b>Decide by</b>Within a week (our proposal). Each week of waiting leaves the four out of rotation</div><div><b>If we say no</b>The four stay out of rotation, and 83 open tickets stay open</div></div>
+<div class="note"><b>Owner:</b> Wen Li, the staff engineer who knows the ranking code. The engineering manager confirms the ship date within 2 working days of approval. <b>Condition:</b> it ships only after that written check passes. If the check says the cause is distance or skills and not the score, the fix does not ship.</div></div>
+<aside class="notes" hidden>Here is the ask. Three decisions: approve the hotfix, allow it outside the normal release cycle, and accept the backlog in order. We recommend yes to all three. The Director decides, within a week as our proposal. Wen Li owns the hotfix, and the engineering manager confirms the ship date. If the answer is no, the four stay out of rotation and the open tickets stay open. And one condition: the fix ships only after the engineer who built the ranking confirms in writing that the score really is what keeps those four down.</aside>
+</section>
+<section class="slide light" id="s19" data-title="How we will know" aria-label="Slide 19 of 23: How we will know">
+<div class="slide-in">
+<div class="kick">How we will know it worked</div><h2 class="title">From 1.8% of all offers to at least 14%.</h2>
+<div class="two"><div class="panel"><div class="lab">The measure</div><p class="p2">In the second full week after launch, the four get at least <b>14%</b> of all weekly offers. Today it is <b>1.8%</b>. Before 4.2 it was 28%.</p></div>
+<div class="panel"><div class="lab">We undo the fix if, over a rolling week, any one of these happens</div><div class="trip"><div>Fewer than <b>66.7%</b> of offers are taken</div><div>More than <b>12.9%</b> of callouts go untaken</div><div>The slowest 10% of callouts take over <b>82 seconds</b> to reach a responder</div></div><div class="small muted">We check daily. Each line is a level reached in the weeks right after 4.2, so going past it means we are worse than the damage we are fixing.</div></div></div>
+<div class="note"><b>How it reaches 14%:</b> a healed score puts them back within about 5 minutes of travel behind a healthy neighbour, so they are asked when close. That is a replay, not a forecast; 14% is our proposal. <b>What it will not fix:</b> why the four miss 70% of their first offers. It may be the phone not receiving the offer, or slow answers. The shorter wait is the likely trigger for the extra misses; whether to keep 60 seconds is a separate decision, and nobody owns it yet.</div></div>
+<aside class="notes" hidden>How will we know it worked? The four responders should get at least fourteen percent of all weekly offers, up from under two. Before the release it was twenty-eight. And we have written down in advance when we would undo it: any of three tripwires. One limit to be straight about: this does not explain why those four miss so many first offers, and the sixty second wait is the likely trigger. That is a separate decision with no owner yet.</aside>
+</section>
+<section class="slide dark" id="s20" data-title="Never again" aria-label="Slide 20 of 23: Never again">
+<div class="slide-in">
+<div class="kick">Never again</div><h2 class="title">Two skills I built. One checks the brief.</h2>
+<div class="pipe">
+<div class="pstep"><b>1 &middot; Write the brief first</b><span>Problem, plan, one decision, one owner, one measure.</span></div>
+<div class="pstep skillstep"><span class="chip bk">skill I built</span><b>2 &middot; review-checklist</b><span>Owner. One clear decision. A measure. Same scope. Problem before fix.</span></div>
+<div class="pstep"><b>3 &middot; Verdict</b><span>Ready, small fixes, or not ready. "Can the decider decide today?"</span></div>
+<div class="pstep"><b>4 &middot; Fix first</b><span>At most three edits, tagged <span class="chip bad">blocks the decision</span> or <span class="chip ex">polish</span>.</span></div>
+<div class="pstep skillstep"><span class="chip bk">skill I built</span><b>5 &middot; pm-demonstrator</b><span>Turns the approved brief into a clickable demo like the one you just saw.</span></div></div></div>
+<aside class="notes" hidden>Now the part about the future. review-checklist reads a brief the way the person who has to decide would read it, and tells me plainly whether they could decide today, then lists at most three fixes, marked as blocking or polish. After that, the second skill, pm-demonstrator, builds a clickable demo from the approved brief in a fixed order: grounded numbers, one event diagram, then reviewer rounds. The demo you just clicked was built that way.</aside>
+</section>
+<section class="slide light" id="s21" data-title="What it would have said" aria-label="Slide 21 of 23: What it would have said">
+<div class="slide-in">
+<div class="kick">The checklist run by hand on the 4.2 paper trail &middot; my own analysis</div><h2 class="title">Verdict on 4.2: not ready.</h2>
+<div class="tw"><table class="big"><thead><tr><th>Roadmap entry (4.2)</th><th>Owner</th><th>Measure</th><th>Problem stated</th><th>Did what it said</th></tr></thead><tbody>
+<tr><td><b>Change to who gets pinged</b><br><span class="small muted">"Weight proximity more heavily when ranking who gets pinged for a callout."</span></td><td class="p">Priya</td><td class="f">none</td><td class="f">none</td><td class="p">as written</td></tr>
+<tr><td><b>Ping timeout tuning</b><br><span class="small muted">"Tune how long a ping waits for an answer before it moves on."</span></td><td class="p">Priya</td><td class="f">none</td><td class="f">none</td><td class="h">"tuning" shipped as a cut, 90 s to 60 s</td></tr>
+<tr><td><b>Availability Confidence</b><br><span class="small muted">"Show a confidence score alongside a responder's stated availability."</span></td><td class="p">Priya</td><td class="f">none</td><td class="f">none</td><td class="f">committed for 4.2, never shipped</td></tr></tbody></table></div>
+<p class="lede2">Three owned items. No measure. No problem statement. That is the gap between "went clean" on 13 August and 83 open tickets.</p></div>
+<aside class="notes" hidden>Here is the same checklist run by hand on the three 4.2 roadmap entries. Each had an owner. None had a measure and none stated a problem. One of them, ping timeout tuning, shipped as something different from what it said. If these had been through the checklist, none would have counted as ready, and nobody would have had to find out from the tickets.</aside>
+</section>
+<section class="slide dark" id="s22" data-title="It already works" aria-label="Slide 22 of 23: It already works">
+<div class="slide-in">
+<div class="kick">Proof</div><h2 class="title">It finds real gaps in real briefs, including mine.</h2>
+<div class="two"><div class="panel"><div class="lab">Real Rook briefs, scheduled run</div><div class="tw"><table><tbody>
+<tr><td>Bulk callout</td><td class="f">No owner</td></tr><tr><td>Routing override audit log</td><td class="f">No success measure</td></tr><tr><td>Requisition approval chains</td><td class="f">Scope grows mid-document</td></tr><tr><td>Handler phone app</td><td class="f">Solution before problem</td></tr></tbody></table></div><div class="small muted">06-sidekicks/scheduled-run-output.txt. I checked each flag against the brief by hand: all four hold.</div></div>
+<div class="panel"><div class="lab">My own brief, version 8</div><p class="p2">Four of the five checks were only partly met. It flagged: three decisions bundled with no deadline; launch conditions hidden in the risks; the key fact, 70% first-offer misses, missing from the problem. Version 9 fixes all three.</p><div class="small muted" style="margin-top:6px">You typed (prompt 22): "review this response and the brief from a executive point of view ... apply that change and run it again"</div></div></div></div>
+<aside class="notes" hidden>Does it work? It flagged every real Rook brief in the course folder, one flag each. And it flagged my own: the first version bundled three decisions with no deadline, hid its launch conditions in the risks, and left out the key fact. I fixed all three in version nine, which has not yet been through the checklist again. Fair warning: the checklist judges structure and clarity, not whether the numbers are right.</aside>
+</section>
+<section class="slide light" id="s23" data-title="Still open" aria-label="Slide 23 of 23: Still open">
+<div class="slide-in">
+<div class="kick">What is still open</div><h2 class="title">Five answers we still need.</h2>
+<div class="open5"><div><b>A written check by the engineer who built the ranking</b><span>Does the score really put the four below their neighbours on two specific callouts we picked? If not, the fix does not ship.</span></div>
+<div><b>Where scores are kept</b><span>In memory today. A restart resets everyone to 0.5, so the fade needs a place to keep scores that survives a restart.</span></div>
+<div><b>The ship date</b><span>The engineering manager confirms within 2 working days of approval.</span></div>
+<div><b>Who owns the 60-second decision</b><span>The hotfix leaves the wait at 60 seconds. It is a separate decision.</span></div>
+<div><b>Why the four miss so many first offers</b><span>The phone not receiving the offer, or slow answers. The phone delivery logs for 12 and 13 Aug decide it.</span></div></div>
+<div class="closer"><span>The ask, within a week: approve the hotfix and the two decisions that go with it.</span><span>The habit from now on: check every brief before it ships.</span></div></div>
+<aside class="notes" hidden>Five things are still open and I would rather say so than hide them. The most important is the written check by the engineer who built the ranking, because if the score is not what keeps those four down, the fix does not ship. So what I am asking for, within a week, is the three decisions on the decision slide, starting with the hotfix. And the habit from now on is another: every brief goes through the checklist before it ships. Thank you.</aside>
+</section>
+</div>
+<div id="notesbar" hidden role="note"><div class="lab">Speaker notes</div><div id="notesText"></div></div>
+<div id="hud" role="toolbar" aria-label="Presentation controls"><span class="ct" id="ct">1 / 1</span><span class="dots" id="dots"></span><button class="btn" id="bShort" aria-pressed="false" title="Skip the course tour">Short (S)</button><button class="btn" id="bNotes" aria-pressed="false">Notes (N)</button><button class="btn" id="bPrev" aria-label="Previous slide">&larr;</button><button class="btn" id="bNext" aria-label="Next slide">&rarr;</button></div>
 <div id="tip" hidden></div>
 
 <script>
@@ -913,24 +998,28 @@ select { font: inherit; background: var(--surface); color: var(--ink); border: 1
     tip.style.left = Math.max(8, x) + "px"; tip.style.top = Math.max(8, y) + "px";
   });
   function lines(host, opts) {
-    var w = 420, h = opts.h || 200, l = 34, r = 10, t = 12, b = 26, iw = w - l - r, n = WEEKS.length, ymax = opts.ymax;
+    if (!host) return;
+    var w = 460, h = opts.h || 220, l = 36, r = 12, t = 14, b = 28, iw = w - l - r, n = WEEKS.length, ymax = opts.ymax;
     var x = function (i) { return l + iw * (i + .5) / n; }, y = function (v) { return h - b - (h - t - b) * v / ymax; };
     var s = '<svg class="ch-svg" viewBox="0 0 ' + w + ' ' + h + '" role="img" aria-label="' + opts.label + '">';
-    opts.ticks.forEach(function (g) { s += '<line x1="' + l + '" x2="' + (w - r) + '" y1="' + y(g) + '" y2="' + y(g) + '" stroke="' + opts.grid + '"/><text x="' + (l - 5) + '" y="' + (y(g) + 3) + '" text-anchor="end" style="fill:' + opts.muted + ';font:10px var(--f-mono)">' + g + (opts.unit || "") + '</text>'; });
-    opts.series.forEach(function (sr) { s += '<polyline fill="none" stroke="' + sr.c + '" stroke-width="3" points="' + sr.v.map(function (v, i) { return x(i) + "," + y(v); }).join(" ") + '"/>' + sr.v.map(function (v, i) { return '<circle cx="' + x(i) + '" cy="' + y(v) + '" r="3.5" fill="' + sr.c + '"/>'; }).join(""); if (sr.label) s += '<text x="' + (x(n - 1) - 4) + '" y="' + (y(sr.v[n - 1]) - 9) + '" text-anchor="end" style="fill:' + sr.c + ';font:700 11px var(--f-body)">' + sr.label + '</text>'; });
+    opts.ticks.forEach(function (g) { s += '<line x1="' + l + '" x2="' + (w - r) + '" y1="' + y(g) + '" y2="' + y(g) + '" stroke="var(--line)"/><text x="' + (l - 5) + '" y="' + (y(g) + 3) + '" text-anchor="end" style="fill:var(--muted);font:10px var(--f-mono)">' + g + '</text>'; });
+    opts.series.forEach(function (sr) { s += '<polyline fill="none" stroke="' + sr.c + '" stroke-width="3.5" points="' + sr.v.map(function (v, i) { return x(i) + "," + y(v); }).join(" ") + '"/>' + sr.v.map(function (v, i) { return '<circle cx="' + x(i) + '" cy="' + y(v) + '" r="4" fill="' + sr.c + '"/>'; }).join(""); s += '<text x="' + (x(n - 1) - 6) + '" y="' + (y(sr.v[n - 1]) - 11) + '" text-anchor="end" style="fill:' + sr.c + ';font:800 12px var(--f-body)">' + sr.label + '</text>'; });
     var mx = l + iw * (6 + 2 / 7) / n;
-    s += '<line x1="' + mx + '" x2="' + mx + '" y1="' + t + '" y2="' + (h - b) + '" stroke="' + opts.mark + '" stroke-dasharray="4 3"/><text x="' + (mx - 5) + '" y="' + (t + 9) + '" text-anchor="end" style="fill:' + opts.mark + ';font:700 10px var(--f-body)">4.2 ships</text>';
-    WEEKS.forEach(function (wk, i) { if (i % 2 === 0) s += '<text x="' + x(i) + '" y="' + (h - 9) + '" text-anchor="middle" style="fill:' + opts.muted + ';font:10px var(--f-mono)">' + wk + '</text>'; s += '<rect class="hit" x="' + (x(i) - iw / n / 2) + '" y="' + t + '" width="' + (iw / n) + '" height="' + (h - t - b) + '" data-tip="' + opts.tip(i) + '"/>'; });
+    s += '<line x1="' + mx + '" x2="' + mx + '" y1="' + t + '" y2="' + (h - b) + '" stroke="var(--hot)" stroke-dasharray="4 3"/><text x="' + (mx - 5) + '" y="' + (t + 9) + '" text-anchor="end" style="fill:var(--hot);font:700 11px var(--f-body)">4.2 ships</text>';
+    WEEKS.forEach(function (wk, i) { if (i % 2 === 0) s += '<text x="' + x(i) + '" y="' + (h - 9) + '" text-anchor="middle" style="fill:var(--muted);font:10px var(--f-mono)">' + wk + '</text>'; s += '<rect x="' + (x(i) - iw / n / 2) + '" y="' + t + '" width="' + (iw / n) + '" height="' + (h - t - b) + '" fill="transparent" data-tip="Week of ' + wk + '\nThe four: ' + W4[i] + '\nOther twelve: ' + W12[i] + '"/>'; });
     host.innerHTML = s + '</svg>';
   }
-  function hero() {
-    lines($("#heroChart"), { h: 190, ymax: 180, ticks: [0, 60, 120, 180], grid: "#2a3b4a", muted: "#9db0bf", mark: "#ff9f5c", label: "Pings a week", series: [{ v: W12, c: "#9db0bf", label: "other twelve" }, { v: W4, c: "#ff8d85", label: "the four" }], tip: function (i) { return "Week of " + WEEKS[i] + "\nThe four: " + W4[i] + "\nOther twelve: " + W12[i]; } });
-  }
-  function weekly() {
-    lines($("#weeklyChart"), { h: 220, ymax: 180, ticks: [0, 60, 120, 180], grid: "var(--line)", muted: "var(--muted)", mark: "var(--hot)", label: "Pings a week, the four against the other twelve", series: [{ v: W12, c: "var(--ink)", label: "other twelve" }, { v: W4, c: "var(--bad)", label: "the four" }], tip: function (i) { return "Week of " + WEEKS[i] + "\nThe four: " + W4[i] + "\nOther twelve: " + W12[i]; } });
+  function charts() {
+    var ser = [{ v: W12, c: "var(--muted)", label: "other twelve" }, { v: W4, c: "var(--bad)", label: "the four" }];
+    lines($("#weeklyChart"), { h: 250, ymax: 180, ticks: [0, 60, 120, 180], label: "Job offers a week, the four against the other twelve", series: [{ v: W12, c: "var(--ink)", label: "other twelve" }, { v: W4, c: "var(--bad)", label: "the four" }] });
+    daily();
+    hbars($("#ticketChart"), TICKETS, 32, function (v) { return v + " tickets"; }, function (r, i) { return i === 1 ? "var(--bad)" : "var(--muted)"; }, 190);
+    hbars($("#scoreChart"), SCORES, 1.05, function (v) { return v.toFixed(2); }, function (r) { return r[1] === 0 ? "var(--bad)" : "var(--ok)"; }, 100, 19);
+    hbars($("#fixChart"), FIX.map(function (r) { return [r[0] + ", hotfix", r[2]]; }).concat(FIX.map(function (r) { return [r[0] + ", today", r[1]]; })), 1, function (v) { return v.toFixed(2); }, function (r) { return r[0].indexOf("hotfix") > 0 ? "var(--hot)" : "var(--bad)"; }, 160, 22);
   }
   function daily() {
-    var w = 420, h = 220, l = 30, r = 8, t = 12, b = 28, iw = w - l - r, n = DAYS.length, bw = iw / n, ymax = 40;
+    if (!$("#dailyChart")) return;
+    var w = 460, h = 250, l = 30, r = 8, t = 14, b = 30, iw = w - l - r, n = DAYS.length, bw = iw / n, ymax = 40;
     var x = function (i) { return l + bw * i; }, y = function (v) { return h - b - (h - t - b) * v / ymax; };
     var lab = function (d) { return d <= 31 ? d + " Aug" : (d - 31) + " Sep"; };
     var s = '<svg class="ch-svg" viewBox="0 0 ' + w + ' ' + h + '" role="img" aria-label="Pings and missed pings by day">';
@@ -938,47 +1027,87 @@ select { font: inherit; background: var(--surface); color: var(--ink); border: 1
     DAYS.forEach(function (d, i) {
       s += '<rect x="' + (x(i) + 1) + '" y="' + y(d[1]) + '" width="' + Math.max(1, bw - 2) + '" height="' + (y(0) - y(d[1])) + '" fill="var(--surface2)" stroke="var(--line)"/><rect x="' + (x(i) + 1) + '" y="' + y(d[2]) + '" width="' + Math.max(1, bw - 2) + '" height="' + (y(0) - y(d[2])) + '" fill="var(--bad)"/>';
       if (i % 8 === 0) s += '<text x="' + (x(i) + bw / 2) + '" y="' + (h - 10) + '" text-anchor="middle" style="fill:var(--muted);font:10px var(--f-mono)">' + lab(d[0]) + '</text>';
-      s += '<rect class="hit" x="' + x(i) + '" y="' + t + '" width="' + bw + '" height="' + (h - t - b) + '" data-tip="' + lab(d[0]) + '\n' + d[1] + ' pings, ' + d[2] + ' missed"/>';
+      s += '<rect x="' + x(i) + '" y="' + t + '" width="' + bw + '" height="' + (h - t - b) + '" fill="transparent" data-tip="' + lab(d[0]) + '\n' + d[1] + ' pings, ' + d[2] + ' missed"/>';
     });
-    var mx = x(7); s += '<line x1="' + mx + '" x2="' + mx + '" y1="' + t + '" y2="' + (h - b) + '" stroke="var(--hot)" stroke-dasharray="4 3"/><text x="' + (mx + 5) + '" y="' + (t + 9) + '" style="fill:var(--hot);font:700 10px var(--f-body)">4.2 ships 12 Aug</text>';
-    $("#dailyChart").innerHTML = s + '</svg><div class="small" style="margin-top:4px"><span style="color:var(--bad)">&#9632;</span> missed &nbsp; <span class="muted">&#9632;</span> all pings</div>';
+    var mx = x(7); s += '<line x1="' + mx + '" x2="' + mx + '" y1="' + t + '" y2="' + (h - b) + '" stroke="var(--hot)" stroke-dasharray="4 3"/><text x="' + (mx + 5) + '" y="' + (t + 9) + '" style="fill:var(--hot);font:700 11px var(--f-body)">4.2 ships 12 Aug</text>';
+    $("#dailyChart").innerHTML = s + '</svg>';
   }
-  function hbars(host, rows, max, fmt, colorFn, labW) {
-    var h = rows.length * 26 + 8, lw = labW || 150, w = 420, iw = w - lw - 44;
+  function hbars(host, rows, max, fmt, colorFn, labW, rh) {
+    if (!host) return;
+    rh = rh || 26; var bh = rh - 7, h = rows.length * rh + 8, lw = labW || 150, w = 460, iw = w - lw - 50;
     var s = '<svg class="ch-svg" viewBox="0 0 ' + w + ' ' + h + '" role="img">';
-    rows.forEach(function (r, i) { var y0 = 4 + i * 26, bw = Math.max(1, iw * r[1] / max); s += '<text x="' + (lw - 6) + '" y="' + (y0 + 15) + '" text-anchor="end" style="fill:var(--ink);font:600 11px var(--f-body)">' + r[0] + '</text><rect x="' + lw + '" y="' + y0 + '" width="' + bw + '" height="19" rx="3" fill="' + colorFn(r, i) + '" data-tip="' + r[0] + ": " + fmt(r[1]) + '"/><text x="' + (lw + bw + 5) + '" y="' + (y0 + 14) + '" style="fill:var(--muted);font:10px var(--f-mono)">' + fmt(r[1]) + '</text>'; });
+    rows.forEach(function (r, i) { var y0 = 4 + i * rh, bw = Math.max(1, iw * r[1] / max); s += '<text x="' + (lw - 6) + '" y="' + (y0 + bh - 4) + '" text-anchor="end" style="fill:var(--ink);font:600 11px var(--f-body)">' + r[0] + '</text><rect x="' + lw + '" y="' + y0 + '" width="' + bw + '" height="' + bh + '" rx="3" fill="' + colorFn(r, i) + '" data-tip="' + r[0] + ": " + fmt(r[1]) + '"/><text x="' + (lw + bw + 5) + '" y="' + (y0 + bh - 5) + '" style="fill:var(--muted);font:10px var(--f-mono)">' + fmt(r[1]) + '</text>'; });
     host.innerHTML = s + '</svg>';
   }
   function misswk() {
-    var tot4 = [49,48,48,50,50,49,43,16,6,3], tot12 = W12, rate = tot4.map(function (_, i) { return 100 * (M4[i] + M12[i]) / (tot4[i] + tot12[i]); });
-    var w = 420, h = 150, l = 30, r = 8, t = 12, b = 24, iw = w - l - r, n = rate.length, bw = iw / n, ymax = 20;
+    var rate = W4.map(function (_, i) { return 100 * (M4[i] + M12[i]) / (W4[i] + W12[i]); });
+    var w = 460, h = 190, l = 32, r = 8, t = 14, b = 26, iw = w - l - r, n = rate.length, bw = iw / n, ymax = 20;
     var y = function (v) { return h - b - (h - t - b) * v / ymax; };
     var s = '<svg class="ch-svg" viewBox="0 0 ' + w + ' ' + h + '" role="img" aria-label="Share of pings missed by week">';
     [0, 5, 10, 15, 20].forEach(function (g) { s += '<line x1="' + l + '" x2="' + (w - r) + '" y1="' + y(g) + '" y2="' + y(g) + '" stroke="var(--line)"/><text x="' + (l - 4) + '" y="' + (y(g) + 3) + '" text-anchor="end" style="fill:var(--muted);font:10px var(--f-mono)">' + g + '%</text>'; });
     rate.forEach(function (v, i) { var x0 = l + bw * i; s += '<rect x="' + (x0 + 4) + '" y="' + y(v) + '" width="' + (bw - 8) + '" height="' + (y(0) - y(v)) + '" rx="2" fill="' + (i >= 6 ? "var(--bad)" : "var(--muted)") + '" data-tip="Week of ' + WEEKS[i] + '\n' + v.toFixed(1) + '% missed"/>'; if (i % 2 === 0) s += '<text x="' + (x0 + bw / 2) + '" y="' + (h - 8) + '" text-anchor="middle" style="fill:var(--muted);font:10px var(--f-mono)">' + WEEKS[i] + '</text>'; });
     $("#missWeekChart").innerHTML = s + '</svg>';
   }
-  function draw() {
-    hero(); weekly(); daily(); misswk();
-    hbars($("#ticketChart"), TICKETS, 32, function (v) { return v + " tickets"; }, function (r, i) { return i === 1 ? "var(--bad)" : "var(--muted)"; }, 170);
-    hbars($("#scoreChart"), SCORES, 1.05, function (v) { return v.toFixed(2); }, function (r) { return r[1] === 0 ? "var(--bad)" : "var(--ok)"; }, 96);
-    hbars($("#fixChart"), FIX.map(function (r) { return [r[0] + ", hotfix", r[2]]; }).concat(FIX.map(function (r) { return [r[0] + ", today", r[1]]; })), 1, function (v) { return v.toFixed(2); }, function (r) { return r[0].indexOf("hotfix") > 0 ? "var(--hot)" : "var(--bad)"; }, 150);
+  charts();
+
+  /* hands-on score toy */
+  var sc = 0.5, log = [];
+  function toy(o) {
+    if (o === "R") { sc = 0.5; log = []; }
+    else { log.push(o); sc = o === "T" ? Math.min(1, sc + .08) : Math.max(0, sc - .12); sc = Math.round(sc * 100) / 100; if (log.length > 28) log.shift(); }
+    $("#tScore").textContent = sc.toFixed(2);
+    var bar = $("#tBar"); bar.style.width = (sc * 100) + "%"; bar.style.background = sc >= .5 ? "var(--ok)" : sc >= .25 ? "var(--warn)" : "var(--bad)";
+    $("#tLog").innerHTML = log.map(function (x) { return '<span class="lg ' + x + '">' + x + '</span>'; }).join("");
+    var need = Math.ceil((0.5 - sc) / 0.08 - 1e-9), m = $("#tMsg");
+    if (!log.length) m.textContent = "Try it: miss three pings in a row, then try to climb back.";
+    else if (sc === 0) m.textContent = "At zero. Getting back to the 0.50 start takes " + need + " yeses in a row, and a yes only comes if someone asks.";
+    else if (sc < 0.5) m.textContent = "Below the start. You need " + need + " more yeses in a row to be level again. One miss undoes one and a half of them.";
+    else m.textContent = "At or above the start. Keep missing and watch how fast it falls.";
   }
-  draw();
-  /* progress bar and active chapter */
-  var bar = $("#bar");
-  function prog() { var h = document.documentElement.scrollHeight - innerHeight; bar.style.width = (h > 0 ? 100 * scrollY / h : 0) + "%"; }
-  addEventListener("scroll", prog, { passive: true }); prog();
-  var links = $$("nav.top a");
+  $$("#tLog").length && $$(".tbtns button").forEach(function (b) { b.addEventListener("click", function () { toy(b.getAttribute("data-o")); }); });
+
+  /* deck navigation */
+  var deck = $("#deck"), all = $$(".slide"), slides = all.slice(), cur = 0, N = slides.length, short = false;
+  var dots = $("#dots");
+  function buildDots() { dots.innerHTML = ""; slides.forEach(function (s, i) { var d = document.createElement("button"); d.setAttribute("aria-label", "Go to slide " + (i + 1) + ": " + s.getAttribute("data-title")); d.onclick = function () { go(i); }; dots.appendChild(d); }); }
+  buildDots();
+  function setShort(on) {
+    var el = slides[cur]; short = on; document.body.classList.toggle("short", on); $("#bShort").setAttribute("aria-pressed", String(on));
+    slides = all.filter(function (s) { return !(on && s.hasAttribute("data-tour")); }); N = slides.length; buildDots();
+    var k = all.indexOf(el), idx = slides.indexOf(el); while (idx < 0 && k > 0) { k--; idx = slides.indexOf(all[k]); } if (idx < 0) idx = 0;
+    setCur(idx); deck.scrollTo({ top: slides[idx].offsetTop, behavior: "instant" });
+  }
+  $("#bShort").onclick = function () { setShort(!short); };
+  function go(i) { i = Math.max(0, Math.min(N - 1, i)); deck.scrollTo({ top: slides[i].offsetTop, behavior: "smooth" }); }
+  function setCur(i) {
+    cur = i; $("#ct").textContent = (i + 1) + " / " + N;
+    $$("#dots button").forEach(function (d, k) { d.setAttribute("aria-current", k === i ? "true" : "false"); });
+    var n = $(".notes", slides[i]); $("#notesText").textContent = n ? n.textContent : "";
+  }
   if (window.IntersectionObserver) {
-    var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) links.forEach(function (a) { a.classList.toggle("on", a.getAttribute("href") === "#" + e.target.id); }); }); }, { rootMargin: "-40% 0px -55% 0px" });
-    $$("section.ch").forEach(function (s) { io.observe(s); });
+    var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) setCur(slides.indexOf(e.target)); }); }, { root: deck, rootMargin: "-45% 0px -45% 0px", threshold: 0 });
+    slides.forEach(function (s) { io.observe(s); });
   }
+  setCur(0);
+  $("#bNext").onclick = function () { go(cur + 1); }; $("#bPrev").onclick = function () { go(cur - 1); };
+  function notes(on) { var b = $("#bNotes"); on = on === undefined ? $("#notesbar").hidden : on; $("#notesbar").hidden = !on; b.setAttribute("aria-pressed", String(on)); }
+  $("#bNotes").onclick = function () { notes(); };
+  document.addEventListener("keydown", function (e) {
+    if (e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
+    var k = e.key;
+    if (k === "ArrowRight" || k === "ArrowDown" || k === "PageDown" || (k === " " && !e.shiftKey)) { e.preventDefault(); go(cur + 1); }
+    else if (k === "ArrowLeft" || k === "ArrowUp" || k === "PageUp" || (k === " " && e.shiftKey)) { e.preventDefault(); go(cur - 1); }
+    else if (k === "Home") { e.preventDefault(); go(0); } else if (k === "End") { e.preventDefault(); go(N - 1); }
+    else if (k === "n" || k === "N") notes();
+    else if (k === "s" || k === "S") setShort(!short);
+    else if (k === "f" || k === "F") { try { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen(); } catch (x) {} }
+  });
   /* copy buttons on prompts */
   $$("pre.prompt").forEach(function (p) {
-    var b = document.createElement("button"); b.className = "copy"; b.textContent = "Copy prompt"; b.style.marginTop = "6px";
+    var b = document.createElement("button"); b.textContent = "Copy prompt"; b.style.cssText = "margin-top:6px;font:600 .7rem var(--f-mono);border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:6px;padding:3px 8px;cursor:pointer";
     b.onclick = function () { var done = function () { b.textContent = "Copied"; setTimeout(function () { b.textContent = "Copy prompt"; }, 1400); }; try { navigator.clipboard.writeText(p.textContent).then(done, function () { b.textContent = "Select and copy"; }); } catch (e) { b.textContent = "Select and copy"; } };
     p.insertAdjacentElement("afterend", b);
   });
 })();
+
 </script>
